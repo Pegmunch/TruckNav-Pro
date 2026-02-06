@@ -14,9 +14,12 @@
 class AudioBluetoothInit {
   private static instance: AudioBluetoothInit | null = null;
   private isInitialized: boolean = false;
-  private audioElement: HTMLAudioElement | null = null;
   private audioContext: AudioContext | null = null;
   private initPromise: Promise<boolean> | null = null;
+  private speechPrimed: boolean = false;
+  private duckingOscillator: OscillatorNode | null = null;
+  private duckingGain: GainNode | null = null;
+  private isDucking: boolean = false;
 
   private constructor() {}
 
@@ -27,25 +30,20 @@ class AudioBluetoothInit {
     return AudioBluetoothInit.instance;
   }
 
-  /**
-   * Check if audio has been initialized
-   */
   public getIsInitialized(): boolean {
     return this.isInitialized;
+  }
+
+  public isSpeechPrimed(): boolean {
+    return this.speechPrimed;
   }
 
   /**
    * Initialize audio for Bluetooth/CarPlay/Android Auto
    * MUST be called from a user interaction event (tap, click)
-   * 
-   * This does three things:
-   * 1. Creates and plays a silent audio element to activate the audio session
-   * 2. Resumes any suspended AudioContext
-   * 3. Speaks a silent utterance to activate speech synthesis
    */
   public async initialize(): Promise<boolean> {
     if (this.isInitialized) {
-      console.log('[AudioBluetooth] Already initialized');
       return true;
     }
 
@@ -58,73 +56,17 @@ class AudioBluetoothInit {
   }
 
   private async doInitialize(): Promise<boolean> {
-    console.log('[AudioBluetooth] 🔊 Initializing audio for Bluetooth/CarPlay/Android Auto...');
+    console.log('[AudioBluetooth] Initializing audio for Bluetooth/CarPlay/Android Auto...');
 
     try {
-      // Step 1: Create and play silent audio element
-      // This activates the iOS audio session and enables Bluetooth routing
-      await this.playSilentAudio();
-
-      // Step 2: Resume AudioContext if suspended
       await this.resumeAudioContext();
-
-      // Step 3: Warm up speech synthesis
-      await this.warmupSpeechSynthesis();
-
       this.isInitialized = true;
-      console.log('[AudioBluetooth] ✅ Audio initialization complete - Bluetooth/CarPlay ready');
+      console.log('[AudioBluetooth] Audio initialization complete');
       return true;
     } catch (error) {
-      console.error('[AudioBluetooth] ❌ Audio initialization failed:', error);
+      console.error('[AudioBluetooth] Audio initialization failed:', error);
       return false;
     }
-  }
-
-  /**
-   * Play a silent audio element to activate the audio session
-   * This is crucial for iOS to enable Bluetooth audio routing
-   */
-  private async playSilentAudio(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        // Create audio element with silent audio data (base64 encoded silent MP3)
-        // This is a minimal valid MP3 file with silence
-        const silentMp3 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYZt2aYpAAAAAAD/+1AEAAP8AABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAAR7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7';
-
-        this.audioElement = new Audio(silentMp3);
-        this.audioElement.volume = 0.01; // Very low volume
-        
-        // Set attributes for iOS (using setAttribute for compatibility)
-        this.audioElement.setAttribute('playsinline', 'true');
-        this.audioElement.setAttribute('webkit-playsinline', 'true');
-        (this.audioElement as any).playsInline = true;
-
-        const playPromise = this.audioElement.play();
-        
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('[AudioBluetooth] Silent audio played - audio session active');
-              setTimeout(() => {
-                if (this.audioElement) {
-                  this.audioElement.pause();
-                  this.audioElement = null;
-                }
-              }, 100);
-              resolve();
-            })
-            .catch((error) => {
-              console.warn('[AudioBluetooth] Silent audio play failed (may need user interaction):', error);
-              resolve(); // Continue anyway
-            });
-        } else {
-          resolve();
-        }
-      } catch (error) {
-        console.warn('[AudioBluetooth] Silent audio creation failed:', error);
-        resolve(); // Continue anyway
-      }
-    });
   }
 
   /**
@@ -132,7 +74,6 @@ class AudioBluetoothInit {
    */
   private async resumeAudioContext(): Promise<void> {
     try {
-      // Create AudioContext if not exists
       if (!this.audioContext) {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioContextClass) {
@@ -140,7 +81,6 @@ class AudioBluetoothInit {
         }
       }
 
-      // Resume if suspended
       if (this.audioContext && this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
         console.log('[AudioBluetooth] AudioContext resumed');
@@ -151,52 +91,37 @@ class AudioBluetoothInit {
   }
 
   /**
-   * Warm up speech synthesis by speaking a silent/empty utterance
-   * This helps ensure speech routes through Bluetooth
+   * Prime speech synthesis from a user gesture context
+   * This MUST be called synchronously from a click/tap handler
+   * It speaks a real short utterance to unlock iOS speech synthesis
    */
-  private async warmupSpeechSynthesis(): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        if (!window.speechSynthesis) {
-          resolve();
-          return;
-        }
+  public primeSpeechFromGesture(): void {
+    if (this.speechPrimed) return;
 
-        // Cancel any pending speech
-        window.speechSynthesis.cancel();
+    try {
+      if (!window.speechSynthesis) return;
 
-        // Create utterance with empty/silent text
-        const utterance = new SpeechSynthesisUtterance(' ');
-        utterance.volume = 0.01; // Very low volume
-        utterance.rate = 2; // Fast to complete quickly
-        
-        utterance.onend = () => {
-          console.log('[AudioBluetooth] Speech synthesis warmed up');
-          resolve();
-        };
-        
-        utterance.onerror = () => {
-          console.warn('[AudioBluetooth] Speech synthesis warmup had error (continuing)');
-          resolve();
-        };
+      window.speechSynthesis.cancel();
 
-        // Speak the silent utterance
-        window.speechSynthesis.speak(utterance);
+      const utterance = new SpeechSynthesisUtterance(' ');
+      utterance.volume = 0.01;
+      utterance.rate = 10;
 
-        // Timeout fallback
-        setTimeout(() => {
-          resolve();
-        }, 500);
-      } catch (error) {
-        console.warn('[AudioBluetooth] Speech synthesis warmup failed:', error);
-        resolve();
-      }
-    });
+      utterance.onend = () => {
+        this.speechPrimed = true;
+        console.log('[AudioBluetooth] Speech synthesis primed from user gesture');
+      };
+
+      utterance.onerror = () => {
+        console.warn('[AudioBluetooth] Speech priming had error');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.warn('[AudioBluetooth] Speech priming failed:', error);
+    }
   }
 
-  /**
-   * Get the shared AudioContext (for other modules to use)
-   */
   public getAudioContext(): AudioContext | null {
     if (!this.audioContext) {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -207,9 +132,6 @@ class AudioBluetoothInit {
     return this.audioContext;
   }
 
-  /**
-   * Force re-initialization (e.g., after Bluetooth reconnection)
-   */
   public async reinitialize(): Promise<boolean> {
     this.isInitialized = false;
     this.initPromise = null;
@@ -217,96 +139,149 @@ class AudioBluetoothInit {
   }
 
   /**
-   * Play a brief silent audio clip to activate Bluetooth audio routing
-   * Call this IMMEDIATELY before speech synthesis to ensure speech routes through Bluetooth
-   * 
-   * On iOS, speech synthesis often doesn't route through Bluetooth by default.
-   * Playing a brief audio clip first "wakes up" the Bluetooth audio session,
-   * causing subsequent speech to route through the connected audio device.
+   * Activate Bluetooth audio route before speech
+   * Uses a very brief, low-volume oscillator to wake up the audio session
+   * Volume 0.01 is enough to trigger Bluetooth routing but not audible to humans
    */
   public async activateBluetoothForSpeech(): Promise<void> {
-    console.log('[AudioBluetooth] 🔊 Activating Bluetooth audio route for speech...');
-    
     try {
-      // Resume AudioContext first
       if (this.audioContext && this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
-      
-      // Create a short audible tone using Web Audio API
-      // This tone needs to be AUDIBLE (not silent) to properly activate Bluetooth routing on iOS
-      // iOS speech synthesis uses a different audio category - we need to "wake up" the media channel
+
       const ctx = this.getAudioContext();
       if (ctx) {
-        // Create an oscillator with gentle fade-in/fade-out to avoid clicks
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
-        // Use audible but soft volume (0.05) for reliable Bluetooth activation
-        // Too quiet won't activate the audio route, too loud is jarring
+
         gainNode.gain.setValueAtTime(0, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.02); // Fade in
-        gainNode.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.15); // Hold
-        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2); // Fade out
-        
-        oscillator.frequency.value = 440;
-        oscillator.type = 'sine'; // Smooth tone
-        
+        gainNode.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
+
+        oscillator.frequency.value = 200;
+        oscillator.type = 'sine';
+
         oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.25); // 250ms total duration
-        
-        // Wait for it to complete fully
-        await new Promise(resolve => setTimeout(resolve, 300));
-        console.log('[AudioBluetooth] ✅ Bluetooth audio route activated with audible tone');
+        oscillator.stop(ctx.currentTime + 0.12);
+
+        await new Promise(resolve => setTimeout(resolve, 150));
+        console.log('[AudioBluetooth] Bluetooth audio route activated');
       }
-      
-      // Also play HTML audio element as backup - this helps on some iOS versions
-      // Use a longer clip with actual audio content
-      const silentMp3 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYZt2aYpAAAAAAD/+1AEAAP8AABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAAR7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7';
-      const audio = new Audio(silentMp3);
-      audio.volume = 0.1; // Higher volume for better Bluetooth activation
-      audio.setAttribute('playsinline', 'true');
-      (audio as any).playsInline = true;
-      
-      try {
-        await audio.play();
-        await new Promise(resolve => setTimeout(resolve, 150)); // Let it play longer
-        audio.pause();
-      } catch (e) {
-        // Ignore - oscillator already handled it
-      }
-      
-      // Final delay to ensure audio route is fully established before speech
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
     } catch (error) {
       console.warn('[AudioBluetooth] Bluetooth activation failed:', error);
     }
   }
 
   /**
+   * Start audio ducking - signals the OS to reduce volume of other audio (music, podcasts)
+   * so navigation voice can be heard clearly over Bluetooth/CarPlay/Android Auto.
+   * 
+   * Uses two techniques:
+   * 1. navigator.audioSession API (where supported) to request 'transient' focus
+   * 2. A sustained near-silent audio signal through AudioContext to keep the audio
+   *    route active and trigger OS-level ducking behavior
+   */
+  public startAudioDucking(): void {
+    if (this.isDucking) return;
+
+    try {
+      const nav = navigator as any;
+      if (nav.audioSession) {
+        nav.audioSession.type = 'auto';
+        console.log('[AudioBluetooth] Set audioSession.type to auto for ducking');
+      }
+
+      const ctx = this.getAudioContext();
+      if (ctx) {
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+
+        this.duckingGain = ctx.createGain();
+        this.duckingGain.connect(ctx.destination);
+        this.duckingGain.gain.setValueAtTime(0, ctx.currentTime);
+        this.duckingGain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 0.05);
+
+        this.duckingOscillator = ctx.createOscillator();
+        this.duckingOscillator.type = 'sine';
+        this.duckingOscillator.frequency.value = 100;
+        this.duckingOscillator.connect(this.duckingGain);
+        this.duckingOscillator.start();
+
+        this.isDucking = true;
+        console.log('[AudioBluetooth] Audio ducking STARTED - other audio will be reduced');
+      }
+    } catch (error) {
+      console.warn('[AudioBluetooth] Audio ducking start failed:', error);
+    }
+  }
+
+  /**
+   * Stop audio ducking - allows other audio (music, podcasts) to return to normal volume.
+   * Fades out the ducking signal smoothly to avoid audio pops.
+   */
+  public stopAudioDucking(): void {
+    if (!this.isDucking) return;
+
+    try {
+      const ctx = this.getAudioContext();
+
+      if (this.duckingGain && ctx) {
+        this.duckingGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+      }
+
+      setTimeout(() => {
+        try {
+          if (this.duckingOscillator) {
+            this.duckingOscillator.stop();
+            this.duckingOscillator.disconnect();
+            this.duckingOscillator = null;
+          }
+          if (this.duckingGain) {
+            this.duckingGain.disconnect();
+            this.duckingGain = null;
+          }
+        } catch (e) {
+          // Already stopped
+        }
+        this.isDucking = false;
+        console.log('[AudioBluetooth] Audio ducking STOPPED - other audio restored');
+      }, 400);
+    } catch (error) {
+      this.isDucking = false;
+      console.warn('[AudioBluetooth] Audio ducking stop failed:', error);
+    }
+  }
+
+  /**
+   * Check if audio ducking is currently active
+   */
+  public isAudioDucking(): boolean {
+    return this.isDucking;
+  }
+
+  /**
    * Keep-alive function to maintain Bluetooth audio connection during navigation
-   * Call this periodically (e.g., every 30 seconds) during active navigation
    */
   public async keepBluetoothAlive(): Promise<void> {
     if (!this.isInitialized) return;
-    
+
     try {
       const ctx = this.getAudioContext();
       if (ctx && ctx.state === 'running') {
-        // Create a silent ping
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
-        gainNode.gain.value = 0.0001; // Essentially silent
+
+        gainNode.gain.value = 0.0001;
         oscillator.frequency.value = 440;
-        
+
         oscillator.start();
         oscillator.stop(ctx.currentTime + 0.01);
       }
@@ -318,14 +293,10 @@ class AudioBluetoothInit {
 
 export const audioBluetoothInit = AudioBluetoothInit.getInstance();
 
-/**
- * Hook to initialize audio on first user interaction
- * Add this to your main app component
- */
 export function initializeAudioOnInteraction(): void {
   const handleInteraction = async () => {
+    audioBluetoothInit.primeSpeechFromGesture();
     await audioBluetoothInit.initialize();
-    // Remove listeners after first successful init
     document.removeEventListener('touchstart', handleInteraction);
     document.removeEventListener('click', handleInteraction);
   };

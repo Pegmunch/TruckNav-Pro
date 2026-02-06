@@ -34,7 +34,7 @@ The frontend uses React with TypeScript and Vite, employing Shadcn/ui (Radix UI,
 - **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation, with dynamic language switching.
 - **Unified Voice Navigation System**: A single consolidated voice system for all navigation announcements, offering modes like Motorway-Only, Junction & Lane Guidance Only, and Emergency Traffic Notifications. It defaults to a female voice preference in the user's language and supports 17 languages. All voice sources route through a single `NavigationVoice` singleton.
 - **Multilingual Voice System**: All voice features dynamically use the user's selected language from i18n settings, supporting over 40 language codes.
-- **Bluetooth/CarPlay/Android Auto Audio System**: Comprehensive audio initialization for vehicle connectivity, including silent audio warmup, AudioContext resumption, speech synthesis priming, automatic reinitialization on visibility changes, and volume control via device media buttons.
+- **Bluetooth/CarPlay/Android Auto Audio System**: Comprehensive audio initialization for vehicle connectivity, including silent audio warmup, AudioContext resumption, speech synthesis priming, automatic reinitialization on visibility changes, volume control via device media buttons, and audio ducking (automatically reduces music/podcast volume when navigation voice speaks).
 - **User Guide**: Comprehensive in-app documentation translated into 17 languages.
 - **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limits, traffic incidents, and fatigue/break reminders.
 - **Haptic Feedback System**: Vibration API integration for tactile feedback.

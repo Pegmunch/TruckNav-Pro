@@ -3414,20 +3414,10 @@ function NavigationPageContent() {
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
-    // CRITICAL: Prime voice and Bluetooth audio for iOS Safari
-    // Must happen during user gesture (button tap) for iOS audio policy
     navigationVoice.primeForUserGesture();
-    console.log('[NAV-ACTIVATION] ✅ Voice primed for iOS Safari');
-    
-    // CRITICAL: Initialize and activate Bluetooth audio for vehicle speakers
-    // This ensures voice navigation routes through connected Bluetooth audio devices
-    try {
-      await audioBluetoothInit.initialize();
-      await audioBluetoothInit.activateBluetoothForSpeech();
-      console.log('[NAV-ACTIVATION] ✅ Bluetooth audio activated for vehicle speakers');
-    } catch (e) {
-      console.warn('[NAV-ACTIVATION] Bluetooth audio activation failed:', e);
-    }
+    audioBluetoothInit.primeSpeechFromGesture();
+    audioBluetoothInit.activateBluetoothForSpeech().catch(() => {});
+    console.log('[NAV-ACTIVATION] Voice primed for iOS Safari');
     
     // Enable Smart Traffic Lights Panel during navigation
     setShowSmartTrafficLights(true);
@@ -3619,17 +3609,9 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(navigationStartedEvent);
       
-      // VOICE: Announce navigation started with first instruction
       if (professionalVoiceEnabled) {
-        // Ensure voice is enabled and prime Bluetooth audio
         navigationVoice.setEnabled(true);
         
-        // Prime Bluetooth/CarPlay audio before speaking
-        import('@/lib/audio-bluetooth-init').then(({ audioBluetoothInit }) => {
-          audioBluetoothInit.initialize();
-        });
-        
-        // Announce navigation started after a brief delay for audio initialization
         setTimeout(() => {
           const destination = route.endLocation || 'your destination';
           const durationMinutes = Math.ceil(route.duration || 0);
@@ -4386,15 +4368,10 @@ function NavigationPageContent() {
                           navigationVoice.setEnabled(newState);
                           console.log('[VOICE-TOGGLE] Voice navigation:', newState ? 'ENABLED' : 'DISABLED');
                           
-                          // If enabling voice, prime the audio system for Bluetooth
                           if (newState) {
-                            try {
-                              await audioBluetoothInit.initialize();
-                              await audioBluetoothInit.activateBluetoothForSpeech();
-                              console.log('[VOICE-TOGGLE] Audio system primed for Bluetooth');
-                            } catch (e) {
-                              console.warn('[VOICE-TOGGLE] Audio priming failed:', e);
-                            }
+                            navigationVoice.primeForUserGesture();
+                            audioBluetoothInit.primeSpeechFromGesture();
+                            console.log('[VOICE-TOGGLE] Voice primed for navigation');
                           }
                         }}
                         roadInfo={roadInfo ? {
@@ -5200,11 +5177,10 @@ function NavigationPageContent() {
         resetTrigger={menuResetTrigger}
         onRequestAutoNavigation={() => {
           console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
+          navigationVoice.primeForUserGesture();
+          audioBluetoothInit.primeSpeechFromGesture();
           setShouldAutoNavigateOnMobile(true);
-          // Show navigation controls immediately
           setShowNavControls(true);
-          // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
-          // DON'T set isLocalNavActive yet - let user choose to start navigation
           setIsShowingPreview(true);
           localStorage.setItem('navigation_mode', 'route_ready');
           localStorage.setItem('navigation_timestamp', Date.now().toString());

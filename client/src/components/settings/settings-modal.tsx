@@ -1277,8 +1277,7 @@ const SettingsModal = memo(function SettingsModal({
                                   navigationVoice.setEnabled(checked);
                                   if (checked) {
                                     navigationVoice.forceMaxVolume();
-                                    // Prime the voice system since this is a user gesture
-                                    await navigationVoice.primeForUserGesture();
+                                    navigationVoice.primeForUserGesture();
                                   }
                                   // Verify the setting was saved
                                   const settings = navigationVoice.getSettings();
