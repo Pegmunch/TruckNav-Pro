@@ -860,6 +860,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       preferencesRef.current = newPrefs;
       setPreferences(newPrefs);
       saveMapPreferences(newPrefs);
+      if (map.current && isLoaded) {
+        updateLayerVisibility(map.current, newMode, currentZoomRef.current, viewState);
+        console.log('[MAP-VIEW-TOGGLE] Layer visibility updated immediately from imperative handle');
+      }
     },
     getMapViewMode: () => preferencesRef.current.mapViewMode,
     flyByRoute: (routeCoordinates, options = {}) => {
@@ -1333,188 +1337,140 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, [hideControls, hideCompass, isLoaded]);
 
   const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number, currentViewState: ViewState) => {
-    if (!mapInstance.isStyleLoaded()) return;
+    const doUpdate = () => {
+      if (!mapInstance || !mapInstance.getCanvas()) return;
 
-    // Use actual view state for 3D determination (tilted or overhead = 3D layers)
-    const is3D = currentViewState === 'tilted' || currentViewState === 'overhead';
-    
-    // Helper to safely set layer visibility only if layer exists
-    const safeSetVisibility = (layerId: string, visibility: 'visible' | 'none') => {
-      if (mapInstance.getLayer(layerId)) {
-        mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
-      }
-    };
-    
-    // Helper to ensure labels overlay exists and is on top
-    const ensureLabelsOverlay = () => {
-      // Add source if missing - using dark_only_labels which has white text for satellite imagery
-      // CRITICAL: Use tileSize: 512 for @2x tiles to prevent black seam artifacts
-      if (!mapInstance.getSource('labels-overlay')) {
-        mapInstance.addSource('labels-overlay', {
-          type: 'raster',
-          tiles: [
-            'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-            'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-            'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
-          ],
-          tileSize: 512,
-          maxzoom: 20,
-          attribution: '© <a href="https://carto.com/">CARTO</a>'
-        });
-      }
+      const is3D = currentViewState === 'tilted' || currentViewState === 'overhead';
       
-      // Add layer if missing (on top of everything)
-      if (!mapInstance.getLayer('labels-overlay-layer')) {
-        mapInstance.addLayer({
-          id: 'labels-overlay-layer',
-          type: 'raster',
-          source: 'labels-overlay',
-          layout: {
-            visibility: 'visible'
-          }
-        });
-        console.log('[LABELS] Added labels overlay layer on top');
-      } else {
-        // Move labels layer to top to ensure visibility over satellite
+      const safeSetVisibility = (layerId: string, visibility: 'visible' | 'none') => {
         try {
-          mapInstance.moveLayer('labels-overlay-layer');
-          console.log('[LABELS] Moved labels overlay layer to top');
-        } catch (e) {
-          // Layer might already be on top
-        }
-      }
-    };
-    
-    // Helper to ensure route layers are on top (above all base layers including labels)
-    const ensureRouteLayers = () => {
-      try {
-        if (mapInstance.getLayer('route-outline')) {
-          mapInstance.moveLayer('route-outline');
-        }
-        if (mapInstance.getLayer('route-line')) {
-          mapInstance.moveLayer('route-line');
-        }
-        console.log('[ROUTE-LAYERS] Moved route layers to top after mode switch');
-      } catch (e) {
-        // Layers might not exist yet
-      }
-    };
-    
-    // Helper to set opacity with smooth transition effect
-    const safeSetOpacity = (layerId: string, opacity: number) => {
-      if (mapInstance && mapInstance.getLayer(layerId)) {
-        try {
-          const layer = mapInstance.getLayer(layerId);
-          if (layer) {
-            const type = layer.type;
-            if (type === 'raster') {
-              mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
-            } else if (type === 'line') {
-              mapInstance.setPaintProperty(layerId, 'line-opacity', opacity);
-            } else if (type === 'fill') {
-              mapInstance.setPaintProperty(layerId, 'fill-opacity', opacity);
-            }
+          if (mapInstance.getLayer(layerId)) {
+            mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
           }
-        } catch (e) {
-          // Layer might not support opacity
-        }
-      }
-    };
-    
-    try {
-      if (viewMode === 'roads') {
-        // SMOOTH TRANSITION: Fade in roads, fade out satellite
-        safeSetVisibility('roads-2d-layer', is3D ? 'none' : 'visible');
-        safeSetVisibility('roads-3d-layer', is3D ? 'visible' : 'none');
-        safeSetOpacity('roads-2d-layer', 1);
-        safeSetOpacity('roads-3d-layer', 1);
-        
-        // Fade out satellite layers smoothly
-        safeSetOpacity('satellite-2d-layer', 0);
-        safeSetOpacity('satellite-3d-layer', 0);
-        setTimeout(() => {
-          safeSetVisibility('satellite-2d-layer', 'none');
-          safeSetVisibility('satellite-3d-layer', 'none');
-        }, 350);
-        
-        // Hide labels overlay in roads mode (OSM tiles already have labels)
-        safeSetOpacity('labels-overlay-layer', 0);
-        setTimeout(() => safeSetVisibility('labels-overlay-layer', 'none'), 350);
-        
-        // Show traffic layer in roads mode if it exists and traffic is enabled
-        // NAVIGATION FIX: During active navigation, hide general traffic layer to avoid confusion
-        // Only show route-specific traffic overlay (route-traffic-overlay-layer) during navigation
-        if (mapInstance.getLayer('traffic-flow-layer')) {
-          const showGeneralTraffic = showTraffic && !isNavigating;
-          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
-        }
-      } else {
-        // Satellite mode - check sources exist first
-        if (!mapInstance.getSource('satellite-2d')) {
-          console.warn('[SATELLITE] Sources not ready yet - staying in roads mode');
-          return;
-        }
-        
-        safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
-        safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
-        safeSetOpacity('satellite-2d-layer', 1);
-        safeSetOpacity('satellite-3d-layer', 1);
-        
-        // Fade out road layers smoothly
-        safeSetOpacity('roads-2d-layer', 0);
-        safeSetOpacity('roads-3d-layer', 0);
-        setTimeout(() => {
-          safeSetVisibility('roads-2d-layer', 'none');
-          safeSetVisibility('roads-3d-layer', 'none');
-        }, 350);
-        
-        // CRITICAL: Ensure labels overlay exists and is on TOP of satellite imagery
-        ensureLabelsOverlay();
-        safeSetVisibility('labels-overlay-layer', 'visible');
-        safeSetOpacity('labels-overlay-layer', 1);
-        
-        // Traffic layer is now controlled by showTraffic toggle in both modes
-        // Previously hidden in satellite mode, now user can toggle it
-        // NAVIGATION FIX: During active navigation, hide general traffic layer to avoid confusion
-        if (mapInstance.getLayer('traffic-flow-layer')) {
-          const showGeneralTraffic = showTraffic && !isNavigating;
-          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
-        }
-      }
-      
-      // CRITICAL: Always ensure route layers are on top after mode switch
-      // This prevents the blue navigation line from being hidden behind other layers
-      ensureRouteLayers();
-      
-      // SATELLITE FIX: Move route layers to top with multiple delayed checks for reliability
-      // This handles the case where labels overlay tiles are still loading
-      const moveRouteToTop = () => {
-        try {
-          if (mapInstance.getLayer('route-outline')) {
-            mapInstance.moveLayer('route-outline');
-          }
-          if (mapInstance.getLayer('route-line')) {
-            mapInstance.moveLayer('route-line');
-          }
-          // TRAFFIC FIX: Ensure route traffic overlay is on top in ALL view modes
-          if (mapInstance.getLayer('route-traffic-overlay-layer')) {
-            mapInstance.moveLayer('route-traffic-overlay-layer');
-          }
-        } catch (e) {
-          // Layers might not exist yet
-        }
+        } catch (e) { /* layer may have been removed */ }
       };
       
-      // Immediate move
-      moveRouteToTop();
+      const safeSetOpacity = (layerId: string, opacity: number) => {
+        try {
+          if (mapInstance.getLayer(layerId)) {
+            const layer = mapInstance.getLayer(layerId);
+            if (layer) {
+              const type = layer.type;
+              if (type === 'raster') {
+                mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
+              } else if (type === 'line') {
+                mapInstance.setPaintProperty(layerId, 'line-opacity', opacity);
+              } else if (type === 'fill') {
+                mapInstance.setPaintProperty(layerId, 'fill-opacity', opacity);
+              }
+            }
+          }
+        } catch (e) { /* layer might not support opacity */ }
+      };
+
+      const ensureLabelsOverlay = () => {
+        if (!mapInstance.getSource('labels-overlay')) {
+          mapInstance.addSource('labels-overlay', {
+            type: 'raster',
+            tiles: [
+              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
+            ],
+            tileSize: 512,
+            maxzoom: 20,
+            attribution: '© <a href="https://carto.com/">CARTO</a>'
+          });
+        }
+        if (!mapInstance.getLayer('labels-overlay-layer')) {
+          mapInstance.addLayer({
+            id: 'labels-overlay-layer',
+            type: 'raster',
+            source: 'labels-overlay',
+            layout: { visibility: 'visible' }
+          });
+          console.log('[LABELS] Added labels overlay layer on top');
+        } else {
+          try { mapInstance.moveLayer('labels-overlay-layer'); } catch (e) { /* already on top */ }
+        }
+      };
+
+      const moveRouteToTop = () => {
+        try {
+          if (mapInstance.getLayer('route-outline')) mapInstance.moveLayer('route-outline');
+          if (mapInstance.getLayer('route-line')) mapInstance.moveLayer('route-line');
+          if (mapInstance.getLayer('route-traffic-overlay-layer')) mapInstance.moveLayer('route-traffic-overlay-layer');
+        } catch (e) { /* layers might not exist */ }
+      };
       
-      // Staggered delayed moves to handle async tile loading in satellite mode
-      setTimeout(moveRouteToTop, 100);
-      setTimeout(moveRouteToTop, 300);
-      setTimeout(moveRouteToTop, 600);
-      console.log('[ROUTE-LAYERS] Smooth transition - route layers moved to top with staggered timing');
-    } catch (error) {
-      console.warn('Failed to update layer visibility:', error);
+      try {
+        console.log(`[MAP-VIEW-SWITCH] Applying view mode: ${viewMode}, is3D: ${is3D}`);
+        
+        if (viewMode === 'roads') {
+          safeSetVisibility('roads-2d-layer', is3D ? 'none' : 'visible');
+          safeSetVisibility('roads-3d-layer', is3D ? 'visible' : 'none');
+          safeSetOpacity('roads-2d-layer', 1);
+          safeSetOpacity('roads-3d-layer', 1);
+          
+          safeSetVisibility('satellite-2d-layer', 'none');
+          safeSetVisibility('satellite-3d-layer', 'none');
+          safeSetOpacity('satellite-2d-layer', 0);
+          safeSetOpacity('satellite-3d-layer', 0);
+          
+          safeSetVisibility('labels-overlay-layer', 'none');
+          safeSetOpacity('labels-overlay-layer', 0);
+          
+          if (mapInstance.getLayer('traffic-flow-layer')) {
+            const showGeneralTraffic = showTraffic && !isNavigating;
+            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
+          }
+          console.log('[MAP-VIEW-SWITCH] Roads mode applied successfully');
+        } else {
+          if (!mapInstance.getSource('satellite-2d')) {
+            console.warn('[SATELLITE] Sources not ready yet - retrying in 200ms');
+            setTimeout(() => doUpdate(), 200);
+            return;
+          }
+          
+          safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
+          safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
+          safeSetOpacity('satellite-2d-layer', 1);
+          safeSetOpacity('satellite-3d-layer', 1);
+          
+          safeSetVisibility('roads-2d-layer', 'none');
+          safeSetVisibility('roads-3d-layer', 'none');
+          safeSetOpacity('roads-2d-layer', 0);
+          safeSetOpacity('roads-3d-layer', 0);
+          
+          ensureLabelsOverlay();
+          safeSetVisibility('labels-overlay-layer', 'visible');
+          safeSetOpacity('labels-overlay-layer', 1);
+          
+          if (mapInstance.getLayer('traffic-flow-layer')) {
+            const showGeneralTraffic = showTraffic && !isNavigating;
+            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
+          }
+          console.log('[MAP-VIEW-SWITCH] Satellite mode applied successfully');
+        }
+        
+        moveRouteToTop();
+        setTimeout(moveRouteToTop, 150);
+        setTimeout(moveRouteToTop, 500);
+      } catch (error) {
+        console.warn('[MAP-VIEW-SWITCH] Failed to update layer visibility:', error);
+      }
+    };
+
+    if (!mapInstance.isStyleLoaded()) {
+      console.log('[MAP-VIEW-SWITCH] Style not loaded yet - waiting for style.load event');
+      const onStyleLoad = () => doUpdate();
+      mapInstance.once('style.load', onStyleLoad);
+      setTimeout(() => {
+        mapInstance.off('style.load', onStyleLoad);
+        doUpdate();
+      }, 500);
+    } else {
+      doUpdate();
     }
   }, [showTraffic, isNavigating]);
 
@@ -2098,7 +2054,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const zoom = currentZoomRef.current;
     console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', mode, 'viewState:', viewState, 'zoom:', zoom);
     updateLayerVisibility(map.current, mode, zoom, viewState);
-  }, [preferences.mapViewMode, isLoaded, showTraffic]);
+  }, [preferences.mapViewMode, isLoaded, showTraffic, viewState, updateLayerVisibility]);
 
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {
@@ -4482,12 +4438,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     saveMapPreferences(newPrefs);
     
     if (map.current && isLoaded) {
-      setTimeout(() => {
-        if (map.current) {
-          updateLayerVisibility(map.current, newMode, currentZoomRef.current, viewState);
-          console.log('[MAP-VIEW-TOGGLE-INTERNAL] Layer visibility updated');
-        }
-      }, 50);
+      updateLayerVisibility(map.current, newMode, currentZoomRef.current, viewState);
+      console.log('[MAP-VIEW-TOGGLE-INTERNAL] Layer visibility updated immediately');
     }
   };
 
