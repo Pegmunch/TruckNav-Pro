@@ -501,19 +501,15 @@ function NavigationPageContent() {
     return null;
   }, []);
   
-  // Auto-reroute callback - updates current route when driver goes off-route
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
     console.log('[AUTO-REROUTE] Updating route with new TomTom route');
     setCurrentRoute(newRoute);
-    // Reset route progress tracking for new route
     routeProgressRef.current = 0;
-    // Reset distance and ETA remaining with new route values
-    // Note: route.distance is in MILES from server, convert to METERS for consistency
+    lastVoiceAnnouncementRef.current = null;
     if (newRoute.distance) {
       setDynamicDistanceRemaining(newRoute.distance * 1609.344);
     }
     if (newRoute.duration) {
-      // route.duration is already in MINUTES from the server
       setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
   }, []);
@@ -637,15 +633,17 @@ function NavigationPageContent() {
     }
   }, [hasInteractedWithIncidentFeed, showIncidentFeed]);
 
-  // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
     direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
     distance: number; // in meters
     roadName?: string;
+    vertexIndex?: number;
   } | null>(null);
   
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
+  
+  const lastVoiceAnnouncementRef = useRef<{ direction: string; threshold: string; turnIndex: number } | null>(null);
   
   // Helper: Generate fallback lane guidance based on turn direction
   const getFallbackLaneInfo = (direction: string) => {
@@ -1384,21 +1382,35 @@ function NavigationPageContent() {
       const segmentLength = cumulativeDistances[bestSegmentIndex + 1] - cumulativeDistances[bestSegmentIndex];
       const projectedDistanceAlongRoute = cumulativeDistances[bestSegmentIndex] + segmentLength * bestProjectionT;
 
-      // Update dynamic distance remaining during navigation
-      // Note: remainingDistance is in METERS (from route geometry calculation)
       const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
       if (remainingDistance >= 0) {
         setDynamicDistanceRemaining(remainingDistance);
         
-        // Update dynamic ETA based on proportion of route remaining
-        // Use the original route duration and scale it by remaining distance
-        // Note: currentRoute.duration is already in MINUTES from the server
-        // CRITICAL: Use totalRouteLength (meters) for proportion, not currentRoute.distance (miles)
+        const rawSpeed = gpsData?.position?.speed;
+        const MAX_TRUCK_SPEED = 36; // ~130 km/h or ~80 mph
+        const MIN_RELIABLE_SPEED = 1.0; // m/s (~2.2 mph)
+        const clampedSpeed = typeof rawSpeed === 'number' && rawSpeed > MIN_RELIABLE_SPEED && rawSpeed < MAX_TRUCK_SPEED
+          ? rawSpeed : 0;
+        
         const originalDurationMinutes = currentRoute.duration || 0;
-        if (totalRouteLength > 0 && originalDurationMinutes > 0) {
+        
+        if (clampedSpeed > 0 && remainingDistance > 0 && totalRouteLength > 0) {
+          const speedBasedMinutes = (remainingDistance / clampedSpeed) / 60;
+          const proportionRemaining = remainingDistance / totalRouteLength;
+          const proportionalMinutes = originalDurationMinutes * proportionRemaining;
+          const blendedMinutes = proportionalMinutes > 0 
+            ? speedBasedMinutes * 0.6 + proportionalMinutes * 0.4
+            : speedBasedMinutes;
+          const prevEta = dynamicEtaMinutes;
+          const maxDelta = Math.max(3, prevEta * 0.2);
+          const smoothedMinutes = prevEta > 0 
+            ? Math.max(1, Math.ceil(Math.max(blendedMinutes, prevEta - maxDelta)))
+            : Math.max(1, Math.ceil(blendedMinutes));
+          setDynamicEtaMinutes(smoothedMinutes);
+        } else if (totalRouteLength > 0 && originalDurationMinutes > 0) {
           const proportionRemaining = remainingDistance / totalRouteLength;
           const remainingMinutes = originalDurationMinutes * proportionRemaining;
-          setDynamicEtaMinutes(Math.ceil(remainingMinutes));
+          setDynamicEtaMinutes(Math.max(1, Math.ceil(remainingMinutes)));
         }
       }
 
@@ -1500,7 +1512,8 @@ function NavigationPageContent() {
         setNextTurn({
           direction,
           distance: distanceToTurn,
-          roadName: undefined
+          roadName: undefined,
+          vertexIndex: nextTurnIndex
         });
         console.log(`[TURN-CALC] Route turn: ${direction} at ${turnAngleAtPoint.toFixed(1)}° in ${distanceToTurn.toFixed(0)}m (vertex ${nextTurnIndex})`);
       } else {
@@ -1515,29 +1528,56 @@ function NavigationPageContent() {
     }
   }, [isNavigating, isShowingPreview, currentRoute, gpsData?.position]);
   
-  // Announce turn-by-turn navigation with voice
   useEffect(() => {
     if (!isNavigating || !nextTurn || !professionalVoiceEnabled) {
-      console.log(`[VOICE-NAV] Skipping: isNavigating=${isNavigating}, nextTurn=${!!nextTurn}, voiceEnabled=${professionalVoiceEnabled}`);
       return;
     }
     
-    // Ensure voice is enabled and initialized
     navigationVoice.setEnabled(true);
     
-    // Get the measurement unit (mi or km)
     const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
+    const distFeet = nextTurn.distance * 3.28084;
+    const distMeters = nextTurn.distance;
     
-    console.log(`[VOICE-NAV] Announcing turn: ${nextTurn.direction} in ${nextTurn.distance.toFixed(0)}m (${unit}), road: ${nextTurn.roadName || 'unknown'}`);
+    let threshold = '';
+    if (unit === 'mi') {
+      if (distFeet <= 50) threshold = 'now';
+      else if (distFeet <= 100) threshold = '100ft';
+      else if (distFeet <= 200) threshold = '200ft';
+      else if (distFeet <= 500) threshold = '500ft';
+      else if (distFeet <= 1000) threshold = '1000ft';
+      else if (distFeet <= 2000) threshold = '2000ft';
+      else threshold = 'far';
+    } else {
+      if (distMeters <= 15) threshold = 'now';
+      else if (distMeters <= 30) threshold = '30m';
+      else if (distMeters <= 60) threshold = '60m';
+      else if (distMeters <= 150) threshold = '150m';
+      else if (distMeters <= 300) threshold = '300m';
+      else if (distMeters <= 600) threshold = '600m';
+      else threshold = 'far';
+    }
     
-    // Announce the turn based on distance
+    if (threshold === 'far') return;
+    
+    const turnIndex = nextTurn.vertexIndex ?? -1;
+    const lastAnn = lastVoiceAnnouncementRef.current;
+    
+    if (lastAnn && lastAnn.turnIndex === turnIndex && lastAnn.threshold === threshold) {
+      return;
+    }
+    
+    lastVoiceAnnouncementRef.current = { direction: nextTurn.direction, threshold, turnIndex };
+    
+    console.log(`[VOICE-NAV] Announcing: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
+    
     navigationVoice.announceTurn(
       nextTurn.direction,
-      nextTurn.distance, // Already in meters
+      nextTurn.distance,
       nextTurn.roadName,
       unit
     );
-  }, [nextTurn, isNavigating, professionalVoiceEnabled, measurementSystem]);
+  }, [nextTurn?.direction, nextTurn?.distance, isNavigating, professionalVoiceEnabled, measurementSystem]);
   
   // Detect when destination is reached
   useEffect(() => {

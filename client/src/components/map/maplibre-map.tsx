@@ -2796,6 +2796,40 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
+  useEffect(() => {
+    if (!isNavigating || !isLoaded || !map.current) return;
+    
+    let consecutiveFailures = 0;
+    
+    const healthCheckInterval = setInterval(() => {
+      if (!map.current) return;
+      
+      if (!map.current.isStyleLoaded()) {
+        consecutiveFailures++;
+        if (consecutiveFailures > 3) {
+          console.log('[ROUTE-HEALTH] Style not loaded after multiple checks - will retry on next styledata');
+        }
+        return;
+      }
+      
+      const hasSource = !!map.current.getSource('route');
+      const hasLayer = !!map.current.getLayer('route-line');
+      const hasRoute = !!(currentRoute?.routePath?.length && currentRoute.routePath.length >= 2);
+      const hasCache = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
+      
+      if ((!hasSource || !hasLayer) && (hasRoute || hasCache)) {
+        console.log('[ROUTE-HEALTH] Route layers missing during navigation - rebuilding');
+        ensureRouteLayers();
+        renderRouteLayers();
+        consecutiveFailures = 0;
+      } else {
+        consecutiveFailures = 0;
+      }
+    }, 5000);
+    
+    return () => clearInterval(healthCheckInterval);
+  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
+
   // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
   // This ensures the blue line updates when user selects a different route
   const previousRouteIdRef = useRef<string | number | null>(null);
