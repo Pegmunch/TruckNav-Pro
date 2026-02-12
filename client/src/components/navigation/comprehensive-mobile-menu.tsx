@@ -960,18 +960,16 @@ function ComprehensiveMobileMenu({
                           size="sm"
                           onClick={() => {
                             console.log('[PREVIEW-BUTTON] Clicked - triggering auto-navigation flow');
-                            // Close menu immediately so user sees the map
                             onOpenChange(false);
-                            // Trigger auto-navigation flow (sets up preview mode, then auto-starts navigation)
                             if (onRequestAutoNavigation) {
                               onRequestAutoNavigation();
                             }
-                            // Fire route calculation
                             onPlanRoute();
                           }}
                           onTouchEnd={(e) => {
                             e.preventDefault();
-                            if (!fromInput || !toInput || !selectedProfile || isCalculating) return;
+                            const hasOrigin = fromInput || (gps?.position);
+                            if (!hasOrigin || !toInput || !selectedProfile || isCalculating) return;
                             console.log('[PREVIEW-BUTTON] TouchEnd - triggering auto-navigation flow');
                             onOpenChange(false);
                             if (onRequestAutoNavigation) {
@@ -979,13 +977,13 @@ function ComprehensiveMobileMenu({
                             }
                             onPlanRoute();
                           }}
-                          disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
+                          disabled={(!fromInput && !gps?.position) || !toInput || !selectedProfile || isCalculating}
                           className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                           style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                           data-testid="button-preview-route"
                         >
                           <Map className="h-4 w-4 mr-1" />
-                          Preview
+                          GO
                         </Button>
                       </Label>
                       <AddressAutocomplete
@@ -1144,24 +1142,21 @@ function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Preview Route Button - Shows when locations entered but route not calculated */}
-                    {!currentRoute && fromInput && toInput && selectedProfile && (
+                    {/* GO Button - Shows when destination entered (origin auto-fills from GPS if empty) */}
+                    {!currentRoute && (fromInput || gps?.position) && toInput && selectedProfile && (
                       <Button
                         onClick={async () => {
-                          console.log('[PREVIEW-BUTTON-BOTTOM] Clicked - triggering auto-navigation flow');
-                          // Close menu immediately so user sees the map
+                          console.log('[GO-BUTTON-BOTTOM] Clicked - triggering route calculation and preview');
                           onOpenChange(false);
-                          // Trigger auto-navigation flow (sets up preview mode, then auto-transitions to nav view)
                           if (onRequestAutoNavigation) {
                             onRequestAutoNavigation();
                           }
-                          // Calculate and display route
                           await onPlanRoute();
                         }}
                         onTouchEnd={async (e) => {
                           e.preventDefault();
                           if (isCalculating) return;
-                          console.log('[PREVIEW-BUTTON-BOTTOM] TouchEnd - triggering auto-navigation flow');
+                          console.log('[GO-BUTTON-BOTTOM] TouchEnd - triggering route calculation and preview');
                           onOpenChange(false);
                           if (onRequestAutoNavigation) {
                             onRequestAutoNavigation();
@@ -1171,7 +1166,7 @@ function ComprehensiveMobileMenu({
                         disabled={isCalculating}
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
                         style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                        data-testid="button-preview-route-bottom"
+                        data-testid="button-go-route-bottom"
                       >
                         {isCalculating ? (
                           <>
@@ -1180,8 +1175,8 @@ function ComprehensiveMobileMenu({
                           </>
                         ) : (
                           <>
-                            <Map className="h-5 w-5 mr-2" />
-                            Preview
+                            <Navigation className="h-5 w-5 mr-2" />
+                            GO
                           </>
                         )}
                       </Button>

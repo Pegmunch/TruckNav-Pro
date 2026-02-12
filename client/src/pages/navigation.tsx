@@ -2867,11 +2867,37 @@ function NavigationPageContent() {
     }
 
     // Check for required locations
-    const finalStartLoc = startLoc || fromLocation;
+    let finalStartLoc = startLoc || fromLocation;
     const finalEndLoc = endLoc || toLocation;
     
-    if (!finalStartLoc || !finalEndLoc) {
-      console.error('[PLAN-ROUTE] ERROR: Missing locations - From:', finalStartLoc, 'To:', finalEndLoc);
+    if (!finalEndLoc) {
+      console.error('[PLAN-ROUTE] ERROR: Missing destination');
+      return;
+    }
+    
+    // Auto-use GPS position as origin when from location is empty
+    if (!finalStartLoc && gpsData?.position) {
+      const { latitude, longitude } = gpsData.position;
+      console.log('[PLAN-ROUTE] No origin set - auto-using GPS position:', latitude, longitude);
+      setFromCoordinates({ lat: latitude, lng: longitude });
+      try {
+        const result = await reverseGeocode(latitude, longitude, 5000);
+        if (result.success) {
+          finalStartLoc = result.address;
+          setFromLocation(result.address);
+          console.log('[PLAN-ROUTE] GPS origin reverse geocoded:', result.address);
+        } else {
+          finalStartLoc = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          setFromLocation(finalStartLoc);
+        }
+      } catch {
+        finalStartLoc = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        setFromLocation(finalStartLoc);
+      }
+    }
+    
+    if (!finalStartLoc) {
+      console.error('[PLAN-ROUTE] ERROR: Missing origin and no GPS available');
       return;
     }
 
