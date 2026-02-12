@@ -4258,6 +4258,7 @@ function NavigationPageContent() {
                       right: '16px'
                     }}>
                     <RightActionStack
+                      stackId="plan"
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
                       onRecenter={() => mapRef.current?.resetNavigationCamera()}
@@ -4761,6 +4762,7 @@ function NavigationPageContent() {
                         )}
                       </div>
                       <RightActionStack
+                        stackId="mobile-nav"
                         onZoomIn={() => mapRef.current?.zoomIn()}
                         onZoomOut={() => mapRef.current?.zoomOut()}
                         onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
@@ -5280,6 +5282,7 @@ function NavigationPageContent() {
                         )}
                       </div>
                       <RightActionStack
+                        stackId="desktop-preview"
                         onZoomIn={() => mapRef.current?.zoomIn()}
                         onZoomOut={() => mapRef.current?.zoomOut()}
                         onRecenter={() => mapRef.current?.resetNavigationCamera()}
@@ -5586,6 +5589,7 @@ function NavigationPageContent() {
                         )}
                       </div>
                       <RightActionStack
+                        stackId="desktop-nav"
                         onZoomIn={() => mapRef.current?.zoomIn()}
                         onZoomOut={() => mapRef.current?.zoomOut()}
                         onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}

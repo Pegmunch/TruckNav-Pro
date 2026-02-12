@@ -254,6 +254,7 @@ interface RightActionStackProps {
   isVisible?: boolean;
   compact?: boolean;
   isNavigating?: boolean;
+  stackId?: string;
 }
 
 export function RightActionStack({
@@ -278,8 +279,10 @@ export function RightActionStack({
   restrictionViolations = [],
   isVisible = true,
   compact = false,
-  isNavigating = false
+  isNavigating = false,
+  stackId = 'default'
 }: RightActionStackProps) {
+  const bid = (name: string) => `${stackId}-${name}`;
   const buttonSize = compact ? "h-9 w-9 min-h-[36px] min-w-[36px]" : "h-11 w-11 min-h-[44px] min-w-[44px]";
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
   
@@ -388,14 +391,14 @@ export function RightActionStack({
     recenterCallbackRef.current?.();
   }, []);
   
-  const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, 'incidents-btn', incidentsVisible);
-  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, 'map-view-btn', mapViewVisible, 24);
-  const recenterHandlers = useUnifiedTouchHandler(recenterRef, recenterCallback, 'recenter-btn', recenterVisible);
-  const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, 'zoom-in-btn', zoomInVisible);
-  const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, 'zoom-out-btn', zoomOutVisible);
-  const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, 'compass-btn', compassVisible);
-  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, '3d-toggle-btn', toggle3DVisible);
-  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, 'traffic-btn', trafficVisible);
+  const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, bid('incidents-btn'), incidentsVisible);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, bid('map-view-btn'), mapViewVisible, 24);
+  const recenterHandlers = useUnifiedTouchHandler(recenterRef, recenterCallback, bid('recenter-btn'), recenterVisible);
+  const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, bid('zoom-in-btn'), zoomInVisible);
+  const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, bid('zoom-out-btn'), zoomOutVisible);
+  const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, bid('compass-btn'), compassVisible);
+  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, bid('3d-toggle-btn'), toggle3DVisible);
+  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, bid('traffic-btn'), trafficVisible);
   
   // Common button styles
   const baseButtonClass = "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150 transform-gpu";
@@ -433,7 +436,7 @@ export function RightActionStack({
         <AlertCircle className={iconSize} />
       </Button>
 
-      {/* 2. Map View Toggle (Satellite) - Green when satellite */}
+      {/* 2. Map View Toggle (Satellite) - Dark green border */}
       {onToggleMapView && (
         <Button
           ref={mapViewRef}
@@ -445,7 +448,7 @@ export function RightActionStack({
           className={cn(
             buttonSize, 
             baseButtonClass,
-            isSatelliteView ? "border-green-500" : "border-gray-400",
+            isSatelliteView ? "border-green-700" : "border-green-800",
             mapViewVisible ? visibleClass : hiddenClass
           )}
           style={buttonStyle}
