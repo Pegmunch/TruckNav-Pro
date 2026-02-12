@@ -297,79 +297,80 @@ export function RightActionStack({
   const toggle3DRef = useRef<HTMLButtonElement>(null);
   const trafficRef = useRef<HTMLButtonElement>(null);
   
-  // Zoom handlers with cooldown and navigation mode support
+  const zoomInRef2 = useRef(onZoomIn);
+  zoomInRef2.current = onZoomIn;
+  const staggeredZoomInRef = useRef(onStaggeredZoomIn);
+  staggeredZoomInRef.current = onStaggeredZoomIn;
+  const zoomOutRef2 = useRef(onZoomOut);
+  zoomOutRef2.current = onZoomOut;
+  const staggeredZoomOutRef = useRef(onStaggeredZoomOut);
+  staggeredZoomOutRef.current = onStaggeredZoomOut;
+  const isNavigatingRef = useRef(isNavigating);
+  isNavigatingRef.current = isNavigating;
+  
   const zoomInHandler = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] ➕ ZoomIn callback invoked');
     if (zoomCooldownRef.current) return;
     zoomCooldownRef.current = true;
     
-    if (isNavigating && onStaggeredZoomIn) {
-      console.log('[ZOOM-IN] Staggered navigation zoom');
-      onStaggeredZoomIn();
-    } else if (onZoomIn) {
-      console.log('[ZOOM-IN] Standard zoom');
-      onZoomIn();
+    if (isNavigatingRef.current && staggeredZoomInRef.current) {
+      staggeredZoomInRef.current();
+    } else if (zoomInRef2.current) {
+      zoomInRef2.current();
     }
     
     setTimeout(() => { zoomCooldownRef.current = false; }, ZOOM_COOLDOWN_MS);
-  }, [isNavigating, onStaggeredZoomIn, onZoomIn]);
+  }, []);
   
   const zoomOutHandler = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] ➖ ZoomOut callback invoked');
     if (zoomCooldownRef.current) return;
     zoomCooldownRef.current = true;
     
-    if (isNavigating && onStaggeredZoomOut) {
-      console.log('[ZOOM-OUT] Staggered navigation zoom');
-      onStaggeredZoomOut();
-    } else if (onZoomOut) {
-      console.log('[ZOOM-OUT] Standard zoom');
-      onZoomOut();
+    if (isNavigatingRef.current && staggeredZoomOutRef.current) {
+      staggeredZoomOutRef.current();
+    } else if (zoomOutRef2.current) {
+      zoomOutRef2.current();
     }
     
     setTimeout(() => { zoomCooldownRef.current = false; }, ZOOM_COOLDOWN_MS);
-  }, [isNavigating, onStaggeredZoomOut, onZoomOut]);
+  }, []);
   
-  // Stable callback for incidents (handles hideIncidents)
+  const incidentsCallbackRef = useRef(onViewIncidents);
+  incidentsCallbackRef.current = onViewIncidents;
+  const hideIncidentsRef = useRef(hideIncidents);
+  hideIncidentsRef.current = hideIncidents;
   const incidentsCallback = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] 🔴 Incidents callback invoked');
-    if (onViewIncidents && !hideIncidents) {
-      onViewIncidents();
-    }
-  }, [onViewIncidents, hideIncidents]);
-  
-  // Stable callback wrappers with logging for debugging
-  // MapView uses a ref-based callback to prevent re-registration churn
-  // (onToggleMapView is an inline arrow that changes every render)
-  const mapViewCallbackRef = useRef(onToggleMapView);
-  mapViewCallbackRef.current = onToggleMapView;
-  const mapViewCallback = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] 🟢 MapView callback invoked - should toggle satellite view');
-    if (mapViewCallbackRef.current) {
-      mapViewCallbackRef.current();
+    if (incidentsCallbackRef.current && !hideIncidentsRef.current) {
+      incidentsCallbackRef.current();
     }
   }, []);
   
+  const mapViewCallbackRef = useRef(onToggleMapView);
+  mapViewCallbackRef.current = onToggleMapView;
+  const mapViewCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] MapView callback invoked - toggling satellite view');
+    mapViewCallbackRef.current?.();
+  }, []);
+  
+  const toggle3DCallbackRef = useRef(onToggle3D);
+  toggle3DCallbackRef.current = onToggle3D;
   const toggle3DCallback = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] 🔵 Toggle3D callback invoked - should toggle 3D/tilt mode');
-    if (onToggle3D) {
-      onToggle3D();
-    }
-  }, [onToggle3D]);
+    console.log('[BUTTON-CALLBACK] Toggle3D callback invoked - toggling tilt mode');
+    toggle3DCallbackRef.current?.();
+  }, []);
   
+  const compassCallbackRef = useRef(onCompassClick);
+  compassCallbackRef.current = onCompassClick;
   const compassCallback = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] 🧭 Compass callback invoked');
-    if (onCompassClick) {
-      onCompassClick();
-    }
-  }, [onCompassClick]);
+    console.log('[BUTTON-CALLBACK] Compass callback invoked');
+    compassCallbackRef.current?.();
+  }, []);
   
+  const trafficCallbackRef = useRef(onToggleTraffic);
+  trafficCallbackRef.current = onToggleTraffic;
   const trafficCallback = useCallback(() => {
-    console.log('[BUTTON-CALLBACK] 🟠 Traffic callback invoked');
-    if (onToggleTraffic) {
-      onToggleTraffic();
-    }
-  }, [onToggleTraffic]);
+    console.log('[BUTTON-CALLBACK] Traffic callback invoked');
+    trafficCallbackRef.current?.();
+  }, []);
   
   // Button visibility states
   const incidentsVisible = Boolean(onViewIncidents && !hideIncidents && isVisible);
@@ -381,11 +382,15 @@ export function RightActionStack({
   const toggle3DVisible = Boolean(onToggle3D && !hide3D && isVisible);
   const trafficVisible = Boolean(onToggleTraffic && isVisible);
   
-  // Register all buttons with unified touch handling (includes visibility)
-  // Using stable callback wrappers with logging for debugging
+  const recenterCallbackRef = useRef(onRecenter);
+  recenterCallbackRef.current = onRecenter;
+  const recenterCallback = useCallback(() => {
+    recenterCallbackRef.current?.();
+  }, []);
+  
   const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, 'incidents-btn', incidentsVisible);
   const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, 'map-view-btn', mapViewVisible, 24);
-  const recenterHandlers = useUnifiedTouchHandler(recenterRef, onRecenter, 'recenter-btn', recenterVisible);
+  const recenterHandlers = useUnifiedTouchHandler(recenterRef, recenterCallback, 'recenter-btn', recenterVisible);
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, 'zoom-in-btn', zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, 'zoom-out-btn', zoomOutVisible);
   const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, 'compass-btn', compassVisible);

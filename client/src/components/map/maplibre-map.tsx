@@ -664,41 +664,37 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     getMapValidity: () => isMapLibreValid,
     toggle3DMode: () => {
       if (!map.current) return;
-      // Cycle: normal → tilted → overhead → normal
-      // tilted = 60° pitch (3D perspective view)
-      // overhead = 0° pitch but keeps current bearing (plan view, heading-up)
-      // normal = 0° pitch, bearing reset to 0 (north-up 2D)
+      const currentVS = viewStateRef.current;
       let newState: ViewState;
       const currentBearing = map.current.getBearing();
       
-      if (viewState === 'normal') {
+      if (currentVS === 'normal') {
         newState = 'tilted';
         map.current.easeTo({
           pitch: 55,
           duration: 400
         });
-      } else if (viewState === 'tilted') {
+      } else if (currentVS === 'tilted') {
         newState = 'overhead';
-        // Overhead: keep bearing (heading-up), set pitch to 0 for plan view
         map.current.easeTo({
           pitch: 0,
-          bearing: currentBearing, // Keep current heading
+          bearing: currentBearing,
           duration: 400
         });
       } else {
         newState = 'normal';
-        // Normal: reset to north-up 2D view
         map.current.easeTo({
           pitch: 0,
-          bearing: 0, // North up
+          bearing: 0,
           duration: 400
         });
       }
+      viewStateRef.current = newState;
       setViewState(newState);
-      console.log(`[3D-TOGGLE] View state: ${viewState} → ${newState}`);
+      console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
     },
-    is3DMode: () => is3DMode,
-    getViewState: () => viewState,
+    is3DMode: () => viewStateRef.current === 'tilted' || viewStateRef.current === 'overhead',
+    getViewState: () => viewStateRef.current,
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
