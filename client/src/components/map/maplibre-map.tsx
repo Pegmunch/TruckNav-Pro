@@ -232,6 +232,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
   const restrictionViolationsRef = useRef(restrictionViolations);
   const isNavigatingRef = useRef(isNavigating);
+  const onViewIncidentsRef = useRef(onViewIncidents);
+  onViewIncidentsRef.current = onViewIncidents;
+  const onToggleTrafficRef = useRef(onToggleTraffic);
+  onToggleTrafficRef.current = onToggleTraffic;
+  const showTrafficRef = useRef(showTraffic);
+  showTrafficRef.current = showTraffic;
   const { reportError } = useMapLibreErrorReporting();
   const resetBearingFailureCountRef = useRef(0);
   const MAX_RESET_BEARING_FAILURES = 3;
@@ -316,21 +322,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (isNavigating) {
       console.log('[MAPLIBRE-CONTROLS] ✅ Adding custom controls for navigation mode');
       
-      // Incident control (red border)
-      if (onViewIncidents && !incidentControlRef.current) {
+      // Incident control (red border) - uses ref for fresh callback
+      if (!incidentControlRef.current) {
         incidentControlRef.current = new IncidentControl(() => {
           console.log('[MAPLIBRE-CONTROLS] Incident control clicked');
-          onViewIncidents();
+          onViewIncidentsRef.current?.();
         });
         mapInstance.addControl(incidentControlRef.current, 'top-right');
       }
       
-      // Traffic control (orange border when active)
-      if (onToggleTraffic && !trafficControlRef.current) {
+      // Traffic control (orange border when active) - uses ref for fresh callback
+      if (!trafficControlRef.current) {
         trafficControlRef.current = new TrafficControl(() => {
           console.log('[MAPLIBRE-CONTROLS] Traffic control clicked');
-          onToggleTraffic();
-        }, showTraffic);
+          onToggleTrafficRef.current?.();
+        }, showTrafficRef.current);
         mapInstance.addControl(trafficControlRef.current, 'top-right');
       }
       
@@ -358,7 +364,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             console.log(`[3D-TOGGLE] View state: ${prev} → ${newState}`);
             return newState;
           });
-        }, is3DMode);
+        }, viewStateRef.current === 'tilted' || viewStateRef.current === 'overhead');
         mapInstance.addControl(tiltControlRef.current, 'top-right');
       }
     } else {
@@ -394,7 +400,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         tiltControlRef.current = null;
       }
     };
-  }, [isNavigating, isLoaded, onViewIncidents, onToggleTraffic, showTraffic, is3DMode]);
+  }, [isNavigating, isLoaded]);
   
   // Update traffic control active state when showTraffic changes
   useEffect(() => {
@@ -4611,17 +4617,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     setViewState(newState);
   };
   
-  // AUTO-ENABLE 3D MODE when navigation starts
+  // AUTO-ENABLE 3D MODE when navigation starts (only on initial transition)
+  // Uses ref to track if user manually toggled - prevents auto-override of user choice
+  const userManuallyToggled3DRef = useRef(false);
   useEffect(() => {
-    if (isNavigating && viewState === 'normal') {
-      console.log('[3D-AUTO] Automatically enabling tilted view for navigation');
-      setViewState('tilted');
-    } else if (!isNavigating && previousNavigationStateRef.current && is3DMode) {
-      console.log('[3D-AUTO] Navigation ended, keeping view state');
-      // Keep current view state even after navigation ends - user can manually toggle
+    if (isNavigating && !previousNavigationStateRef.current) {
+      // Navigation just started - auto-enable 3D only on initial start
+      userManuallyToggled3DRef.current = false;
+      if (viewState === 'normal') {
+        console.log('[3D-AUTO] Automatically enabling tilted view for navigation start');
+        setViewState('tilted');
+      }
+    } else if (!isNavigating && previousNavigationStateRef.current) {
+      // Navigation ended - reset manual toggle tracking
+      userManuallyToggled3DRef.current = false;
     }
     previousNavigationStateRef.current = isNavigating;
-  }, [isNavigating, viewState, is3DMode]);
+  }, [isNavigating]);
 
   // Toggle 3D buildings visibility based on is3DMode state
   useEffect(() => {
