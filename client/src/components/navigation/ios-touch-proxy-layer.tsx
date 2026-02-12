@@ -100,21 +100,12 @@ export function IOSTouchProxyLayer() {
   }, []);
   
   useEffect(() => {
-    const ua = navigator.userAgent || '';
-    const platform = navigator.platform || '';
-    isIOS.current = /iPad|iPhone|iPod/.test(ua) ||
-      (platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-      (/Mac/.test(ua) && 'ontouchend' in document) ||
-      ('ontouchend' in document && /Safari/.test(ua) && !/Chrome/.test(ua));
-    
-    const hasTouchScreen = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
-    if (!isIOS.current && !hasTouchScreen) {
-      console.log('[IOS-TOUCH-PROXY] Not touch device - disabled');
-      return;
-    }
+    isIOS.current = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     if (!isIOS.current) {
-      console.log('[IOS-TOUCH-PROXY] Touch device detected but not iOS - activating anyway for safety');
+      console.log('[IOS-TOUCH-PROXY] Not iOS - disabled');
+      return;
     }
     
     console.log('[IOS-TOUCH-PROXY] iOS detected - creating permanent proxy layer');

@@ -54,20 +54,23 @@ function markButtonFired(id: string): void {
 // Reference counter for window listener
 let windowListenerRefCount = 0;
 let windowTouchHandler: ((e: TouchEvent) => void) | null = null;
-let windowPointerHandler: ((e: PointerEvent) => void) | null = null;
 
-// Shared hit-test logic for both touch and pointer events
-function findClosestButton(x: number, y: number): { id: string; registration: ButtonRegistration; distance: number } | null {
+// Window-level touch handler - catches ALL touches including over WebGL
+function handleWindowTouchStart(e: TouchEvent) {
+  if (e.touches.length !== 1) return;
+  
+  const touch = e.touches[0];
+  const x = touch.clientX;
+  const y = touch.clientY;
+  
   let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
-  const defaultPadding = 16;
+  const padding = 30;
   
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     if (!registration.isVisible) continue;
     
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
-    
-    const padding = registration.touchPadding ?? defaultPadding;
     
     if (
       x >= rect.left - padding &&
@@ -85,48 +88,29 @@ function findClosestButton(x: number, y: number): { id: string; registration: Bu
     }
   }
   
-  return closestButton;
-}
-
-function fireClosestButton(x: number, y: number, e: Event, source: string): boolean {
-  const closestButton = findClosestButton(x, y);
-  if (!closestButton) return false;
-  
-  const { id, registration } = closestButton;
-  if (!canButtonFire(id)) return false;
-  
-  console.log(`[TOUCH-UNIFIED] ✅ ${source} hit: ${id}`);
-  e.preventDefault();
-  e.stopPropagation();
-  markButtonFired(id);
-  hapticButtonPress();
-  registration.callback();
-  return true;
-}
-
-// Window-level touch handler - catches ALL touches including over WebGL
-function handleWindowTouchStart(e: TouchEvent) {
-  if (e.touches.length !== 1) return;
-  fireClosestButton(e.touches[0].clientX, e.touches[0].clientY, e, 'touch');
-}
-
-// Window-level pointer handler - CRITICAL for iOS Safari where touch events
-// are blocked by WebGL canvas but pointer events still fire
-function handleWindowPointerDown(e: PointerEvent) {
-  if (e.pointerType !== 'touch') return;
-  fireClosestButton(e.clientX, e.clientY, e, 'pointer');
+  if (closestButton) {
+    const { id, registration } = closestButton;
+    
+    if (!canButtonFire(id)) {
+      return;
+    }
+    
+    console.log(`[TOUCH-UNIFIED] Window touch hit: ${id}`);
+    e.preventDefault();
+    e.stopPropagation();
+    markButtonFired(id);
+    hapticButtonPress();
+    registration.callback();
+  }
 }
 
 export function attachWindowTouchListener() {
   windowListenerRefCount++;
   if (windowListenerRefCount === 1) {
     windowTouchHandler = handleWindowTouchStart;
-    windowPointerHandler = handleWindowPointerDown;
     document.addEventListener('touchstart', windowTouchHandler, { passive: false, capture: true });
     window.addEventListener('touchstart', windowTouchHandler, { passive: false });
-    document.addEventListener('pointerdown', windowPointerHandler, { capture: true });
-    window.addEventListener('pointerdown', windowPointerHandler, { passive: false });
-    console.log('[TOUCH-UNIFIED] 📎 Window touch+pointer listeners attached');
+    console.log('[TOUCH-UNIFIED] Window touch listeners attached');
   }
 }
 
@@ -138,12 +122,7 @@ export function detachWindowTouchListener() {
       window.removeEventListener('touchstart', windowTouchHandler);
       windowTouchHandler = null;
     }
-    if (windowPointerHandler) {
-      document.removeEventListener('pointerdown', windowPointerHandler, { capture: true });
-      window.removeEventListener('pointerdown', windowPointerHandler);
-      windowPointerHandler = null;
-    }
-    console.log('[TOUCH-UNIFIED] 🗑️ Window listeners detached');
+    console.log('[TOUCH-UNIFIED] Window listeners detached');
   }
 }
 
@@ -181,36 +160,23 @@ function useUnifiedTouchHandler(
       touchPadding
     });
     
-    // Also attach direct DOM listeners as backup
+    // Also attach direct DOM touchstart listener as backup
     const button = ref.current;
     if (button) {
       const handleDirectTouch = (e: TouchEvent) => {
         if (!canButtonFire(id)) return;
         e.preventDefault();
         e.stopPropagation();
-        console.log(`[TOUCH-DIRECT] ✅ Direct touch: ${id}`);
-        markButtonFired(id);
-        hapticButtonPress();
-        callback();
-      };
-      
-      const handleDirectPointer = (e: PointerEvent) => {
-        if (e.pointerType !== 'touch') return;
-        if (!canButtonFire(id)) return;
-        e.preventDefault();
-        e.stopPropagation();
-        console.log(`[TOUCH-DIRECT] ✅ Direct pointer: ${id}`);
+        console.log(`[TOUCH-DIRECT] Direct touch: ${id}`);
         markButtonFired(id);
         hapticButtonPress();
         callback();
       };
       
       button.addEventListener('touchstart', handleDirectTouch, { passive: false, capture: true });
-      button.addEventListener('pointerdown', handleDirectPointer, { passive: false, capture: true });
       
       return () => {
         button.removeEventListener('touchstart', handleDirectTouch, { capture: true });
-        button.removeEventListener('pointerdown', handleDirectPointer, { capture: true });
         buttonRegistry.delete(id);
         detachWindowTouchListener();
       };
@@ -253,10 +219,11 @@ function useUnifiedTouchHandler(
     
     onPointerDown: useCallback((e: React.PointerEvent) => {
       if (!callback) return;
+      if (e.pointerType === 'touch') return;
       if (!canButtonFire(id)) return;
       
       e.preventDefault();
-      console.log(`[TOUCH-REACT] ✅ PointerDown (${e.pointerType}): ${id}`);
+      console.log(`[TOUCH-REACT] PointerDown (mouse): ${id}`);
       markButtonFired(id);
       hapticButtonPress();
       callback();
