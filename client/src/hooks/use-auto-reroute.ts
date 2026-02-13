@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGPS, type GPSContextValue } from '@/contexts/gps-context';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import * as turf from '@turf/turf';
 import type { Route } from '@shared/schema';
 
@@ -14,12 +15,12 @@ interface AutoRerouteConfig {
 }
 
 const DEFAULT_CONFIG: AutoRerouteConfig = {
-  lateralThresholdMeters: 25,
+  lateralThresholdMeters: 35,
   consecutiveFixesRequired: 2,
-  minSecondsBetweenReroutes: 15,
+  minSecondsBetweenReroutes: 10,
   minProgressMeters: 50,
   headingDeviationDegrees: 45,
-  offRouteDelaySeconds: 10,
+  offRouteDelaySeconds: 5,
 };
 
 interface RerouteState {
@@ -66,7 +67,6 @@ export function useAutoReroute(
   const offRouteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offRouteStartTimeRef = useRef<number | null>(null);
   
-  // Helper to validate a single coordinate pair
   const isValidCoordinate = useCallback((coord: unknown): coord is [number, number] => {
     if (!Array.isArray(coord) || coord.length < 2) return false;
     const [lng, lat] = coord;
@@ -79,66 +79,89 @@ export function useAutoReroute(
       isFinite(lat)
     );
   }, []);
-  
-  useEffect(() => {
-    if (!currentRoute?.geometry) {
-      routeLineRef.current = null;
-      return;
-    }
-    
-    try {
-      const geometry = typeof currentRoute.geometry === 'string' 
-        ? JSON.parse(currentRoute.geometry) 
-        : currentRoute.geometry;
-      
-      if (geometry?.coordinates && Array.isArray(geometry.coordinates)) {
-        // Transform and filter coordinates - handle various formats
-        const transformedCoords = geometry.coordinates
-          .map((coord: unknown) => {
-            // Handle array format [lng, lat]
-            if (Array.isArray(coord) && coord.length >= 2) {
-              const lng = Number(coord[0]);
-              const lat = Number(coord[1]);
-              if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
-                return [lng, lat] as [number, number];
-              }
-            }
-            // Handle object format {lng, lat} or {longitude, latitude}
-            if (coord && typeof coord === 'object') {
-              const obj = coord as Record<string, unknown>;
-              const lng = Number(obj.lng ?? obj.longitude ?? obj.lon);
-              const lat = Number(obj.lat ?? obj.latitude);
-              if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
-                return [lng, lat] as [number, number];
-              }
-            }
-            return null;
-          })
-          .filter((coord: [number, number] | null): coord is [number, number] => coord !== null);
-        
-        if (transformedCoords.length >= 2) {
-          try {
-            // Extra safety: ensure all coords are clean number pairs
-            const cleanCoords = transformedCoords.map((c: [number, number]) => [Number(c[0]), Number(c[1])] as [number, number]);
-            routeLineRef.current = turf.lineString(cleanCoords);
-          } catch (lineErr) {
-            console.error('[AUTO-REROUTE] Failed to create lineString:', lineErr);
-            routeLineRef.current = null;
-          }
-        } else {
-          console.warn('[AUTO-REROUTE] Not enough valid coordinates for route line');
-          routeLineRef.current = null;
-        }
-      } else {
+
+  const buildRouteLineFromCoords = useCallback((coords: [number, number][]) => {
+    if (coords.length >= 2) {
+      try {
+        const cleanCoords = coords.map((c) => [Number(c[0]), Number(c[1])] as [number, number]);
+        routeLineRef.current = turf.lineString(cleanCoords);
+        console.log('[AUTO-REROUTE] Route reference line built with', cleanCoords.length, 'coordinates');
+      } catch (lineErr) {
+        console.error('[AUTO-REROUTE] Failed to create lineString:', lineErr);
         routeLineRef.current = null;
       }
-    } catch (e) {
-      console.error('[AUTO-REROUTE] Failed to parse route geometry:', e);
+    } else {
+      console.warn('[AUTO-REROUTE] Not enough valid coordinates for route line');
       routeLineRef.current = null;
     }
-  }, [currentRoute?.geometry]);
+  }, []);
   
-  // Helper to check if GPS has valid coordinates
+  useEffect(() => {
+    let built = false;
+
+    if (currentRoute?.geometry) {
+      try {
+        const geometry = typeof currentRoute.geometry === 'string' 
+          ? JSON.parse(currentRoute.geometry) 
+          : currentRoute.geometry;
+        
+        if (geometry?.coordinates && Array.isArray(geometry.coordinates)) {
+          const transformedCoords = geometry.coordinates
+            .map((coord: unknown) => {
+              if (Array.isArray(coord) && coord.length >= 2) {
+                const lng = Number(coord[0]);
+                const lat = Number(coord[1]);
+                if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+                  return [lng, lat] as [number, number];
+                }
+              }
+              if (coord && typeof coord === 'object') {
+                const obj = coord as Record<string, unknown>;
+                const lng = Number(obj.lng ?? obj.longitude ?? obj.lon);
+                const lat = Number(obj.lat ?? obj.latitude);
+                if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+                  return [lng, lat] as [number, number];
+                }
+              }
+              return null;
+            })
+            .filter((coord: [number, number] | null): coord is [number, number] => coord !== null);
+          
+          if (transformedCoords.length >= 2) {
+            buildRouteLineFromCoords(transformedCoords);
+            built = true;
+          }
+        }
+      } catch (e) {
+        console.error('[AUTO-REROUTE] Failed to parse route geometry:', e);
+      }
+    }
+
+    if (!built && currentRoute?.routePath && Array.isArray(currentRoute.routePath) && currentRoute.routePath.length >= 2) {
+      const transformedCoords = currentRoute.routePath
+        .map((coord: any) => {
+          if (coord && typeof coord === 'object') {
+            const lng = Number(coord.lng ?? coord.longitude ?? coord.lon);
+            const lat = Number(coord.lat ?? coord.latitude);
+            if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+              return [lng, lat] as [number, number];
+            }
+          }
+          return null;
+        })
+        .filter((coord: [number, number] | null): coord is [number, number] => coord !== null);
+      
+      if (transformedCoords.length >= 2) {
+        buildRouteLineFromCoords(transformedCoords);
+        built = true;
+      }
+    }
+
+    if (!built) {
+      routeLineRef.current = null;
+    }
+  }, [currentRoute?.geometry, currentRoute?.routePath, buildRouteLineFromCoords]);
+  
   const hasValidGpsCoordinates = useCallback((gps: GPSContextValue | null): boolean => {
     if (!gps?.position) return false;
     const { latitude, longitude } = gps.position;
@@ -161,7 +184,6 @@ export function useAutoReroute(
       const lng = gps.position!.longitude;
       const lat = gps.position!.latitude;
       
-      // Final validation before creating point
       if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
         console.warn('[AUTO-REROUTE] Invalid GPS coordinates:', { lng, lat });
         return { isOff: false, distance: 0, bearing: 0 };
@@ -170,41 +192,40 @@ export function useAutoReroute(
       const currentPoint = turf.point([lng, lat]);
       const nearestOnLine = turf.nearestPointOnLine(routeLineRef.current, currentPoint);
     
-    const distanceKm = turf.distance(currentPoint, nearestOnLine, { units: 'kilometers' });
-    const distanceMeters = distanceKm * 1000;
-    
-    let headingDeviation = 0;
-    const heading = gps.position!.heading;
-    if (heading !== null && heading !== undefined) {
-      const routeCoords = routeLineRef.current.geometry.coordinates;
-      const nearestIndex = nearestOnLine.properties.index || 0;
+      const distanceKm = turf.distance(currentPoint, nearestOnLine, { units: 'kilometers' });
+      const distanceMeters = distanceKm * 1000;
       
-      if (nearestIndex < routeCoords.length - 1) {
-        const startCoord = routeCoords[nearestIndex];
-        const endCoord = routeCoords[nearestIndex + 1];
+      let headingDeviation = 0;
+      const heading = gps.position!.heading;
+      if (heading !== null && heading !== undefined) {
+        const routeCoords = routeLineRef.current.geometry.coordinates;
+        const nearestIndex = nearestOnLine.properties.index || 0;
         
-        // Validate coordinates before using in turf.point
-        if (isValidCoordinate(startCoord) && isValidCoordinate(endCoord)) {
-          const segmentStart = turf.point(startCoord);
-          const segmentEnd = turf.point(endCoord);
-          const routeBearing = turf.bearing(segmentStart, segmentEnd);
+        if (nearestIndex < routeCoords.length - 1) {
+          const startCoord = routeCoords[nearestIndex];
+          const endCoord = routeCoords[nearestIndex + 1];
           
-          headingDeviation = Math.abs(heading - routeBearing);
-          if (headingDeviation > 180) {
-            headingDeviation = 360 - headingDeviation;
+          if (isValidCoordinate(startCoord) && isValidCoordinate(endCoord)) {
+            const segmentStart = turf.point(startCoord);
+            const segmentEnd = turf.point(endCoord);
+            const routeBearing = turf.bearing(segmentStart, segmentEnd);
+            
+            headingDeviation = Math.abs(heading - routeBearing);
+            if (headingDeviation > 180) {
+              headingDeviation = 360 - headingDeviation;
+            }
           }
         }
       }
-    }
-    
-    const isLaterallyOff = distanceMeters > mergedConfig.lateralThresholdMeters;
-    const isHeadingOff = headingDeviation > mergedConfig.headingDeviationDegrees;
-    
-    return {
-      isOff: isLaterallyOff || (distanceMeters > 30 && isHeadingOff),
-      distance: distanceMeters,
-      bearing: headingDeviation,
-    };
+      
+      const isLaterallyOff = distanceMeters > mergedConfig.lateralThresholdMeters;
+      const isHeadingOff = headingDeviation > mergedConfig.headingDeviationDegrees;
+      
+      return {
+        isOff: isLaterallyOff || (distanceMeters > 30 && isHeadingOff),
+        distance: distanceMeters,
+        bearing: headingDeviation,
+      };
     } catch (e) {
       console.warn('[AUTO-REROUTE] Error checking off-route status:', e);
       return { isOff: false, distance: 0, bearing: 0 };
@@ -225,28 +246,23 @@ export function useAutoReroute(
     isReroutingRef.current = true;
     setState(prev => ({ ...prev, isRerouting: true }));
     
-    // REMOVED: Toast notification disabled per user request - no popups
     console.log('[AUTO-REROUTE] Recalculating route from current position...');
     
     try {
       const currentLat = gpsData!.position!.latitude;
       const currentLng = gpsData!.position!.longitude;
       
-      const response = await fetch('/api/routes/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startLocation: `${currentLat},${currentLng}`,
-          endLocation: `${toCoordinates.lat},${toCoordinates.lng}`,
-          startCoordinates: {
-            lat: currentLat,
-            lng: currentLng,
-          },
-          endCoordinates: toCoordinates,
-          vehicleProfileId: activeProfileId,
-          routePreference: 'fastest',
-          isReroute: true,
-        }),
+      const response = await apiRequest('POST', '/api/routes/calculate', {
+        startLocation: `${currentLat},${currentLng}`,
+        endLocation: `${toCoordinates.lat},${toCoordinates.lng}`,
+        startCoordinates: {
+          lat: currentLat,
+          lng: currentLng,
+        },
+        endCoordinates: toCoordinates,
+        vehicleProfileId: activeProfileId,
+        routePreference: 'fastest',
+        isReroute: true,
       });
       
       if (!response.ok) {
@@ -255,14 +271,22 @@ export function useAutoReroute(
       
       const newRoute = await response.json();
       
+      if (newRoute.routePath && Array.isArray(newRoute.routePath) && newRoute.routePath.length >= 2 && !newRoute.geometry) {
+        newRoute.geometry = {
+          type: 'LineString',
+          coordinates: newRoute.routePath
+            .filter((p: any) => p && typeof p.lat === 'number' && typeof p.lng === 'number')
+            .map((p: any) => [p.lng, p.lat]),
+        };
+      }
+      
       console.log('[AUTO-REROUTE] Successfully calculated new route:', {
         routePathLength: newRoute.routePath?.length || 0,
+        hasGeometry: !!newRoute.geometry,
         instructionsCount: newRoute.instructions?.length || 0,
         distance: newRoute.distance,
         duration: newRoute.duration,
       });
-      
-      // REMOVED: Toast notification disabled per user request - no popups
       
       onRerouteSuccess(newRoute);
       
@@ -279,18 +303,14 @@ export function useAutoReroute(
     } catch (error) {
       console.error('[AUTO-REROUTE] Reroute failed:', error);
       
-      // REMOVED: Toast notification disabled per user request - no popups
-      
       setState(prev => ({ ...prev, isRerouting: false }));
     } finally {
       isReroutingRef.current = false;
     }
-  }, [toCoordinates, gpsData?.position, activeProfileId, state.lastRerouteAt, mergedConfig.minSecondsBetweenReroutes, onRerouteSuccess, toast]);
+  }, [toCoordinates, gpsData?.position, activeProfileId, state.lastRerouteAt, mergedConfig.minSecondsBetweenReroutes, onRerouteSuccess, hasValidGpsCoordinates]);
   
   useEffect(() => {
-    // Skip rerouting if not navigating, no valid GPS, no route, or already rerouting
     if (!isNavigating || !routeLineRef.current || isReroutingRef.current) {
-      // Clear any pending timer if navigation stops
       if (offRouteTimerRef.current) {
         clearTimeout(offRouteTimerRef.current);
         offRouteTimerRef.current = null;
@@ -299,9 +319,7 @@ export function useAutoReroute(
       return;
     }
     
-    // CRITICAL: Only attempt rerouting with valid GPS coordinates
     if (!gpsData || !hasValidGpsCoordinates(gpsData)) {
-      console.log('[AUTO-REROUTE] Skipping - no valid GPS coordinates available');
       return;
     }
     
@@ -312,20 +330,18 @@ export function useAutoReroute(
     if (isOff) {
       consecutiveOffRouteFixesRef.current++;
       
-      // Only start timer after minimum consecutive fixes to avoid false positives
       if (consecutiveOffRouteFixesRef.current >= mergedConfig.consecutiveFixesRequired) {
         setState(prev => ({
           ...prev,
           isOffRoute: true,
         }));
         
-        // Start 10-second timer if not already running
         if (!offRouteTimerRef.current && !offRouteStartTimeRef.current) {
           offRouteStartTimeRef.current = Date.now();
           console.log(`[AUTO-REROUTE] Off-route detected: ${distance.toFixed(0)}m from route - starting ${mergedConfig.offRouteDelaySeconds}s timer`);
           
           offRouteTimerRef.current = setTimeout(() => {
-            console.log(`[AUTO-REROUTE] ${mergedConfig.offRouteDelaySeconds}s timer expired - triggering reroute`);
+            console.log(`[AUTO-REROUTE] ${mergedConfig.offRouteDelaySeconds}s timer expired - triggering automatic reroute`);
             offRouteTimerRef.current = null;
             offRouteStartTimeRef.current = null;
             setState(prev => ({
@@ -340,7 +356,6 @@ export function useAutoReroute(
         }
       }
     } else {
-      // Back on route - cancel the timer
       if (offRouteTimerRef.current) {
         console.log('[AUTO-REROUTE] Back on route - cancelling reroute timer');
         clearTimeout(offRouteTimerRef.current);
@@ -355,7 +370,6 @@ export function useAutoReroute(
     }
   }, [gpsData, gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, mergedConfig.offRouteDelaySeconds, hasValidGpsCoordinates]);
   
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (offRouteTimerRef.current) {
@@ -366,7 +380,6 @@ export function useAutoReroute(
   }, []);
   
   const resetRerouteState = useCallback(() => {
-    // Clear any pending reroute timer
     if (offRouteTimerRef.current) {
       clearTimeout(offRouteTimerRef.current);
       offRouteTimerRef.current = null;

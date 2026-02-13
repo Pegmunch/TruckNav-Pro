@@ -37,6 +37,7 @@ import {
   validatePostcodeGeocoding
 } from "./middleware/validation";
 import * as turf from "@turf/turf";
+import { decode as flexPolylineDecode } from "@here/flexpolyline";
 // Import to ensure Express.User augmentation is available
 import "./replitAuth";
 // Robustness monitoring - performance and error tracking
@@ -477,6 +478,225 @@ async function callTomTomRoutingAPI(
   }
 }
 
+// HERE Routing API v8 integration - truck routing fallback with full vehicle dimension support
+async function callHERERoutingAPI(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  geometry: any;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+  summary?: { lengthInMeters: number; travelTimeInSeconds: number; trafficDelayInSeconds: number };
+} | null> {
+  try {
+    const HERE_API_KEY = process.env.HERE_API_KEY;
+    
+    if (!HERE_API_KEY) {
+      console.warn('[HERE-ROUTING] API key not found');
+      return null;
+    }
+
+    const heightCm = Math.round(vehicleProfile.height * 30.48);
+    const widthCm = Math.round(vehicleProfile.width * 30.48);
+    const lengthCm = Math.round((vehicleProfile.length || 0) * 30.48);
+    const weightKg = Math.round((vehicleProfile.weight || 0) * 1000);
+
+    const hereUrl = new URL('https://router.hereapi.com/v8/routes');
+
+    hereUrl.searchParams.set('origin', `${startCoords.lat},${startCoords.lng}`);
+    hereUrl.searchParams.set('destination', `${endCoords.lat},${endCoords.lng}`);
+    hereUrl.searchParams.set('return', 'polyline,summary,actions,instructions,travelSummary');
+    hereUrl.searchParams.set('spans', 'notices');
+    hereUrl.searchParams.set('apiKey', HERE_API_KEY);
+
+    const isCarType = vehicleProfile.type === 'car' || vehicleProfile.type === 'car_caravan';
+
+    if (isCarType) {
+      hereUrl.searchParams.set('transportMode', 'car');
+      console.log(`[HERE-ROUTING] Using CAR routing for vehicle type: ${vehicleProfile.type}`);
+    } else {
+      hereUrl.searchParams.set('transportMode', 'truck');
+      console.log(`[HERE-ROUTING] Using TRUCK routing for vehicle type: ${vehicleProfile.type}`);
+
+      if (heightCm > 0) {
+        hereUrl.searchParams.set('truck[height]', heightCm.toString());
+      }
+      if (widthCm > 0) {
+        hereUrl.searchParams.set('truck[width]', widthCm.toString());
+      }
+      if (lengthCm > 0) {
+        hereUrl.searchParams.set('truck[length]', lengthCm.toString());
+      }
+      if (weightKg > 0) {
+        hereUrl.searchParams.set('truck[grossWeight]', weightKg.toString());
+      }
+      if (vehicleProfile.axles) {
+        hereUrl.searchParams.set('truck[axleCount]', vehicleProfile.axles.toString());
+        if (weightKg > 0) {
+          const axleWeight = Math.round(weightKg / vehicleProfile.axles);
+          hereUrl.searchParams.set('truck[weightPerAxle]', axleWeight.toString());
+        }
+      }
+      if (vehicleProfile.isHazmat) {
+        hereUrl.searchParams.set('truck[shippedHazardousGoods]', 'other');
+        hereUrl.searchParams.set('truck[tunnelCategory]', 'E');
+      }
+    }
+
+    hereUrl.searchParams.set('routingMode', 'fast');
+    hereUrl.searchParams.set('lang', 'en-GB');
+
+    console.log('[HERE-ROUTING] Request URL:', hereUrl.toString().replace(HERE_API_KEY, '***'));
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(hereUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'TruckNav-Pro/1.0'
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[HERE-ROUTING] API error: HTTP ${response.status}`, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.routes || data.routes.length === 0) {
+      console.error('[HERE-ROUTING] No route found');
+      return null;
+    }
+
+    const route = data.routes[0];
+    const sections = route.sections || [];
+
+    if (sections.length === 0) {
+      console.error('[HERE-ROUTING] No route sections found');
+      return null;
+    }
+
+    const isValidCoord = (val: unknown): val is number =>
+      typeof val === 'number' && !isNaN(val) && isFinite(val);
+
+    const coordinates: Array<{ lat: number; lng: number }> = [];
+
+    for (const section of sections) {
+      if (section.polyline) {
+        try {
+          const decoded = flexPolylineDecode(section.polyline);
+          if (decoded && decoded.polyline) {
+            for (const point of decoded.polyline) {
+              const lat = point[0];
+              const lng = point[1];
+              if (isValidCoord(lat) && isValidCoord(lng)) {
+                coordinates.push({ lat, lng });
+              }
+            }
+          }
+        } catch (decodeErr) {
+          console.warn('[HERE-ROUTING] Failed to decode section polyline:', decodeErr);
+        }
+      }
+    }
+
+    if (coordinates.length < 2) {
+      console.error('[HERE-ROUTING] Not enough valid coordinates:', coordinates.length);
+      return null;
+    }
+
+    const geometry = {
+      type: "LineString" as const,
+      coordinates: coordinates.map(coord => [coord.lng, coord.lat])
+    };
+
+    let totalLengthMeters = 0;
+    let totalDurationSeconds = 0;
+    let totalTrafficDelay = 0;
+
+    for (const section of sections) {
+      if (section.travelSummary || section.summary) {
+        const summary = section.travelSummary || section.summary;
+        totalLengthMeters += summary.length || 0;
+        totalDurationSeconds += summary.duration || 0;
+        totalTrafficDelay += summary.trafficDelay || summary.trafficTime || 0;
+      }
+    }
+
+    const mapHEREActionToSign = (action: string): number => {
+      const actionMap: Record<string, number> = {
+        'arrive': 4,
+        'depart': 0,
+        'continue': 0,
+        'turnLeft': -2,
+        'turnRight': 2,
+        'turnSlightlyLeft': -7,
+        'turnSlightlyRight': 7,
+        'turnSharpLeft': -3,
+        'turnSharpRight': 3,
+        'uTurnLeft': -8,
+        'uTurnRight': 8,
+        'enterHighway': 0,
+        'exitHighway': 6,
+        'roundaboutExit': 2,
+        'keepLeft': -7,
+        'keepRight': 7,
+        'keepMiddle': 0
+      };
+      return actionMap[action] || 0;
+    };
+
+    const instructions: Array<{ text: string; distance: number; time: number; sign: number }> = [];
+
+    for (const section of sections) {
+      if (section.actions && Array.isArray(section.actions)) {
+        for (const action of section.actions) {
+          instructions.push({
+            text: action.instruction || action.action || '',
+            distance: Math.round((action.length || 0) / 1609.34 * 100) / 100,
+            time: Math.round(action.duration || 0),
+            sign: mapHEREActionToSign(action.action || '')
+          });
+        }
+      }
+    }
+
+    console.log('[HERE-ROUTING] Success:', {
+      distance: Math.round(totalLengthMeters / 1609.34 * 100) / 100,
+      duration: Math.round(totalDurationSeconds / 60),
+      points: coordinates.length,
+      instructions: instructions.length,
+      sections: sections.length
+    });
+
+    return {
+      distance: Math.round(totalLengthMeters / 1609.34 * 100) / 100,
+      duration: Math.round(totalDurationSeconds / 60),
+      coordinates,
+      geometry,
+      instructions,
+      summary: {
+        lengthInMeters: totalLengthMeters,
+        travelTimeInSeconds: totalDurationSeconds,
+        trafficDelayInSeconds: totalTrafficDelay
+      }
+    };
+  } catch (error) {
+    console.error('[HERE-ROUTING] API call failed:', error);
+    return null;
+  }
+}
+
 // Enhanced strict vehicle class routing function with actual spatial validation
 async function calculateStrictVehicleClassRoute(
   startCoords: { lat: number; lng: number },
@@ -494,16 +714,23 @@ async function calculateStrictVehicleClassRoute(
   isRouteAllowed: boolean;
 } | null> {
   try {
-    // Get route from TomTom Truck Routing API (primary) with GraphHopper as fallback
+    // Get route from TomTom Truck Routing API (primary) with HERE and GraphHopper as fallbacks
     let routeResult = await callTomTomRoutingAPI(startCoords, endCoords, vehicleProfile);
     
     if (!routeResult) {
-      console.log('[ROUTING] TomTom routing failed, falling back to GraphHopper');
-      routeResult = await callGraphHopperAPI(startCoords, endCoords, vehicleProfile);
+      console.log('[ROUTING] TomTom routing failed, falling back to HERE Routing API');
+      routeResult = await callHERERoutingAPI(startCoords, endCoords, vehicleProfile);
       
       if (!routeResult) {
-        console.error('Failed to get route from both TomTom and GraphHopper APIs');
-        return null;
+        console.log('[ROUTING] HERE routing failed, falling back to GraphHopper');
+        routeResult = await callGraphHopperAPI(startCoords, endCoords, vehicleProfile);
+        
+        if (!routeResult) {
+          console.error('Failed to get route from TomTom, HERE, and GraphHopper APIs');
+          return null;
+        }
+      } else {
+        console.log('[ROUTING] Using HERE truck routing with vehicle dimensions');
       }
     } else {
       console.log('[ROUTING] Using TomTom truck routing with vehicle dimensions');
@@ -680,11 +907,15 @@ async function tryRerouteWithWaypoints(
       
       console.log(`[REROUTE] Trying waypoint at ${waypoint.lat.toFixed(4)}, ${waypoint.lng.toFixed(4)}`);
       
-      // Try route with waypoint: start -> waypoint -> end
-      const leg1 = await callGraphHopperAPI(startCoords, waypoint, vehicleProfile);
+      // Try route with waypoint: start -> waypoint -> end (TomTom → HERE → GraphHopper fallback)
+      let leg1 = await callTomTomRoutingAPI(startCoords, waypoint, vehicleProfile);
+      if (!leg1) leg1 = await callHERERoutingAPI(startCoords, waypoint, vehicleProfile);
+      if (!leg1) leg1 = await callGraphHopperAPI(startCoords, waypoint, vehicleProfile);
       if (!leg1) continue;
       
-      const leg2 = await callGraphHopperAPI(waypoint, endCoords, vehicleProfile);
+      let leg2 = await callTomTomRoutingAPI(waypoint, endCoords, vehicleProfile);
+      if (!leg2) leg2 = await callHERERoutingAPI(waypoint, endCoords, vehicleProfile);
+      if (!leg2) leg2 = await callGraphHopperAPI(waypoint, endCoords, vehicleProfile);
       if (!leg2) continue;
       
       // Combine the two legs

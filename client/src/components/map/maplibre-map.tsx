@@ -3005,25 +3005,31 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       return;
     }
     
-    // HEALTH & SAFETY: Immediately cache new route for persistent navigation
-    if (currentRoute.routePath.length >= 2) {
-      persistentNavRouteRef.current = [...currentRoute.routePath];
-      console.log('[ROUTE-CHANGE] ✅ Updated persistent navigation cache with', currentRoute.routePath.length, 'coordinates');
-    }
-    
     const currentRouteId = currentRoute.id || null;
     const currentPathLength = currentRoute.routePath.length;
     
-    // Detect route change: different ID or significantly different path length
-    const isRouteChanged = (
-      previousRouteIdRef.current !== currentRouteId ||
-      Math.abs(previousRoutePathLengthRef.current - currentPathLength) > 10
+    const prevStartCoord = persistentNavRouteRef.current?.[0];
+    const newStartCoord = currentRoute.routePath[0];
+    const firstCoordChanged = newStartCoord && prevStartCoord && (
+      prevStartCoord.lat !== newStartCoord.lat ||
+      prevStartCoord.lng !== newStartCoord.lng
     );
     
+    const isRouteChanged = (
+      previousRouteIdRef.current !== currentRouteId ||
+      Math.abs(previousRoutePathLengthRef.current - currentPathLength) > 5 ||
+      firstCoordChanged
+    );
+    
+    if (currentRoute.routePath.length >= 2) {
+      persistentNavRouteRef.current = [...currentRoute.routePath];
+    }
+    
     if (isRouteChanged && map.current.isStyleLoaded()) {
-      console.log('[ROUTE-CHANGE] Route changed detected - updating route seamlessly');
+      console.log('[ROUTE-CHANGE] Route changed detected - replacing old route with new route');
       console.log(`[ROUTE-CHANGE] Previous ID: ${previousRouteIdRef.current}, New ID: ${currentRouteId}`);
       console.log(`[ROUTE-CHANGE] Previous length: ${previousRoutePathLengthRef.current}, New length: ${currentPathLength}`);
+      console.log(`[ROUTE-CHANGE] Start coord changed: ${firstCoordChanged}`);
       
       // Update refs immediately
       previousRouteIdRef.current = currentRouteId;

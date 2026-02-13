@@ -504,6 +504,17 @@ function NavigationPageContent() {
   
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
     console.log('[AUTO-REROUTE] Updating route with new TomTom route, routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
+    
+    if (newRoute.routePath && Array.isArray(newRoute.routePath) && newRoute.routePath.length >= 2 && !newRoute.geometry) {
+      (newRoute as any).geometry = {
+        type: 'LineString',
+        coordinates: newRoute.routePath
+          .filter((p: any) => p && typeof p.lat === 'number' && typeof p.lng === 'number')
+          .map((p: any) => [p.lng, p.lat]),
+      };
+      console.log('[AUTO-REROUTE] Built geometry from routePath for off-route detection');
+    }
+    
     setCurrentRoute(newRoute);
     routeProgressRef.current = 0;
     lastVoiceAnnouncementRef.current = null;
@@ -514,7 +525,6 @@ function NavigationPageContent() {
       setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
     
-    // Force map to re-render by dispatching event after React state updates
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
         detail: { routePathLength: newRoute.routePath?.length || 0 }
@@ -570,7 +580,7 @@ function NavigationPageContent() {
   }, [currentRoute?.id, fetchTrafficPrediction]);
   
   // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
-  // Triggers automatic rerouting after 3 seconds off-route without pressing Go button
+  // Triggers automatic rerouting after 5 seconds off-route without pressing Go button
   const { isOffRoute, isRerouting, distanceFromRoute, resetRerouteState } = useAutoReroute(
     currentRoute,
     isNavigating,
@@ -580,8 +590,8 @@ function NavigationPageContent() {
     {
       lateralThresholdMeters: 35,
       consecutiveFixesRequired: 2,
-      minSecondsBetweenReroutes: 8,
-      offRouteDelaySeconds: 2,
+      minSecondsBetweenReroutes: 10,
+      offRouteDelaySeconds: 5,
     }
   );
   
