@@ -4749,25 +4749,26 @@ function NavigationPageContent() {
                   }
                   topRightStack={null}
                   rightStack={
-                    <div className="flex flex-col items-end gap-2">
-                      {/* Vehicle Type Pill - shows HGV or Car calculation mode */}
-                      <div className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg",
-                        vehicleType === 'car' 
-                          ? "bg-blue-500 text-white" 
-                          : "bg-orange-500 text-white"
-                      )}>
-                        {vehicleType === 'car' ? (
-                          <span className="flex items-center gap-1">
-                            <Car className="w-3.5 h-3.5" />
-                            Car
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
-                            <Truck className="w-3.5 h-3.5" />
-                            HGV
-                          </span>
-                        )}
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-1">
+                        <div className={cn(
+                          "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg",
+                          vehicleType === 'car' 
+                            ? "bg-blue-500 text-white" 
+                            : "bg-orange-500 text-white"
+                        )}>
+                          {vehicleType === 'car' ? (
+                            <span className="flex items-center gap-1">
+                              <Car className="w-3.5 h-3.5" />
+                              Car
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Truck className="w-3.5 h-3.5" />
+                              HGV
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <RightActionStack
                         stackId="mobile-nav"
@@ -4830,19 +4831,10 @@ function NavigationPageContent() {
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              // Calculate ETA based on vehicle-specific max speed
-                              // Class 1/HGV: 56 MPH (25 m/s), Car: 70 MPH (31.3 m/s)
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272; // 70 MPH or 56 MPH in m/s
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              const totalMinutes = totalSeconds / 60;
-                              const hours = Math.floor(totalMinutes / 60);
-                              const mins = Math.round(totalMinutes % 60);
-                              if (hours > 0) {
-                                return `${hours}h ${mins}m`;
-                              }
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              const hours = Math.floor(etaMin / 60);
+                              const mins = Math.round(etaMin % 60);
+                              if (hours > 0) return `${hours}h ${mins}m`;
                               return `${mins}m`;
                             })()}
                           </span>
@@ -4851,13 +4843,8 @@ function NavigationPageContent() {
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              // Calculate arrival time based on vehicle-specific max speed
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272; // 70 MPH or 56 MPH in m/s
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              return new Date(Date.now() + etaMin * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                             })()}
                           </span>
                         </div>
@@ -5349,14 +5336,9 @@ function NavigationPageContent() {
                           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                           <span className="font-bold text-xs">
                             {(() => {
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              const totalMinutes = totalSeconds / 60;
-                              const hours = Math.floor(totalMinutes / 60);
-                              const mins = Math.round(totalMinutes % 60);
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              const hours = Math.floor(etaMin / 60);
+                              const mins = Math.round(etaMin % 60);
                               if (hours > 0) return `${hours}h ${mins}m`;
                               return `${mins}m`;
                             })()}
@@ -5366,12 +5348,8 @@ function NavigationPageContent() {
                           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                           <span className="font-bold text-xs">
                             {(() => {
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              return new Date(Date.now() + etaMin * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                             })()}
                           </span>
                         </div>
@@ -5662,14 +5640,9 @@ function NavigationPageContent() {
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute?.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              const totalMinutes = totalSeconds / 60;
-                              const hours = Math.floor(totalMinutes / 60);
-                              const mins = Math.round(totalMinutes % 60);
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              const hours = Math.floor(etaMin / 60);
+                              const mins = Math.round(etaMin % 60);
                               if (hours > 0) return `${hours}h ${mins}m`;
                               return `${mins}m`;
                             })()}
@@ -5679,12 +5652,8 @@ function NavigationPageContent() {
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              const distanceMeters = dynamicDistanceRemaining > 0 
-                                ? dynamicDistanceRemaining 
-                                : (currentRoute?.distance || 0) * 1609.344;
-                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
-                              const totalSeconds = distanceMeters / maxSpeedMs;
-                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                              const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
+                              return new Date(Date.now() + etaMin * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                             })()}
                           </span>
                         </div>

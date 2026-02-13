@@ -116,28 +116,17 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   // Determine speed status - simpler logic
   const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit;
   
-  // Live travel time calculation based on vehicle type max speed
-  // Class 1 Lorry: max 56 MPH (90 km/h), Car: max 70 MPH (112.65 km/h)
   const isCarMode = vehicleType === 'car';
-  const maxSpeedMph = isCarMode ? 70 : 56; // Car 70 MPH, Truck 56 MPH
-  const maxSpeedMs = maxSpeedMph * 0.44704; // Convert MPH to m/s
-  
-  // Calculate estimated travel time based on remaining distance and max speed
-  const calculateLiveTravelTime = (): { hours: number; minutes: number; seconds: number; totalSeconds: number } | null => {
-    if (!distanceRemainingMeters || distanceRemainingMeters <= 0) return null;
-    
-    // Time = Distance / Speed (in seconds)
-    const timeSeconds = distanceRemainingMeters / maxSpeedMs;
-    const hours = Math.floor(timeSeconds / 3600);
-    const minutes = Math.floor((timeSeconds % 3600) / 60);
-    const seconds = Math.floor(timeSeconds % 60);
-    
-    return { hours, minutes, seconds, totalSeconds: timeSeconds };
-  };
-  
-  const liveTravelTime = calculateLiveTravelTime();
-  
-  // Format live travel time for display
+  const maxSpeedMph = isCarMode ? 70 : 56;
+
+  const liveTravelTime = (() => {
+    if (!timeRemainingSeconds || timeRemainingSeconds <= 0) return null;
+    const hours = Math.floor(timeRemainingSeconds / 3600);
+    const minutes = Math.floor((timeRemainingSeconds % 3600) / 60);
+    const seconds = Math.floor(timeRemainingSeconds % 60);
+    return { hours, minutes, seconds, totalSeconds: timeRemainingSeconds };
+  })();
+
   const formatLiveTravelTime = (): string => {
     if (!liveTravelTime) return '--';
     const { hours, minutes } = liveTravelTime;
