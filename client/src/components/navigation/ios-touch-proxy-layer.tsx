@@ -180,7 +180,7 @@ export function IOSTouchProxyLayer() {
         }
       });
       
-      console.log(`[IOS-TOUCH-PROXY] Synced ${proxyMapRef.current.size} proxy buttons${dialogOpen ? ' (DISABLED - dialog open)' : ''}`);
+      
     };
     
     updateProxies();

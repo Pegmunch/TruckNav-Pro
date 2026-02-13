@@ -83,10 +83,11 @@ export default function EntertainmentPanel({
     queryKey: ['/api/entertainment/settings'],
   });
 
-  // Playback state query
+  // Playback state query - only poll when panel is open
   const { data: playbackState } = useQuery({
     queryKey: ['/api/entertainment/playback-state'],
-    refetchInterval: 5000, // Update every 5 seconds
+    refetchInterval: isOpen ? 5000 : false,
+    enabled: isOpen,
   });
 
   // Popular trucking stations query

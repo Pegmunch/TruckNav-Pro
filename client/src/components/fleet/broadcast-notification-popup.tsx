@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, AlertCircle, Info, Megaphone, Bell, ChevronRight, Check, X } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FleetBroadcast {
   id: string;
@@ -25,11 +26,13 @@ export function BroadcastNotificationPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const { isAuthenticated } = useAuth();
 
   const { data: broadcasts = [] } = useQuery<FleetBroadcast[]>({
     queryKey: ['/api/fleet/broadcasts/unread'],
-    refetchInterval: 60000,
+    refetchInterval: isAuthenticated ? 60000 : false,
     retry: false,
+    enabled: isAuthenticated,
   });
 
   const markReadMutation = useMutation({
@@ -202,10 +205,12 @@ export function BroadcastNotificationPopup() {
 }
 
 export function BroadcastBadge({ onClick }: { onClick?: () => void }) {
+  const { isAuthenticated } = useAuth();
   const { data: broadcasts = [] } = useQuery<FleetBroadcast[]>({
     queryKey: ['/api/fleet/broadcasts/unread'],
-    refetchInterval: 60000,
+    refetchInterval: isAuthenticated ? 60000 : false,
     retry: false,
+    enabled: isAuthenticated,
   });
 
   const criticalCount = broadcasts.filter(b => b.priority === 'critical').length;

@@ -12,24 +12,43 @@ import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
 import { initializeAudioOnInteraction } from "@/lib/audio-bluetooth-init";
 import { SubscriptionGate } from "@/components/subscription-gate";
 
-const NavigationPage = lazy(() => import("@/pages/navigation"));
-const LaneSelectionPage = lazy(() => import("@/pages/lane-selection"));
-const MapWindow = lazy(() => import("@/pages/map-window"));
-const LegalPopupPage = lazy(() => import("@/pages/legal-popup"));
-const NotFound = lazy(() => import("@/pages/not-found"));
-const RouteWindow = lazy(() => import("@/pages/window-route"));
-const VehicleWindow = lazy(() => import("@/pages/window-vehicle"));
-const EntertainmentWindow = lazy(() => import("@/pages/window-entertainment"));
-const ThemesWindow = lazy(() => import("@/pages/window-themes"));
-const HistoryWindow = lazy(() => import("@/pages/window-history"));
-const SettingsWindow = lazy(() => import("@/pages/window-settings"));
-const PricingPage = lazy(() => import("@/pages/pricing"));
-const SubscribePage = lazy(() => import("@/pages/subscribe"));
-const FleetManagement = lazy(() => import("@/pages/fleet-management"));
-const SocialNetworkPage = lazy(() => import("@/pages/social-network").then(m => ({ default: m.SocialNetworkPage })));
-const ConnectStore = lazy(() => import("@/pages/connect-store"));
-const ConnectSuccess = lazy(() => import("@/pages/connect-success"));
-const ConnectDashboard = lazy(() => import("@/pages/connect-dashboard"));
+function retryImport(
+  importFn: () => Promise<{ default: React.ComponentType<any> }>,
+  retriesLeft: number
+): Promise<{ default: React.ComponentType<any> }> {
+  return importFn().catch((error: any) => {
+    if (retriesLeft <= 0) {
+      window.location.reload();
+      throw error;
+    }
+    return new Promise<void>((resolve) => setTimeout(resolve, 1000)).then(() =>
+      retryImport(importFn, retriesLeft - 1)
+    );
+  });
+}
+
+function lazyWithRetry(importFn: () => Promise<{ default: React.ComponentType<any> }>): React.LazyExoticComponent<React.ComponentType<any>> {
+  return lazy(() => retryImport(importFn, 3));
+}
+
+const NavigationPage = lazyWithRetry(() => import("@/pages/navigation"));
+const LaneSelectionPage = lazyWithRetry(() => import("@/pages/lane-selection"));
+const MapWindow = lazyWithRetry(() => import("@/pages/map-window"));
+const LegalPopupPage = lazyWithRetry(() => import("@/pages/legal-popup"));
+const NotFound = lazyWithRetry(() => import("@/pages/not-found"));
+const RouteWindow = lazyWithRetry(() => import("@/pages/window-route"));
+const VehicleWindow = lazyWithRetry(() => import("@/pages/window-vehicle"));
+const EntertainmentWindow = lazyWithRetry(() => import("@/pages/window-entertainment"));
+const ThemesWindow = lazyWithRetry(() => import("@/pages/window-themes"));
+const HistoryWindow = lazyWithRetry(() => import("@/pages/window-history"));
+const SettingsWindow = lazyWithRetry(() => import("@/pages/window-settings"));
+const PricingPage = lazyWithRetry(() => import("@/pages/pricing"));
+const SubscribePage = lazyWithRetry(() => import("@/pages/subscribe"));
+const FleetManagement = lazyWithRetry(() => import("@/pages/fleet-management"));
+const SocialNetworkPage = lazyWithRetry(() => import("@/pages/social-network").then(m => ({ default: m.SocialNetworkPage })));
+const ConnectStore = lazyWithRetry(() => import("@/pages/connect-store"));
+const ConnectSuccess = lazyWithRetry(() => import("@/pages/connect-success"));
+const ConnectDashboard = lazyWithRetry(() => import("@/pages/connect-dashboard"));
 
 function LoadingFallback() {
   // Return null to prevent any loading spinners from showing
