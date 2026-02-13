@@ -503,7 +503,7 @@ function NavigationPageContent() {
   }, []);
   
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
-    console.log('[AUTO-REROUTE] Updating route with new TomTom route');
+    console.log('[AUTO-REROUTE] Updating route with new TomTom route, routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
     setCurrentRoute(newRoute);
     routeProgressRef.current = 0;
     lastVoiceAnnouncementRef.current = null;
@@ -513,6 +513,13 @@ function NavigationPageContent() {
     if (newRoute.duration) {
       setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
+    
+    // Force map to re-render by dispatching event after React state updates
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
+        detail: { routePathLength: newRoute.routePath?.length || 0 }
+      }));
+    }, 100);
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
@@ -571,10 +578,10 @@ function NavigationPageContent() {
     activeProfileId,
     handleRerouteSuccess,
     {
-      lateralThresholdMeters: 50,
+      lateralThresholdMeters: 35,
       consecutiveFixesRequired: 2,
-      minSecondsBetweenReroutes: 10,
-      offRouteDelaySeconds: 3, // Trigger reroute after 3 seconds off-route
+      minSecondsBetweenReroutes: 8,
+      offRouteDelaySeconds: 2,
     }
   );
   
@@ -1175,32 +1182,79 @@ function NavigationPageContent() {
       return 'straight';
     };
 
-    // PRIORITY 1: Use actual TomTom instructions (most accurate turn data)
-    // These contain real maneuver data from the routing API
+    // PRIORITY 1: Use actual TomTom/GraphHopper instructions (most accurate turn data)
+    // These contain real maneuver data from the routing API with proper road names
     if ((currentRoute as any).instructions && Array.isArray((currentRoute as any).instructions) && (currentRoute as any).instructions.length > 0) {
       const instructions = (currentRoute as any).instructions as Array<{ text: string; distance: number; time: number; sign: number }>;
       
-      // Find next instruction (skip first "depart" instruction)
-      for (let i = 1; i < instructions.length; i++) {
-        const instruction = instructions[i];
-        const distanceMeters = instruction.distance * 1609.34; // Convert miles to meters
+      // Build cumulative distance for each instruction to map GPS progress to instruction index
+      const instructionCumulativeDistances: number[] = [0];
+      for (let i = 0; i < instructions.length; i++) {
+        const segmentMeters = instructions[i].distance * 1609.34;
+        instructionCumulativeDistances.push(instructionCumulativeDistances[i] + segmentMeters);
+      }
+      
+      // Calculate how far along the route the driver currently is (using GPS if available)
+      let driverProgressMeters = 0;
+      if (gpsData?.position && currentRoute.routePath && currentRoute.routePath.length >= 2) {
+        const { latitude: gLat, longitude: gLng } = gpsData.position;
+        if (typeof gLat === 'number' && typeof gLng === 'number' && !isNaN(gLat) && !isNaN(gLng) && gLat !== 0 && gLng !== 0) {
+          const rp = currentRoute.routePath;
+          let minDist = Infinity;
+          let nearestIdx = 0;
+          for (let i = 0; i < rp.length; i++) {
+            const dx = gLng - rp[i].lng;
+            const dy = gLat - rp[i].lat;
+            const d = dx * dx + dy * dy;
+            if (d < minDist) {
+              minDist = d;
+              nearestIdx = i;
+            }
+          }
+          // Sum up distance from start to nearest point
+          const toRadians = (deg: number) => deg * (Math.PI / 180);
+          for (let i = 0; i < nearestIdx && i < rp.length - 1; i++) {
+            const dLat = toRadians(rp[i+1].lat - rp[i].lat);
+            const dLng2 = toRadians(rp[i+1].lng - rp[i].lng);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRadians(rp[i].lat)) * Math.cos(toRadians(rp[i+1].lat)) *
+                      Math.sin(dLng2/2) * Math.sin(dLng2/2);
+            driverProgressMeters += 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          }
+        }
+      }
+      
+      // Find the NEXT upcoming instruction based on driver's progress along the route
+      let cumulativeDist = 0;
+      for (let i = 0; i < instructions.length; i++) {
+        const segmentMeters = instructions[i].distance * 1609.34;
+        cumulativeDist += segmentMeters;
         
-        // Skip very close instructions or arrival instructions
-        if (distanceMeters < 10 || instruction.sign === 4) continue;
+        // Skip instructions the driver has already passed
+        if (cumulativeDist < driverProgressMeters - 30) continue;
         
-        const direction = mapSignToDirection(instruction.sign);
+        // Skip depart (sign=0 at index 0), arrive (sign=4), and straight (sign=0) instructions
+        if (i === 0 && instructions[i].sign === 0) continue;
+        if (instructions[i].sign === 4) continue;
+        if (instructions[i].sign === 0) continue;
         
-        // Extract road name from instruction text
-        const roadMatch = instruction.text.match(/onto\s+(.+?)(?:\s*$|,)/i) || 
-                         instruction.text.match(/on\s+(.+?)(?:\s*$|,)/i);
+        const distanceToManeuver = Math.max(0, cumulativeDist - driverProgressMeters);
+        
+        // Skip if too far away (>5km) - likely not relevant yet
+        if (distanceToManeuver > 5000) continue;
+        
+        const direction = mapSignToDirection(instructions[i].sign);
+        
+        const roadMatch = instructions[i].text.match(/onto\s+(.+?)(?:\s*$|,)/i) || 
+                         instructions[i].text.match(/on\s+(.+?)(?:\s*$|,)/i);
         const roadName = roadMatch ? roadMatch[1] : undefined;
         
         setNextTurn({
           direction,
-          distance: distanceMeters,
+          distance: distanceToManeuver,
           roadName
         });
-        console.log(`[TURN-INFO] Using TomTom instruction: ${direction} (sign=${instruction.sign}) in ${distanceMeters.toFixed(0)}m - ${instruction.text}`);
+        console.log(`[TURN-INFO] TomTom instruction: ${direction} in ${distanceToManeuver.toFixed(0)}m (progress=${driverProgressMeters.toFixed(0)}m) - ${instructions[i].text}`);
         return;
       }
     }

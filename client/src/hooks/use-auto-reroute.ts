@@ -255,7 +255,12 @@ export function useAutoReroute(
       
       const newRoute = await response.json();
       
-      console.log('[AUTO-REROUTE] Successfully calculated new route');
+      console.log('[AUTO-REROUTE] Successfully calculated new route:', {
+        routePathLength: newRoute.routePath?.length || 0,
+        instructionsCount: newRoute.instructions?.length || 0,
+        distance: newRoute.distance,
+        duration: newRoute.duration,
+      });
       
       // REMOVED: Toast notification disabled per user request - no popups
       

@@ -489,6 +489,7 @@ async function calculateStrictVehicleClassRoute(
   coordinates: Array<{ lat: number; lng: number }>;
   restrictionsAvoided: string[];
   geometry: any;
+  instructions: Array<{ text: string; distance: number; time: number; sign: number }>;
   violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
   isRouteAllowed: boolean;
 } | null> {
@@ -616,6 +617,7 @@ async function calculateStrictVehicleClassRoute(
         coordinates: [],
         restrictionsAvoided,
         geometry: null,
+        instructions: [],
         violations: absoluteViolations,
         isRouteAllowed: false
       };
@@ -628,8 +630,9 @@ async function calculateStrictVehicleClassRoute(
       coordinates: routeResult.coordinates,
       restrictionsAvoided,
       geometry: routeResult.geometry,
+      instructions: routeResult.instructions || [],
       violations,
-      isRouteAllowed: violations.every(v => v.bypassable) // Route allowed if all violations are bypassable
+      isRouteAllowed: violations.every(v => v.bypassable)
     };
   } catch (error) {
     console.error('Error calculating strict vehicle class route:', error);
@@ -652,6 +655,7 @@ async function tryRerouteWithWaypoints(
   coordinates: Array<{ lat: number; lng: number }>;
   restrictionsAvoided: string[];
   geometry: any;
+  instructions: Array<{ text: string; distance: number; time: number; sign: number }>;
   violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
   isRouteAllowed: boolean;
 } | null> {
@@ -748,6 +752,7 @@ async function tryRerouteWithWaypoints(
           coordinates: combinedCoords,
           restrictionsAvoided,
           geometry: combinedGeometry,
+          instructions: [...(leg1.instructions || []), ...(leg2.instructions || [])],
           violations,
           isRouteAllowed: true
         };
@@ -2201,6 +2206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let routeDuration = 222; // Default fallback
       let routePath: Array<{ lat: number; lng: number }> = [];
       let geometry = null;
+      let routeInstructions: Array<{ text: string; distance: number; time: number; sign: number }> = [];
 
       if (vehicleProfileId) {
         vehicleProfile = await storage.getVehicleProfile(vehicleProfileId);
@@ -2327,6 +2333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           routePath = vehicleSpecificRoute.coordinates;
           restrictionsAvoided = vehicleSpecificRoute.restrictionsAvoided;
           geometry = vehicleSpecificRoute.geometry;
+          routeInstructions = vehicleSpecificRoute.instructions || [];
           
           // Check for non-bypassable violations (critical restrictions like low bridges)
           if (vehicleSpecificRoute.violations && vehicleSpecificRoute.violations.length > 0) {
@@ -2363,6 +2370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 routePath = rerouteResult.coordinates;
                 restrictionsAvoided = rerouteResult.restrictionsAvoided;
                 geometry = rerouteResult.geometry;
+                routeInstructions = rerouteResult.instructions || [];
               } else {
                 // FAILED: No safe route possible - BLOCK
                 console.error(`[SAFETY] ✗ Cannot find safe route - blocking for safety`);
@@ -2466,6 +2474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return the route with enhanced truck-safe information
       res.json({
         ...route,
+        instructions: routeInstructions,
         plannedJourney: plannedJourney,
         truckSafeFeatures: {
           restrictionsChecked: restrictionsAvoided.length,

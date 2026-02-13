@@ -2931,8 +2931,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }, 200);
     };
     
+    const handleRerouteComplete = () => {
+      console.log('[ROUTE-HEALTH] Reroute complete event received - forcing route re-render');
+      setTimeout(() => {
+        if (!map.current || !map.current.isStyleLoaded()) return;
+        ensureRouteLayers();
+        renderRouteLayers();
+        console.log('[ROUTE-HEALTH] Route layers rebuilt after reroute');
+      }, 150);
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
+    window.addEventListener('trucknav-reroute-complete', handleRerouteComplete);
     
     const canvas = map.current.getCanvas();
     if (canvas) {
@@ -2943,6 +2954,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       clearInterval(healthCheckInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('trucknav-reroute-complete', handleRerouteComplete);
       if (canvas) {
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       }
