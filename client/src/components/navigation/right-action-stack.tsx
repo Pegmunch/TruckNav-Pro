@@ -64,7 +64,6 @@ function handleWindowTouchStart(e: TouchEvent) {
   const y = touch.clientY;
   
   let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
-  const padding = 30;
   
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     if (!registration.isVisible) continue;
@@ -72,11 +71,13 @@ function handleWindowTouchStart(e: TouchEvent) {
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
     
+    const btnPadding = registration.touchPadding ?? 30;
+    
     if (
-      x >= rect.left - padding &&
-      x <= rect.right + padding &&
-      y >= rect.top - padding &&
-      y <= rect.bottom + padding
+      x >= rect.left - btnPadding &&
+      x <= rect.right + btnPadding &&
+      y >= rect.top - btnPadding &&
+      y <= rect.bottom + btnPadding
     ) {
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -392,13 +393,13 @@ export function RightActionStack({
   }, []);
   
   const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, bid('incidents-btn'), incidentsVisible);
-  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, bid('map-view-btn'), mapViewVisible, 24);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, bid('map-view-btn'), mapViewVisible, 35);
   const recenterHandlers = useUnifiedTouchHandler(recenterRef, recenterCallback, bid('recenter-btn'), recenterVisible);
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, bid('zoom-in-btn'), zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, bid('zoom-out-btn'), zoomOutVisible);
   const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, bid('compass-btn'), compassVisible);
-  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, bid('3d-toggle-btn'), toggle3DVisible);
-  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, bid('traffic-btn'), trafficVisible);
+  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, bid('3d-toggle-btn'), toggle3DVisible, 20);
+  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, bid('traffic-btn'), trafficVisible, 10);
   
   // Common button styles
   const baseButtonClass = "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150 transform-gpu";
