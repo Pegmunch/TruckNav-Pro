@@ -383,8 +383,17 @@ const SettingsModal = memo(function SettingsModal({
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => navigationVoice.getSelectedVoiceName() || 'auto');
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   
-  // Mock state for demonstration - in real app these would come from context/hooks
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const VOICE_ANNOUNCEMENTS_KEY = 'trucknav_voice_announcements';
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    try {
+      const stored = localStorage.getItem(VOICE_ANNOUNCEMENTS_KEY);
+      return stored !== null ? JSON.parse(stored) : true;
+    } catch { return true; }
+  });
+  const handleVoiceEnabledChange = (enabled: boolean) => {
+    setVoiceEnabled(enabled);
+    try { localStorage.setItem(VOICE_ANNOUNCEMENTS_KEY, JSON.stringify(enabled)); } catch {}
+  };
   const [isNavigating] = useState(false);
   const [notificationCount] = useState(0);
   
@@ -1381,14 +1390,14 @@ const SettingsModal = memo(function SettingsModal({
                         dndState={dndState}
                         onUpdateDndState={(updates) => setDndState(prev => ({ ...prev, ...updates }))}
                         voiceEnabled={voiceEnabled}
-                        onVoiceEnabledChange={setVoiceEnabled}
+                        onVoiceEnabledChange={handleVoiceEnabledChange}
                         isNavigating={isNavigating}
                         notificationCount={notificationCount}
                         onTestNotification={() => {
-                          // toast({
-                          //   title: "Test Notification",
-                          //   description: "This is a test notification to verify your settings.",
-                          // });
+                          toast({
+                            title: "Test Notification",
+                            description: "This is a test notification to verify your alert settings are working correctly.",
+                          });
                         }}
                       />
                     </TabsContent>
