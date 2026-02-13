@@ -297,15 +297,22 @@ export function CompactTripStrip({
         {/* Left: Status icons with labels */}
         <div className="flex items-center gap-1.5 md:gap-2">
           <button
-            onClick={onVoiceToggle}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[VOICE-BTN] Voice toggle tapped, current state:', voiceEnabled);
+              if (onVoiceToggle) onVoiceToggle();
+            }}
             aria-label={voiceEnabled ? "Mute voice" : "Enable voice"}
             className={cn(
-              'flex items-center gap-1 md:gap-1.5 px-2 md:px-4 py-0.5 md:py-1.5 rounded-full transition-colors shadow-sm text-[10px] md:text-base font-bold',
-              voiceEnabled ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'
+              'flex items-center gap-1 md:gap-1.5 px-3 md:px-4 py-1.5 md:py-1.5 rounded-full transition-colors shadow-sm text-[10px] md:text-base font-bold select-none active:scale-95',
+              voiceEnabled ? 'bg-green-500 text-white active:bg-green-600' : 'bg-slate-400 text-white active:bg-slate-500'
             )}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minHeight: '36px', minWidth: '60px' }}
             data-testid="voice-toggle-button"
           >
-            {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-5 md:h-5" /> : <VolumeX className="w-3 h-3 md:w-5 md:h-5" />}
+            {voiceEnabled ? <Volume2 className="w-4 h-4 md:w-5 md:h-5" /> : <VolumeX className="w-4 h-4 md:w-5 md:h-5" />}
             {voiceEnabled ? 'On' : 'Off'}
           </button>
         </div>

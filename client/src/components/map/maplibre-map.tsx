@@ -286,6 +286,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const isGPSReady = gpsStatus === 'ready' && !gps?.isUsingCached;
   const isManualLocation = gpsStatus === 'manual' || gps?.isUsingManualLocation;
   
+  const gpsPositionRef = useRef(gpsPosition);
+  gpsPositionRef.current = gpsPosition;
+  
   // Force loading overlay to hide after 1 second - map should be interactive even if tiles still loading
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -2438,17 +2441,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // During navigation, show only remaining route from current GPS position
     // CRITICAL: Only clip route if GPS coordinates are valid (non-zero, non-NaN)
+    // Uses ref to avoid dependency on gpsPosition which would cause effect cascade
+    const liveGps = gpsPositionRef.current;
     const hasValidGPS = isNavigating && 
-      gpsPosition && 
-      typeof gpsPosition.latitude === 'number' && 
-      typeof gpsPosition.longitude === 'number' &&
-      !isNaN(gpsPosition.latitude) && 
-      !isNaN(gpsPosition.longitude) &&
-      gpsPosition.latitude !== 0 && 
-      gpsPosition.longitude !== 0;
+      liveGps && 
+      typeof liveGps.latitude === 'number' && 
+      typeof liveGps.longitude === 'number' &&
+      !isNaN(liveGps.latitude) && 
+      !isNaN(liveGps.longitude) &&
+      liveGps.latitude !== 0 && 
+      liveGps.longitude !== 0;
     
     if (hasValidGPS) {
-      const currentPoint = [gpsPosition.longitude, gpsPosition.latitude];
+      const currentPoint = [liveGps.longitude, liveGps.latitude];
       
       try {
         // Find nearest point on route to current GPS position
@@ -2665,7 +2670,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         map.current.fitBounds(bounds, { padding: 50, duration: 400 });
       }
     }
-  }, [currentRoute, isNavigating, gpsPosition]);
+  }, [currentRoute, isNavigating]);
 
   // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
@@ -2887,6 +2892,32 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     return () => clearInterval(healthCheckInterval);
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
+
+  const lastRouteUpdateTimeRef = useRef(0);
+  useEffect(() => {
+    if (!isNavigating || !isLoaded || !map.current) return;
+    if (gpsPosition?.latitude == null || gpsPosition?.longitude == null) return;
+    if (typeof gpsPosition.latitude !== 'number' || typeof gpsPosition.longitude !== 'number') return;
+    
+    const now = Date.now();
+    if (now - lastRouteUpdateTimeRef.current < 2000) return;
+    lastRouteUpdateTimeRef.current = now;
+    
+    if (!map.current.isStyleLoaded()) return;
+    
+    gpsPositionRef.current = gpsPosition;
+    
+    const hasSource = !!map.current.getSource('route');
+    const hasLayer = !!map.current.getLayer('route-line');
+    
+    if (!hasSource || !hasLayer) {
+      console.log('[ROUTE-GPS] Route layers missing during GPS update - rebuilding');
+      ensureRouteLayers();
+      renderRouteLayers();
+    } else {
+      renderRouteLayers();
+    }
+  }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers]);
 
   // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
   // This ensures the blue line updates when user selects a different route

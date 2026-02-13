@@ -1456,24 +1456,18 @@ function NavigationPageContent() {
         
         // 2D cross product determines rotation direction from incoming to outgoing:
         // cross = inX * outY - inY * outX
-        // For heading-up display where route line points UP:
-        // - Positive cross = route curves RIGHT relative to travel direction
-        // - Negative cross = route curves LEFT relative to travel direction
+        // In geographic coordinates (lat=Y up/North, lng=X right/East):
+        // POSITIVE cross = counterclockwise = LEFT turn
+        // NEGATIVE cross = clockwise = RIGHT turn
         const crossProduct = inX * outY - inY * outX;
         
-        // Calculate magnitude of turn using dot product for angle
         const inMag = Math.sqrt(inX * inX + inY * inY);
         const outMag = Math.sqrt(outX * outX + outY * outY);
         const dotProduct = inX * outX + inY * outY;
         const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
         const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
         
-        // Apply sign from cross product:
-        // In geographic coordinates (lat=Y increases North, lng=X increases East):
-        // The cross product formula inX * outY - inY * outX gives:
-        // POSITIVE cross = turning LEFT (counterclockwise when viewed from above)
-        // NEGATIVE cross = turning RIGHT (clockwise when viewed from above)
-        // For heading-up navigation display: positive angle = LEFT, negative angle = RIGHT
+        // Positive angle = LEFT turn, Negative angle = RIGHT turn
         let turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
         
         // Check if this is a significant turn
@@ -5308,6 +5302,7 @@ function NavigationPageContent() {
                           const newState = !professionalVoiceEnabled;
                           setProfessionalVoiceEnabled(newState);
                           navigationVoice.setEnabled(newState);
+                          console.log('[VOICE-TOGGLE] Voice navigation:', newState ? 'ENABLED' : 'DISABLED');
                           if (newState) {
                             navigationVoice.primeForUserGesture();
                             audioBluetoothInit.primeSpeechFromGesture();
@@ -5612,6 +5607,7 @@ function NavigationPageContent() {
                           const newState = !professionalVoiceEnabled;
                           setProfessionalVoiceEnabled(newState);
                           navigationVoice.setEnabled(newState);
+                          console.log('[VOICE-TOGGLE] Voice navigation:', newState ? 'ENABLED' : 'DISABLED');
                           if (newState) {
                             navigationVoice.primeForUserGesture();
                             audioBluetoothInit.primeSpeechFromGesture();
