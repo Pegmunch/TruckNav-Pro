@@ -63,7 +63,8 @@ function handleWindowTouchStart(e: TouchEvent) {
   const x = touch.clientX;
   const y = touch.clientY;
   
-  let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
+  let directHit: { id: string; registration: ButtonRegistration; distance: number } | null = null;
+  let paddedHit: { id: string; registration: ButtonRegistration; distance: number } | null = null;
   
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     if (!registration.isVisible) continue;
@@ -71,23 +72,32 @@ function handleWindowTouchStart(e: TouchEvent) {
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
     
-    const btnPadding = registration.touchPadding ?? 30;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
     
-    if (
-      x >= rect.left - btnPadding &&
-      x <= rect.right + btnPadding &&
-      y >= rect.top - btnPadding &&
-      y <= rect.bottom + btnPadding
-    ) {
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-      
-      if (!closestButton || distance < closestButton.distance) {
-        closestButton = { id, registration, distance };
+    const isDirectHit = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    
+    if (isDirectHit) {
+      if (!directHit || distance < directHit.distance) {
+        directHit = { id, registration, distance };
+      }
+    } else {
+      const btnPadding = registration.touchPadding ?? 30;
+      if (
+        x >= rect.left - btnPadding &&
+        x <= rect.right + btnPadding &&
+        y >= rect.top - btnPadding &&
+        y <= rect.bottom + btnPadding
+      ) {
+        if (!paddedHit || distance < paddedHit.distance) {
+          paddedHit = { id, registration, distance };
+        }
       }
     }
   }
+  
+  const closestButton = directHit || paddedHit;
   
   if (closestButton) {
     const { id, registration } = closestButton;
@@ -568,6 +578,7 @@ export function RightActionStack({
             buttonSize, 
             baseButtonClass,
             showTraffic ? "border-orange-500" : "border-gray-400",
+            "mt-1",
             trafficVisible ? visibleClass : hiddenClass
           )}
           style={buttonStyle}
