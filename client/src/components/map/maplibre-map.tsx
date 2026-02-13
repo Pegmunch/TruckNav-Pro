@@ -199,7 +199,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   onDoubleTap,
   className,
   showTraffic = true,
-  showIncidents = false,
+  showIncidents = true,
   hideControls = false,
   hideCompass = false,
   isNavigating = false,
@@ -1561,7 +1561,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 0);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTrafficRef.current && !isNavigating;
+            const showGeneralTraffic = showTrafficRef.current;
             mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Roads mode applied successfully');
@@ -1587,7 +1587,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 1);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTrafficRef.current && !isNavigating;
+            const showGeneralTraffic = showTrafficRef.current;
             mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Satellite mode applied successfully');
@@ -1617,15 +1617,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   viewStateRef.current = viewState;
   updateLayerVisibilityRef.current = updateLayerVisibility;
 
-  // Lightweight traffic flow layer toggle - separate from heavy layer visibility updates
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     const mapInstance = map.current;
     if (!mapInstance.isStyleLoaded()) return;
     if (mapInstance.getLayer('traffic-flow-layer')) {
-      const showGeneralTraffic = showTraffic && !isNavigating;
-      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
-      console.log('[TRAFFIC-FLOW] Visibility toggled:', showGeneralTraffic ? 'visible' : 'none');
+      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showTraffic ? 'visible' : 'none');
+      console.log('[TRAFFIC-FLOW] Visibility toggled:', showTraffic ? 'visible' : 'none', '(works in all modes)');
     }
   }, [showTraffic, isNavigating, isLoaded]);
 
@@ -3436,7 +3434,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         incident.severity === 'medium' ? '#F59E0B' : 
         '#64748B';
       
-      const sourceLabel = incident.source === 'tomtom' ? '🛰️ Verified' : '👥 Reported';
+      const sourceLabel = incident.source === 'tomtom' || incident.source === 'here' ? '🛰️ Verified' : '👥 Reported';
       
       const popupContent = `
         <div style="padding: 8px; min-width: 200px;">
@@ -3452,7 +3450,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               ${incident.severity.toUpperCase()}
             </span>
             <span style="
-              background: ${incident.source === 'tomtom' ? '#0284C7' : '#7C3AED'}; 
+              background: ${incident.source === 'tomtom' || incident.source === 'here' ? '#0284C7' : '#7C3AED'}; 
               color: white; 
               padding: 2px 8px; 
               border-radius: 4px; 

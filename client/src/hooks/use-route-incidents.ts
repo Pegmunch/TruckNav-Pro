@@ -8,7 +8,7 @@ export interface RouteIncident {
   coordinates: { lat: number; lng: number };
   description?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  source: 'tomtom' | 'crowdsourced';
+  source: 'tomtom' | 'here' | 'crowdsourced';
   distanceFromRoute: number;
   reportedAt: Date;
   endTime?: Date;
@@ -191,12 +191,6 @@ export function useRouteIncidents(
   });
 
   const fetchTomTomIncidents = useCallback(async (path: Array<{ lat: number; lng: number }>) => {
-    const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY;
-    if (!TOMTOM_API_KEY) {
-      console.warn('[ROUTE-INCIDENTS] No TomTom API key found');
-      return;
-    }
-
     const bbox = getBoundingBox(path, 50);
     if (!bbox) return;
 
@@ -209,41 +203,35 @@ export function useRouteIncidents(
     setError(null);
 
     try {
-      const bboxStr = `${bbox.west.toFixed(6)},${bbox.south.toFixed(6)},${bbox.east.toFixed(6)},${bbox.north.toFixed(6)}`;
-      
       const response = await fetch(
-        `https://api.tomtom.com/traffic/services/5/incidentDetails?key=${TOMTOM_API_KEY}&bbox=${bboxStr}&fields={incidents{type,geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,events{description,code},startTime,endTime,from,to,length,delay,roadNumbers}}}`,
-        { signal: abortControllerRef.current?.signal }
+        `/api/tomtom/traffic-incidents?north=${bbox.north.toFixed(6)}&south=${bbox.south.toFixed(6)}&east=${bbox.east.toFixed(6)}&west=${bbox.west.toFixed(6)}`,
+        { 
+          signal: abortControllerRef.current?.signal,
+          credentials: 'include',
+        }
       );
 
       if (!response.ok) {
-        console.warn(`[ROUTE-INCIDENTS] TomTom API error: ${response.status}`);
-        setError(`TomTom API error: ${response.status}`);
+        console.warn(`[ROUTE-INCIDENTS] Server incidents API error: ${response.status}`);
+        setError(`Incidents API error: ${response.status}`);
         return;
       }
 
-      const data = await response.json();
+      const serverIncidents = await response.json();
       
-      if (!data.incidents || !Array.isArray(data.incidents)) {
+      if (!Array.isArray(serverIncidents) || serverIncidents.length === 0) {
+        console.log('[ROUTE-INCIDENTS] No incidents returned from server (TomTom + HERE)');
         setTomtomIncidents([]);
         return;
       }
 
       const routeIncidents: RouteIncident[] = [];
 
-      for (const incident of data.incidents) {
-        if (!incident.geometry?.coordinates) continue;
-
-        let incidentLat: number, incidentLng: number;
+      for (const incident of serverIncidents) {
+        const incidentLat = incident.latitude || incident.coordinates?.lat || 0;
+        const incidentLng = incident.longitude || incident.coordinates?.lng || 0;
         
-        if (incident.geometry.type === 'Point') {
-          [incidentLng, incidentLat] = incident.geometry.coordinates;
-        } else if (incident.geometry.type === 'LineString' && incident.geometry.coordinates.length > 0) {
-          const midIndex = Math.floor(incident.geometry.coordinates.length / 2);
-          [incidentLng, incidentLat] = incident.geometry.coordinates[midIndex];
-        } else {
-          continue;
-        }
+        if (incidentLat === 0 && incidentLng === 0) continue;
 
         const { isNear, minDistance } = isPointNearRoute(
           { lat: incidentLat, lng: incidentLng },
@@ -253,30 +241,30 @@ export function useRouteIncidents(
 
         if (!isNear) continue;
 
-        const props = incident.properties || {};
-        const incidentType = mapTomTomIncidentType(incident.type || props.iconCategory || 'UNKNOWN');
+        const incidentType = mapTomTomIncidentType(incident.type || 'UNKNOWN');
+        const source = incident.source || 'tomtom';
 
         routeIncidents.push({
-          id: `tomtom_${incidentLat.toFixed(5)}_${incidentLng.toFixed(5)}_${Date.now()}`,
+          id: incident.id || `${source}_${incidentLat.toFixed(5)}_${incidentLng.toFixed(5)}_${Date.now()}`,
           type: incidentType,
           coordinates: { lat: incidentLat, lng: incidentLng },
-          description: props.events?.[0]?.description || props.from || undefined,
-          severity: mapSeverity(props.magnitudeOfDelay),
-          source: 'tomtom',
+          description: incident.description || undefined,
+          severity: incident.severity || mapSeverity(incident.magnitudeOfDelay || incident.delay),
+          source: source as 'tomtom' | 'here' | 'crowdsourced',
           distanceFromRoute: minDistance,
-          reportedAt: props.startTime ? new Date(props.startTime) : new Date(),
-          endTime: props.endTime ? new Date(props.endTime) : undefined,
-          delay: props.delay,
-          roadName: props.roadNumbers?.[0] || props.from,
+          reportedAt: incident.reportedAt ? new Date(incident.reportedAt) : new Date(),
+          endTime: incident.expiresAt ? new Date(incident.expiresAt) : undefined,
+          delay: incident.delay,
+          roadName: incident.roadNumbers?.[0] || incident.from,
         });
       }
 
       setTomtomIncidents(routeIncidents);
       setLastUpdated(new Date());
-      console.log(`[ROUTE-INCIDENTS] ✅ Found ${routeIncidents.length} TomTom incidents along route`);
+      console.log(`[ROUTE-INCIDENTS] ✅ Found ${routeIncidents.length} live incidents along route (source: server proxy with TomTom + HERE fallback)`);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        console.error('[ROUTE-INCIDENTS] Error fetching TomTom incidents:', err);
+        console.error('[ROUTE-INCIDENTS] Error fetching incidents:', err);
         setError(err.message || 'Failed to fetch incidents');
       }
     } finally {

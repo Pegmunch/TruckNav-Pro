@@ -121,64 +121,53 @@ export function useRouteTrafficOverlay(
         const midPoint = segmentPoints[midIndex];
         
         try {
-          // Try TomTom Traffic Flow API first
           let data: any = null;
-          let response = await fetch(
-            `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative/10/json?point=${midPoint.lat.toFixed(6)},${midPoint.lng.toFixed(6)}&key=${TOMTOM_API_KEY}&unit=MPH`,
-            { signal: abortControllerRef.current?.signal }
-          );
-
-          // If TomTom fails (403 Forbidden or other error), try HERE Traffic API as fallback
-          if (!response.ok) {
-            console.warn(`[ROUTE-TRAFFIC] TomTom API error: ${response.status}, trying HERE fallback...`);
-            
+          
+          if (TOMTOM_API_KEY) {
+            try {
+              const response = await fetch(
+                `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative/10/json?point=${midPoint.lat.toFixed(6)},${midPoint.lng.toFixed(6)}&key=${TOMTOM_API_KEY}&unit=MPH`,
+                { signal: abortControllerRef.current?.signal }
+              );
+              if (response.ok) {
+                data = await response.json();
+              } else {
+                console.warn(`[ROUTE-TRAFFIC] TomTom API error: ${response.status}, trying HERE fallback...`);
+              }
+            } catch (tomtomErr: any) {
+              if (tomtomErr.name === 'AbortError') throw tomtomErr;
+              console.warn(`[ROUTE-TRAFFIC] TomTom fetch error, trying HERE fallback...`);
+            }
+          }
+          
+          if (!data) {
             try {
               const hereResponse = await fetch(
                 `/api/here/traffic-flow?lat=${midPoint.lat.toFixed(6)}&lng=${midPoint.lng.toFixed(6)}`,
                 { signal: abortControllerRef.current?.signal }
               );
-              
               if (hereResponse.ok) {
                 data = await hereResponse.json();
-                console.log(`[ROUTE-TRAFFIC] ✅ HERE fallback successful for segment ${segStart}`);
+                if (segStart === 0) console.log(`[ROUTE-TRAFFIC] ✅ Using HERE Traffic API fallback`);
               } else {
-                console.warn(`[ROUTE-TRAFFIC] HERE fallback also failed: ${hereResponse.status}, trying Mapbox...`);
-                
-                // Try Mapbox as third fallback
-                try {
-                  const mapboxResponse = await fetch(
-                    `/api/mapbox/traffic-flow?lat=${midPoint.lat.toFixed(6)}&lng=${midPoint.lng.toFixed(6)}`,
-                    { signal: abortControllerRef.current?.signal }
-                  );
-                  
-                  if (mapboxResponse.ok) {
-                    data = await mapboxResponse.json();
-                    console.log(`[ROUTE-TRAFFIC] ✅ Mapbox fallback successful for segment ${segStart}`);
-                  } else {
-                    console.warn(`[ROUTE-TRAFFIC] Mapbox fallback also failed: ${mapboxResponse.status}`);
-                  }
-                } catch (mapboxErr) {
-                  console.warn(`[ROUTE-TRAFFIC] Mapbox fallback error:`, mapboxErr);
-                }
+                console.warn(`[ROUTE-TRAFFIC] HERE fallback failed: ${hereResponse.status}`);
               }
-            } catch (hereErr) {
-              console.warn(`[ROUTE-TRAFFIC] HERE fallback error:`, hereErr);
+            } catch (hereErr: any) {
+              if (hereErr.name === 'AbortError') throw hereErr;
+              console.warn(`[ROUTE-TRAFFIC] HERE fallback error`);
             }
-            
-            // If all APIs failed, mark as unknown
-            if (!data) {
-              newSegments.push({
-                startIndex: segStart,
-                endIndex: segEnd,
-                coordinates: segmentPoints.map(p => [p.lng, p.lat] as [number, number]),
-                speedRatio: -1,
-                color: TRAFFIC_COLORS.unknown,
-                flowLevel: 'unknown',
-              });
-              continue;
-            }
-          } else {
-            data = await response.json();
+          }
+          
+          if (!data) {
+            newSegments.push({
+              startIndex: segStart,
+              endIndex: segEnd,
+              coordinates: segmentPoints.map(p => [p.lng, p.lat] as [number, number]),
+              speedRatio: -1,
+              color: TRAFFIC_COLORS.unknown,
+              flowLevel: 'unknown',
+            });
+            continue;
           }
           
           if (data.flowSegmentData) {
@@ -225,9 +214,11 @@ export function useRouteTrafficOverlay(
         }
       }
 
+      const knownSegments = newSegments.filter(s => s.flowLevel !== 'unknown');
+      const unknownSegments = newSegments.filter(s => s.flowLevel === 'unknown');
       setSegments(newSegments);
       setLastUpdated(new Date());
-      console.log(`[ROUTE-TRAFFIC] ✅ Fetched ${newSegments.length} traffic segments for route`);
+      console.log(`[ROUTE-TRAFFIC] ✅ Fetched ${newSegments.length} traffic segments (${knownSegments.length} with live data, ${unknownSegments.length} unknown)`);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('[ROUTE-TRAFFIC] Error fetching traffic data:', err);
