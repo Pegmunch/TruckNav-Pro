@@ -140,8 +140,12 @@ class AudioBluetoothInit {
 
   /**
    * Activate Bluetooth audio route before speech
-   * Uses a very brief, low-volume oscillator to wake up the audio session
-   * Volume 0.01 is enough to trigger Bluetooth routing but not audible to humans
+   * Plays a sustained near-silent tone through AudioContext to wake up and hold
+   * the Bluetooth/media audio session open. Speech synthesis then inherits this
+   * active audio route instead of falling back to the phone earpiece.
+   * 
+   * The tone runs for 500ms at near-zero volume (inaudible) which is long enough
+   * for iOS/Android to establish the Bluetooth A2DP or HFP audio path.
    */
   public async activateBluetoothForSpeech(): Promise<void> {
     try {
@@ -150,27 +154,31 @@ class AudioBluetoothInit {
       }
 
       const ctx = this.getAudioContext();
-      if (ctx) {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+      if (!ctx) return;
 
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
-        gainNode.gain.setValueAtTime(0, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
-
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sine';
-
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.12);
-
-        await new Promise(resolve => setTimeout(resolve, 150));
-        console.log('[AudioBluetooth] Bluetooth audio route activated');
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
       }
+
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.02);
+      gainNode.gain.setValueAtTime(0.01, ctx.currentTime + 0.4);
+      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+
+      oscillator.frequency.value = 200;
+      oscillator.type = 'sine';
+
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.55);
+
+      await new Promise(resolve => setTimeout(resolve, 250));
+      console.log('[AudioBluetooth] Bluetooth audio route activated (held 250ms)');
     } catch (error) {
       console.warn('[AudioBluetooth] Bluetooth activation failed:', error);
     }

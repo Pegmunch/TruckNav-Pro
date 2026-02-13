@@ -538,7 +538,7 @@ export class NavigationVoice {
    * Simplified for reliable speech on iOS and Android
    * Key: minimize async work before speak() to stay in user gesture context
    */
-  private processInstruction(instruction: QueuedInstruction): void {
+  private async processInstruction(instruction: QueuedInstruction): Promise<void> {
     console.log(`[NavigationVoice] Processing instruction: "${instruction.text.substring(0, 60)}..."`);
     
     if (!this.synthesis) {
@@ -557,6 +557,8 @@ export class NavigationVoice {
     
     this.synthesis.cancel();
     
+    await audioBluetoothInit.activateBluetoothForSpeech();
+    
     audioBluetoothInit.startAudioDucking();
     
     this.isSpeaking = true;
@@ -574,14 +576,15 @@ export class NavigationVoice {
     utterance.pitch = this.settings.pitch;
     utterance.volume = 1.0;
     
-    console.log('[NavigationVoice] Speaking:', instruction.text.substring(0, 60), {
+    console.log('[NavigationVoice] Speaking via Bluetooth/media channel:', instruction.text.substring(0, 60), {
       voice: utterance.voice?.name || 'default',
       volume: utterance.volume,
-      rate: utterance.rate
+      rate: utterance.rate,
+      bluetoothInitialized: audioBluetoothInit.getIsInitialized()
     });
     
     utterance.onstart = () => {
-      console.log('[NavigationVoice] Speech STARTED playing');
+      console.log('[NavigationVoice] Speech STARTED playing (Bluetooth route active)');
       this.speechRetryCount = 0;
       this.emitVoiceAnnouncement(instruction.text, true);
     };
@@ -616,7 +619,7 @@ export class NavigationVoice {
     
     try {
       this.synthesis.speak(utterance);
-      console.log('[NavigationVoice] speak() called - pending:', this.synthesis.pending, 'speaking:', this.synthesis.speaking);
+      console.log('[NavigationVoice] speak() called after Bluetooth activation - pending:', this.synthesis.pending, 'speaking:', this.synthesis.speaking);
     } catch (error) {
       console.error('[NavigationVoice] Failed to speak:', error);
       this.isSpeaking = false;

@@ -503,7 +503,8 @@ function NavigationPageContent() {
   }, []);
   
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
-    console.log('[AUTO-REROUTE] Updating route with new TomTom route, routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
+    console.log('[AUTO-REROUTE] === Applying rerouted route (mirrors GO button flow) ===');
+    console.log('[AUTO-REROUTE] routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
     
     if (newRoute.routePath && Array.isArray(newRoute.routePath) && newRoute.routePath.length >= 2 && !newRoute.geometry) {
       (newRoute as any).geometry = {
@@ -512,12 +513,12 @@ function NavigationPageContent() {
           .filter((p: any) => p && typeof p.lat === 'number' && typeof p.lng === 'number')
           .map((p: any) => [p.lng, p.lat]),
       };
-      console.log('[AUTO-REROUTE] Built geometry from routePath for off-route detection');
     }
     
     setCurrentRoute(newRoute);
     routeProgressRef.current = 0;
     lastVoiceAnnouncementRef.current = null;
+    
     if (newRoute.distance) {
       setDynamicDistanceRemaining(newRoute.distance * 1609.344);
     }
@@ -525,11 +526,19 @@ function NavigationPageContent() {
       setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
     
+    lastCalculatedRouteRef.current = newRoute;
+    currentRouteIdRef.current = newRoute.id || null;
+    
+    hasShownDestinationDialogRef.current = false;
+    setShowDestinationReached(false);
+    
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
         detail: { routePathLength: newRoute.routePath?.length || 0 }
       }));
     }, 100);
+    
+    console.log('[AUTO-REROUTE] === Route applied - map will re-render ===');
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
@@ -946,6 +955,16 @@ function NavigationPageContent() {
     // Invalidate the active journey query so the hook refetches and gets nothing
     queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
   }, [queryClient]); // Run only once on mount
+  
+  useEffect(() => {
+    if (!isLocalNavActive) return;
+    
+    const keepAliveInterval = setInterval(() => {
+      audioBluetoothInit.keepBluetoothAlive().catch(() => {});
+    }, 15000);
+    
+    return () => clearInterval(keepAliveInterval);
+  }, [isLocalNavActive]);
   
   // CRITICAL FIX: Auto-reset isLocalNavActive when no route exists
   // This ensures stale localStorage doesn't keep the app in navigate mode
