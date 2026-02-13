@@ -1072,40 +1072,57 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         return;
       }
       
-      console.log('[RESET-NAV-CAMERA] Resetting to navigation defaults: zoom 16, pitch 55°');
+      console.log('[RESET-NAV-CAMERA] Resetting to default navigation view (flyby style)');
       
-      // Reset view state to tilted (3D navigation view)
       setViewState('tilted');
+      userPreferredZoomRef.current = 16.5;
       
-      // Get GPS position for centering and bearing
       const gps = gpsPosition;
       const containerHeight = map.current.getContainer().clientHeight || 800;
       
+      let centerLat: number, centerLng: number, useBearing: number;
+      
       if (gps && isValidCoord(gps.latitude) && isValidCoord(gps.longitude)) {
-        // Use GPS heading for bearing, default to 0 if not available
-        const bearing = typeof gps.heading === 'number' && !isNaN(gps.heading) ? gps.heading : 0;
-        
-        map.current.flyTo({
-          center: [gps.longitude, gps.latitude],
-          zoom: 16,
-          pitch: 55,
-          bearing: bearing,
+        centerLat = gps.latitude;
+        centerLng = gps.longitude;
+        useBearing = typeof gps.heading === 'number' && !isNaN(gps.heading) ? gps.heading : 0;
+      } else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+        const path = currentRoute.routePath;
+        centerLat = path[0].lat;
+        centerLng = path[0].lng;
+        const dLon = (path[1].lng - path[0].lng) * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(path[1].lat * Math.PI / 180);
+        const x = Math.cos(path[0].lat * Math.PI / 180) * Math.sin(path[1].lat * Math.PI / 180) -
+                  Math.sin(path[0].lat * Math.PI / 180) * Math.cos(path[1].lat * Math.PI / 180) * Math.cos(dLon);
+        useBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      } else {
+        map.current.easeTo({
+          zoom: 16.5,
+          pitch: 60,
+          duration: 1200,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3)
+        });
+        return;
+      }
+      
+      try {
+        map.current.easeTo({
+          center: [centerLng, centerLat],
+          zoom: 16.5,
+          pitch: 60,
+          bearing: useBearing,
           padding: {
             top: Math.round(containerHeight * 0.55),
             bottom: 40,
             left: 0,
             right: 0
           },
-          duration: 1000,
+          duration: 1200,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
           essential: true
         });
-      } else {
-        // No GPS - just reset pitch and zoom at current location
-        map.current.easeTo({
-          zoom: 16,
-          pitch: 55,
-          duration: 1000
-        });
+      } catch (e) {
+        console.warn('[RESET-NAV-CAMERA] easeTo failed:', e);
       }
     },
     saveNavigationCamera: () => {
@@ -1122,8 +1139,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!map.current) return true;
       const currentZoom = map.current.getZoom();
       const currentPitch = map.current.getPitch();
-      const zoomDiff = Math.abs(currentZoom - 16);
-      const pitchDiff = Math.abs(currentPitch - 55);
+      const zoomDiff = Math.abs(currentZoom - 16.5);
+      const pitchDiff = Math.abs(currentPitch - 60);
       return zoomDiff < 1.5 && pitchDiff < 10;
     },
     resetToSavedNavigationCamera: () => {
