@@ -772,7 +772,7 @@ function NavigationPageContent() {
     if (mapRef.current) {
       setIsCameraAtNavDefault(true);
       cameraResetSuppressUntilRef.current = Date.now() + 1200;
-      mapRef.current.resetToSavedNavigationCamera();
+      mapRef.current.resetNavigationCamera();
     }
   }, []);
   

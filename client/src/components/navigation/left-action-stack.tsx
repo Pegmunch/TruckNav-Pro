@@ -261,14 +261,11 @@ export function LeftActionStack({
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
   const handleNavButtonPress = useCallback(() => {
-    if (!isCameraAtNavDefault && onResetCamera) {
-      console.log('[LEFT-STACK] Camera off-default (red) - resetting to default');
+    if (onResetCamera) {
+      console.log('[LEFT-STACK] Navigation button pressed - resetting to default navigation view');
       onResetCamera();
-    } else if (onToggle3D) {
-      console.log('[LEFT-STACK] Camera at default (green) - toggling 3D tilt');
-      onToggle3D();
     }
-  }, [isCameraAtNavDefault, onResetCamera, onToggle3D]);
+  }, [onResetCamera]);
   
   useNativeClickHandler(navButtonRef, handleNavButtonPress, 'NAV', isNavigating);
   useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE', isNavigating);
