@@ -1,4 +1,4 @@
-import { AlertCircle, Truck, Navigation, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { AlertCircle, Truck, Navigation, X, Mic, MicOff, Volume2, VolumeX, Box } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } from '@/lib/voice-commands';
@@ -150,6 +150,8 @@ interface LeftActionStackProps {
   isVisible?: boolean;
   isCameraAtNavDefault?: boolean;
   onResetCamera?: () => void;
+  onToggle3D?: () => void;
+  is3DMode?: boolean;
 }
 
 const MUTE_STATE_KEY = "trucknav_mute_all_alerts";
@@ -166,7 +168,9 @@ export function LeftActionStack({
   showMenuButton = true,
   isVisible = true,
   isCameraAtNavDefault = true,
-  onResetCamera
+  onResetCamera,
+  onToggle3D,
+  is3DMode = false
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isMuted, setIsMuted] = useState<boolean>(() => {
@@ -257,13 +261,11 @@ export function LeftActionStack({
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
   const handleNavButtonPress = useCallback(() => {
-    if (onResetCamera && !isCameraAtNavDefault) {
-      console.log('[LEFT-STACK] Camera reset button pressed - resetting to navigation camera');
-      onResetCamera();
-    } else if (onNavigate) {
-      onNavigate();
+    if (onToggle3D) {
+      console.log('[LEFT-STACK] 3D tilt toggle button pressed');
+      onToggle3D();
     }
-  }, [onResetCamera, onNavigate, isCameraAtNavDefault]);
+  }, [onToggle3D]);
   
   useNativeClickHandler(navButtonRef, handleNavButtonPress, 'NAV', isNavigating);
   useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE', isNavigating);
@@ -310,16 +312,16 @@ export function LeftActionStack({
   
   return (
     <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* Camera reset button - green when at nav default angles, red when camera has moved */}
+      {/* 3D Tilt toggle button - green by default, blue when 3D active */}
       {isNavigating && (
         <Button
           ref={navButtonRef}
           variant="ghost"
           size="icon"
           className={`h-10 w-10 rounded-xl active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            isCameraAtNavDefault
-              ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
-              : 'bg-red-500 hover:bg-red-600 active:bg-red-700'
+            is3DMode
+              ? 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'
+              : 'bg-green-500 hover:bg-green-600 active:bg-green-700'
           } ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
