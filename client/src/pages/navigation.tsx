@@ -5142,6 +5142,11 @@ function NavigationPageContent() {
                         showMenuButton={false}
                         isCameraAtNavDefault={isCameraAtNavDefault}
                         onResetCamera={handleResetCamera}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        is3DMode={mapControlState.is3DMode}
                         onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
                           if (currentGPSLocation) {
                             const incidentLabels: Record<IncidentType, string> = {
@@ -5463,6 +5468,11 @@ function NavigationPageContent() {
                         showMenuButton={false}
                         isCameraAtNavDefault={isCameraAtNavDefault}
                         onResetCamera={handleResetCamera}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        is3DMode={mapControlState.is3DMode}
                         onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
                           if (currentGPSLocation) {
                             const incidentLabels: Record<IncidentType, string> = {

@@ -261,11 +261,14 @@ export function LeftActionStack({
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
   const handleNavButtonPress = useCallback(() => {
-    if (onToggle3D) {
-      console.log('[LEFT-STACK] 3D tilt toggle button pressed');
+    if (!isCameraAtNavDefault && onResetCamera) {
+      console.log('[LEFT-STACK] Camera off-default (red) - resetting to default');
+      onResetCamera();
+    } else if (onToggle3D) {
+      console.log('[LEFT-STACK] Camera at default (green) - toggling 3D tilt');
       onToggle3D();
     }
-  }, [onToggle3D]);
+  }, [isCameraAtNavDefault, onResetCamera, onToggle3D]);
   
   useNativeClickHandler(navButtonRef, handleNavButtonPress, 'NAV', isNavigating);
   useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE', isNavigating);
@@ -312,16 +315,16 @@ export function LeftActionStack({
   
   return (
     <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* 3D Tilt toggle button - green by default, blue when 3D active */}
+      {/* Nav/Tilt button - green at default (tilt toggle), red when camera moved (reset) */}
       {isNavigating && (
         <Button
           ref={navButtonRef}
           variant="ghost"
           size="icon"
           className={`h-10 w-10 rounded-xl active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            is3DMode
-              ? 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'
-              : 'bg-green-500 hover:bg-green-600 active:bg-green-700'
+            isCameraAtNavDefault
+              ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
+              : 'bg-red-500 hover:bg-red-600 active:bg-red-700'
           } ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
