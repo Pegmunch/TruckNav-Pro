@@ -1119,16 +1119,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[NAV-CAMERA] Saved navigation camera state:', cam);
     },
     isAtNavigationCamera: () => {
-      if (!map.current || !savedNavigationCameraRef.current) return true;
-      const saved = savedNavigationCameraRef.current;
+      if (!map.current) return true;
       const currentZoom = map.current.getZoom();
       const currentPitch = map.current.getPitch();
-      const currentBearing = map.current.getBearing();
-      const zoomDiff = Math.abs(currentZoom - saved.zoom);
-      const pitchDiff = Math.abs(currentPitch - saved.pitch);
-      let bearingDiff = Math.abs(currentBearing - saved.bearing);
-      if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
-      return zoomDiff < 0.5 && pitchDiff < 3 && bearingDiff < 5;
+      const zoomDiff = Math.abs(currentZoom - 16);
+      const pitchDiff = Math.abs(currentPitch - 55);
+      return zoomDiff < 1.5 && pitchDiff < 10;
     },
     resetToSavedNavigationCamera: () => {
       if (!map.current || !savedNavigationCameraRef.current) {

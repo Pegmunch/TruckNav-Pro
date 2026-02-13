@@ -771,7 +771,7 @@ function NavigationPageContent() {
   const handleResetCamera = useCallback(() => {
     if (mapRef.current) {
       setIsCameraAtNavDefault(true);
-      cameraResetSuppressUntilRef.current = Date.now() + 1200;
+      cameraResetSuppressUntilRef.current = Date.now() + 2000;
       mapRef.current.resetNavigationCamera();
     }
   }, []);
