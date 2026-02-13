@@ -867,7 +867,7 @@ function ComprehensiveMobileMenu({
                       />
                     </div>
                     
-                    {/* Use Current Location Button + Recent Origins */}
+                    {/* Use Current Location Button */}
                     <div className="flex items-center gap-2 -mt-1">
                       {gps?.position && !fromInput && (
                         <Button
@@ -879,12 +879,10 @@ function ComprehensiveMobileMenu({
                             const lng = gps.position!.longitude;
                             console.log('[GPS-BUTTON] Using current location - starting reverse geocode:', lat, lng);
                             
-                            // Set loading state and coordinates immediately
                             setIsGeocodingLocation(true);
                             setFromCoordinates({ lat, lng });
                             
                             try {
-                              // Perform reverse geocoding to get actual address
                               const result = await reverseGeocode(lat, lng);
                               
                               if (result.success) {
@@ -892,14 +890,12 @@ function ComprehensiveMobileMenu({
                                 setFromInput(result.address);
                                 onFromLocationChange(result.address);
                               } else {
-                                // Fallback to coordinates if reverse geocoding fails
                                 const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                                 console.log('[GPS-BUTTON] Reverse geocode failed, using coordinates:', fallbackAddress);
                                 setFromInput(fallbackAddress);
                                 onFromLocationChange(fallbackAddress);
                               }
                             } catch (error) {
-                              // Fallback to coordinates on error
                               const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                               console.error('[GPS-BUTTON] Reverse geocode error:', error);
                               setFromInput(fallbackAddress);
@@ -918,27 +914,38 @@ function ComprehensiveMobileMenu({
                           {isGeocodingLocation ? 'Finding Address...' : 'Use Current Location'}
                         </Button>
                       )}
-                      {previousOrigins.length > 0 && !fromInput && (
-                        <div className="flex items-center gap-1 overflow-x-auto">
-                          {previousOrigins.slice(0, 2).map((origin) => (
-                            <Button
+                    </div>
+
+                    {/* Recent Origins - Quick Access below From input */}
+                    {previousOrigins.length > 0 && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium flex items-center gap-1.5 px-1 text-muted-foreground">
+                          <History className="h-3.5 w-3.5 text-blue-500" />
+                          Recent Origins
+                        </Label>
+                        <div className="space-y-1 px-1 max-h-[90px] overflow-y-auto">
+                          {previousOrigins.slice(0, 3).map((origin) => (
+                            <div
                               key={origin.id}
-                              variant="ghost"
-                              size="sm"
+                              className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all active:scale-[0.98]"
                               onClick={() => {
                                 setFromInput(origin.formattedAddress);
                                 setFromCoordinates(origin.coordinates);
                                 onFromLocationChange(origin.formattedAddress);
                               }}
-                              className="h-7 text-xs px-2 bg-muted/30 hover:bg-muted/50 whitespace-nowrap max-w-[120px] truncate"
+                              data-testid={`recent-origin-${origin.id}`}
                             >
-                              <MapPinned className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">{origin.label}</span>
-                            </Button>
+                              <MapPinned className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">{origin.label}</div>
+                                <div className="text-xs text-muted-foreground truncate">{origin.formattedAddress}</div>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            </div>
                           ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* To Location with AddressAutocomplete */}
                     <div 

@@ -8,18 +8,19 @@ export function IOSTouchProxyLayer() {
   const proxyMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const containerRef = useRef<HTMLDivElement | null>(null);
   
-  const createProxyButton = useCallback((id: string, registration: { getRect: () => DOMRect | null; callback: () => void }) => {
+  const createProxyButton = useCallback((id: string, registration: { getRect: () => DOMRect | null; callback: () => void; touchPadding?: number }) => {
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) return null;
     
+    const pad = registration.touchPadding ?? 6;
     const proxy = document.createElement('div');
     proxy.setAttribute('data-proxy-id', id);
     proxy.style.cssText = `
       position: fixed !important;
-      top: ${rect.top - 15}px !important;
-      left: ${rect.left - 15}px !important;
-      width: ${rect.width + 30}px !important;
-      height: ${rect.height + 30}px !important;
+      top: ${rect.top - pad}px !important;
+      left: ${rect.left - pad}px !important;
+      width: ${rect.width + pad * 2}px !important;
+      height: ${rect.height + pad * 2}px !important;
       z-index: 2147483647 !important;
       pointer-events: auto !important;
       touch-action: manipulation !important;
@@ -92,11 +93,11 @@ export function IOSTouchProxyLayer() {
     return proxy;
   }, []);
   
-  const updateProxyPosition = useCallback((proxy: HTMLDivElement, rect: DOMRect) => {
-    proxy.style.top = `${rect.top - 15}px`;
-    proxy.style.left = `${rect.left - 15}px`;
-    proxy.style.width = `${rect.width + 30}px`;
-    proxy.style.height = `${rect.height + 30}px`;
+  const updateProxyPosition = useCallback((proxy: HTMLDivElement, rect: DOMRect, pad: number = 6) => {
+    proxy.style.top = `${rect.top - pad}px`;
+    proxy.style.left = `${rect.left - pad}px`;
+    proxy.style.width = `${rect.width + pad * 2}px`;
+    proxy.style.height = `${rect.height + pad * 2}px`;
   }, []);
   
   useEffect(() => {
@@ -165,9 +166,9 @@ export function IOSTouchProxyLayer() {
         }
         
         const existingProxy = proxyMapRef.current.get(id);
+        const pad = registration.touchPadding ?? 6;
         if (existingProxy) {
-          updateProxyPosition(existingProxy, rect);
-          // Disable pointer events when dialog is open
+          updateProxyPosition(existingProxy, rect, pad);
           existingProxy.style.pointerEvents = dialogOpen ? 'none' : 'auto';
         } else {
           const newProxy = createProxyButton(id, registration);
