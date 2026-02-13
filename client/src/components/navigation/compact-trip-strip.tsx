@@ -298,18 +298,33 @@ export function CompactTripStrip({
         <div className="flex items-center gap-1.5 md:gap-2">
           <button
             type="button"
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[VOICE-BTN] onTouchEnd fired, current state:', voiceEnabled);
+              (e.currentTarget as any)._touchHandled = Date.now();
+              if (onVoiceToggle) onVoiceToggle();
+            }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('[VOICE-BTN] Voice toggle tapped, current state:', voiceEnabled);
+              const lastTouch = (e.currentTarget as any)._touchHandled || 0;
+              if (Date.now() - lastTouch < 500) {
+                console.log('[VOICE-BTN] onClick suppressed (already handled by touch)');
+                return;
+              }
+              console.log('[VOICE-BTN] onClick fired, current state:', voiceEnabled);
               if (onVoiceToggle) onVoiceToggle();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
             }}
             aria-label={voiceEnabled ? "Mute voice" : "Enable voice"}
             className={cn(
               'flex items-center gap-1 md:gap-1.5 px-3 md:px-4 py-1.5 md:py-1.5 rounded-full transition-colors shadow-sm text-[10px] md:text-base font-bold select-none active:scale-95',
               voiceEnabled ? 'bg-green-500 text-white active:bg-green-600' : 'bg-slate-400 text-white active:bg-slate-500'
             )}
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minHeight: '36px', minWidth: '60px' }}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minHeight: '44px', minWidth: '70px', WebkitUserSelect: 'none', userSelect: 'none' }}
             data-testid="voice-toggle-button"
           >
             {voiceEnabled ? <Volume2 className="w-4 h-4 md:w-5 md:h-5" /> : <VolumeX className="w-4 h-4 md:w-5 md:h-5" />}

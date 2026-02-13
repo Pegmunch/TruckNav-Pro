@@ -2864,33 +2864,89 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     let consecutiveFailures = 0;
     
-    const healthCheckInterval = setInterval(() => {
-      if (!map.current) return;
-      
-      if (!map.current.isStyleLoaded()) {
-        consecutiveFailures++;
-        if (consecutiveFailures > 3) {
-          console.log('[ROUTE-HEALTH] Style not loaded after multiple checks - will retry on next styledata');
-        }
-        return;
-      }
-      
+    const rebuildRouteLayers = () => {
+      if (!map.current || !map.current.isStyleLoaded()) return;
       const hasSource = !!map.current.getSource('route');
       const hasLayer = !!map.current.getLayer('route-line');
       const hasRoute = !!(currentRoute?.routePath?.length && currentRoute.routePath.length >= 2);
       const hasCache = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
       
       if ((!hasSource || !hasLayer) && (hasRoute || hasCache)) {
-        console.log('[ROUTE-HEALTH] Route layers missing during navigation - rebuilding');
+        console.log('[ROUTE-HEALTH] Route layers missing - rebuilding');
         ensureRouteLayers();
         renderRouteLayers();
+        return true;
+      }
+      return false;
+    };
+    
+    const healthCheckInterval = setInterval(() => {
+      if (!map.current) return;
+      
+      if (!map.current.isStyleLoaded()) {
+        consecutiveFailures++;
+        if (consecutiveFailures > 3) {
+          console.log('[ROUTE-HEALTH] Style not loaded after multiple checks');
+        }
+        return;
+      }
+      
+      if (rebuildRouteLayers()) {
         consecutiveFailures = 0;
       } else {
         consecutiveFailures = 0;
       }
-    }, 5000);
+    }, 3000);
     
-    return () => clearInterval(healthCheckInterval);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[ROUTE-HEALTH] App returned to foreground - checking route layers');
+        setTimeout(() => {
+          if (rebuildRouteLayers()) {
+            console.log('[ROUTE-HEALTH] Route layers rebuilt after foreground return');
+          } else {
+            renderRouteLayers();
+            console.log('[ROUTE-HEALTH] Route layers OK - refreshed after foreground return');
+          }
+        }, 300);
+      }
+    };
+    
+    const handleOnline = () => {
+      console.log('[ROUTE-HEALTH] Network restored - checking route layers');
+      setTimeout(() => {
+        if (rebuildRouteLayers()) {
+          console.log('[ROUTE-HEALTH] Route layers rebuilt after network restore');
+        } else {
+          renderRouteLayers();
+        }
+      }, 500);
+    };
+    
+    const handleWebGLContextRestored = () => {
+      console.log('[ROUTE-HEALTH] WebGL context restored - rebuilding route layers');
+      setTimeout(() => {
+        ensureRouteLayers();
+        renderRouteLayers();
+      }, 200);
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+    
+    const canvas = map.current.getCanvas();
+    if (canvas) {
+      canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+    }
+    
+    return () => {
+      clearInterval(healthCheckInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+      if (canvas) {
+        canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
+      }
+    };
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
   const lastRouteUpdateTimeRef = useRef(0);
