@@ -1192,108 +1192,9 @@ function NavigationPageContent() {
       return 'straight';
     };
 
-    // PRIORITY 1: Use actual TomTom/GraphHopper instructions (most accurate turn data)
-    // These contain real maneuver data from the routing API with proper road names
-    if ((currentRoute as any).instructions && Array.isArray((currentRoute as any).instructions) && (currentRoute as any).instructions.length > 0) {
-      const instructions = (currentRoute as any).instructions as Array<{ text: string; distance: number; time: number; sign: number }>;
-      
-      // Build cumulative distance for each instruction to map GPS progress to instruction index
-      const instructionCumulativeDistances: number[] = [0];
-      for (let i = 0; i < instructions.length; i++) {
-        const segmentMeters = instructions[i].distance * 1609.34;
-        instructionCumulativeDistances.push(instructionCumulativeDistances[i] + segmentMeters);
-      }
-      
-      // Calculate how far along the route the driver currently is (using GPS if available)
-      let driverProgressMeters = 0;
-      if (gpsData?.position && currentRoute.routePath && currentRoute.routePath.length >= 2) {
-        const { latitude: gLat, longitude: gLng } = gpsData.position;
-        if (typeof gLat === 'number' && typeof gLng === 'number' && !isNaN(gLat) && !isNaN(gLng) && gLat !== 0 && gLng !== 0) {
-          const rp = currentRoute.routePath;
-          let minDist = Infinity;
-          let nearestIdx = 0;
-          for (let i = 0; i < rp.length; i++) {
-            const dx = gLng - rp[i].lng;
-            const dy = gLat - rp[i].lat;
-            const d = dx * dx + dy * dy;
-            if (d < minDist) {
-              minDist = d;
-              nearestIdx = i;
-            }
-          }
-          // Sum up distance from start to nearest point
-          const toRadians = (deg: number) => deg * (Math.PI / 180);
-          for (let i = 0; i < nearestIdx && i < rp.length - 1; i++) {
-            const dLat = toRadians(rp[i+1].lat - rp[i].lat);
-            const dLng2 = toRadians(rp[i+1].lng - rp[i].lng);
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(toRadians(rp[i].lat)) * Math.cos(toRadians(rp[i+1].lat)) *
-                      Math.sin(dLng2/2) * Math.sin(dLng2/2);
-            driverProgressMeters += 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          }
-        }
-      }
-      
-      // Find the NEXT upcoming instruction based on driver's progress along the route
-      let cumulativeDist = 0;
-      for (let i = 0; i < instructions.length; i++) {
-        const segmentMeters = instructions[i].distance * 1609.34;
-        cumulativeDist += segmentMeters;
-        
-        // Skip instructions the driver has already passed
-        if (cumulativeDist < driverProgressMeters - 30) continue;
-        
-        // Skip depart (sign=0 at index 0), arrive (sign=4), and straight (sign=0) instructions
-        if (i === 0 && instructions[i].sign === 0) continue;
-        if (instructions[i].sign === 4) continue;
-        if (instructions[i].sign === 0) continue;
-        
-        const distanceToManeuver = Math.max(0, cumulativeDist - driverProgressMeters);
-        
-        // Skip if too far away (>5km) - likely not relevant yet
-        if (distanceToManeuver > 5000) continue;
-        
-        const direction = mapSignToDirection(instructions[i].sign);
-        
-        const roadMatch = instructions[i].text.match(/onto\s+(.+?)(?:\s*$|,)/i) || 
-                         instructions[i].text.match(/on\s+(.+?)(?:\s*$|,)/i);
-        const roadName = roadMatch ? roadMatch[1] : undefined;
-        
-        setNextTurn({
-          direction,
-          distance: distanceToManeuver,
-          roadName
-        });
-        console.log(`[TURN-INFO] TomTom instruction: ${direction} in ${distanceToManeuver.toFixed(0)}m (progress=${driverProgressMeters.toFixed(0)}m) - ${instructions[i].text}`);
-        return;
-      }
-    }
-
-    // FALLBACK: If no GPS, try lane guidance (less reliable as it may be mock data)
+    // If no GPS position available, clear turn info and wait
     if (!gpsData?.position) {
-      if (currentRoute.laneGuidance && currentRoute.laneGuidance.length > 0) {
-        const firstSegment = currentRoute.laneGuidance[0];
-        let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
-        
-        const maneuverType = firstSegment.maneuverType;
-        if (maneuverType === 'turn-left') {
-          direction = 'left';
-        } else if (maneuverType === 'turn-right') {
-          direction = 'right';
-        } else {
-          direction = 'straight';
-        }
-        
-        setNextTurn({
-          direction,
-          distance: (firstSegment.distance || 0) * 1609.34, // Convert miles to meters
-          roadName: firstSegment.roadName
-        });
-        console.log(`[TURN-INFO-FALLBACK] Using lane guidance: ${direction} onto ${firstSegment.roadName || 'unknown road'}`);
-      } else {
-        // No guidance available - clear any stale turn info
-        setNextTurn(null);
-      }
+      setNextTurn(null);
       return;
     }
 
@@ -1599,6 +1500,9 @@ function NavigationPageContent() {
     }
     if (!nextTurn) return;
     if (nextTurn.direction === 'straight') return;
+    const isMajorAlert = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
+                         nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
+    if (!isMajorAlert) return;
     const vertexIdx = nextTurn.vertexIndex ?? -1;
     if (vertexIdx < 0) return;
     if (vertexIdx === lastAlertedTurnVertexRef.current) return;
@@ -1617,6 +1521,10 @@ function NavigationPageContent() {
     
     navigationVoice.setEnabled(true);
     
+    const isMajorTurn = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
+                        nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
+    if (!isMajorTurn) return;
+    
     const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
     const distFeet = nextTurn.distance * 3.28084;
     const distMeters = nextTurn.distance;
@@ -1624,19 +1532,13 @@ function NavigationPageContent() {
     let threshold = '';
     if (unit === 'mi') {
       if (distFeet <= 50) threshold = 'now';
-      else if (distFeet <= 100) threshold = '100ft';
-      else if (distFeet <= 200) threshold = '200ft';
       else if (distFeet <= 500) threshold = '500ft';
       else if (distFeet <= 1000) threshold = '1000ft';
-      else if (distFeet <= 2000) threshold = '2000ft';
       else threshold = 'far';
     } else {
       if (distMeters <= 15) threshold = 'now';
-      else if (distMeters <= 30) threshold = '30m';
-      else if (distMeters <= 60) threshold = '60m';
       else if (distMeters <= 150) threshold = '150m';
       else if (distMeters <= 300) threshold = '300m';
-      else if (distMeters <= 600) threshold = '600m';
       else threshold = 'far';
     }
     
@@ -1651,7 +1553,7 @@ function NavigationPageContent() {
     
     lastVoiceAnnouncementRef.current = { direction: nextTurn.direction, threshold, turnIndex };
     
-    console.log(`[VOICE-NAV] Announcing: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
+    console.log(`[VOICE-NAV] Announcing major turn: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
     
     navigationVoice.announceTurn(
       nextTurn.direction,

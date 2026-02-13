@@ -74,10 +74,10 @@ const SpeedDisplay = memo(function SpeedDisplay({
     return speedKmh; // already in km/h
   };
   
-  // Get live speed from centralized GPS hook
-  const liveSpeed = gpsPosition?.speed ?? 0;
+  const rawLiveSpeed = gpsPosition?.speed ?? 0;
+  const SPEED_DEAD_ZONE = 1.0;
+  const liveSpeed = rawLiveSpeed < SPEED_DEAD_ZONE ? 0 : rawLiveSpeed;
   
-  // Use live speed or provided current speed
   const displaySpeed = currentSpeed > 0 ? currentSpeed : Math.max(0, liveSpeed);
   const convertedSpeed = convertSpeed(displaySpeed);
   const convertedSpeedLimit = speedLimit ? convertSpeedLimit(speedLimit) : null;

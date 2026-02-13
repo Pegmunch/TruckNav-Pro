@@ -76,9 +76,10 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   // Track speeding state for alert sound
   const wasSpeedingRef = useRef(false);
   
-  // Use provided data or fetch from hooks
   const gpsSpeed = gps?.position?.speed ?? 0;
-  const displaySpeed = currentSpeed ?? gpsSpeed;
+  const SPEED_DEAD_ZONE = 1.0;
+  const filteredGpsSpeed = gpsSpeed < SPEED_DEAD_ZONE ? 0 : gpsSpeed;
+  const displaySpeed = currentSpeed ?? filteredGpsSpeed;
   
   // Speed limit and road info (prioritize props over hook data)
   const speedLimit = propSpeedLimit ?? speedLimitData.speedLimit;

@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Traffic Color Scheme**: Normal/Free flow traffic uses BLUE (#0067FF, #3B82F6), NOT green. The traffic legend shows: Blue = Normal Flow, Green = Light, Yellow = Moderate, Orange = Heavy, Red = Standstill.
 - **Theme Default**: Auto theme (not Day theme) should be default on first app entry.
 - **Vehicle Profiles**: Simplified to two options - Class 1 Truck (truck restrictions) and Car (fastest route).
-- **Voice Navigation**: Female English voice as default, announce ALL turns and lane selections (motorwayOnlyMode: false).
+- **Voice Navigation**: Female English voice as default, announce only major turns (junctions on motorways/main roads). Slight turns and minor road changes are silent. Speed dead zone of 1.0 m/s filters GPS noise when stationary.
 
 # System Architecture
 

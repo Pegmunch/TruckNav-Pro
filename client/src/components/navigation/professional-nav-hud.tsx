@@ -187,9 +187,12 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
     }
   };
   
-  const currentSpeedInUnit = gps?.position?.speed 
-    ? convertSpeed(gps.position.speed, speedLimitData.unit)
-    : currentSpeed; // fallback to prop if GPS speed unavailable
+  const rawGpsSpeed = gps?.position?.speed ?? 0;
+  const SPEED_DEAD_ZONE = 1.0;
+  const filteredGpsSpeed = rawGpsSpeed < SPEED_DEAD_ZONE ? 0 : rawGpsSpeed;
+  const currentSpeedInUnit = filteredGpsSpeed > 0 
+    ? convertSpeed(filteredGpsSpeed, speedLimitData.unit)
+    : currentSpeed;
   
   // Determine if speeding
   const isCurrentlySpeeding = isSpeeding(

@@ -1074,7 +1074,8 @@ export class NavigationVoice {
     this.selectedVoice = null;
     this.saveSettings();
     this.selectVoiceForLanguage(this.settings.language);
-    console.log(`[NavigationVoice] Voice reset to auto, selected: ${this.selectedVoice?.name || 'pending'}`);
+    const voiceName = this.selectedVoice ? (this.selectedVoice as SpeechSynthesisVoice).name : 'pending';
+    console.log(`[NavigationVoice] Voice reset to auto, selected: ${voiceName}`);
   }
   
   /**
