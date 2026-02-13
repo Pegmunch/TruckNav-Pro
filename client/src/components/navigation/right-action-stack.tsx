@@ -242,6 +242,91 @@ function useUnifiedTouchHandler(
   };
 }
 
+const SAT_BTN_ID = 'satellite-view-btn';
+const satLastFired = { ts: 0 };
+
+function SatelliteButton({ buttonSize, baseButtonClass, iconSize, isSatelliteView, isVisible, visibleClass, hiddenClass, buttonStyle, onToggle }: {
+  buttonSize: string; baseButtonClass: string; iconSize: string; isSatelliteView: boolean;
+  isVisible: boolean; visibleClass: string; hiddenClass: string;
+  buttonStyle: React.CSSProperties; onToggle: () => void;
+}) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const callbackRef = useRef(onToggle);
+  callbackRef.current = onToggle;
+
+  const fireToggle = useCallback(() => {
+    const now = Date.now();
+    if (now - satLastFired.ts < 300) return;
+    satLastFired.ts = now;
+    console.log('[SATELLITE-BTN] Toggle fired');
+    hapticButtonPress();
+    callbackRef.current();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) {
+      buttonRegistry.delete(SAT_BTN_ID);
+      return;
+    }
+
+    attachWindowTouchListener();
+
+    buttonRegistry.set(SAT_BTN_ID, {
+      id: SAT_BTN_ID,
+      getRect: () => ref.current?.getBoundingClientRect() || null,
+      callback: () => fireToggle(),
+      lastFired: 0,
+      isVisible: true,
+      touchPadding: 20
+    });
+
+    const btn = ref.current;
+    if (btn) {
+      const handler = (e: TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fireToggle();
+      };
+      btn.addEventListener('touchstart', handler, { passive: false, capture: true });
+      return () => {
+        btn.removeEventListener('touchstart', handler, { capture: true });
+        buttonRegistry.delete(SAT_BTN_ID);
+        detachWindowTouchListener();
+      };
+    }
+
+    return () => {
+      buttonRegistry.delete(SAT_BTN_ID);
+      detachWindowTouchListener();
+    };
+  }, [isVisible, fireToggle]);
+
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      size="icon"
+      onClick={() => fireToggle()}
+      onPointerDown={(e) => {
+        if (e.pointerType === 'touch') return;
+        e.preventDefault();
+        fireToggle();
+      }}
+      className={cn(
+        buttonSize,
+        baseButtonClass,
+        isSatelliteView ? "border-green-700" : "border-green-800",
+        isVisible ? visibleClass : hiddenClass
+      )}
+      style={buttonStyle}
+      data-testid="button-toggle-view"
+      aria-label={isSatelliteView ? "Switch to map view" : "Switch to satellite view"}
+    >
+      <MapIcon className={iconSize} />
+    </Button>
+  );
+}
+
 interface RightActionStackProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
@@ -303,7 +388,7 @@ export function RightActionStack({
   
   // Refs for all buttons
   const incidentsRef = useRef<HTMLButtonElement>(null);
-  const mapViewRef = useRef<HTMLButtonElement>(null);
+  const mapViewRef = useRef<HTMLButtonElement>(null); // kept for compatibility
   const recenterRef = useRef<HTMLButtonElement>(null);
   const zoomInRef = useRef<HTMLButtonElement>(null);
   const zoomOutRef = useRef<HTMLButtonElement>(null);
@@ -403,7 +488,7 @@ export function RightActionStack({
   }, []);
   
   const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, bid('incidents-btn'), incidentsVisible);
-  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, bid('map-view-btn'), mapViewVisible, 35);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, undefined, bid('map-view-btn'), false, 35);
   const recenterHandlers = useUnifiedTouchHandler(recenterRef, recenterCallback, bid('recenter-btn'), recenterVisible);
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, bid('zoom-in-btn'), zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, bid('zoom-out-btn'), zoomOutVisible);
@@ -447,27 +532,19 @@ export function RightActionStack({
         <AlertCircle className={iconSize} />
       </Button>
 
-      {/* 2. Map View Toggle (Satellite) - Dark green border */}
+      {/* 2. Map View Toggle (Satellite) - Dark green border - NATIVE DOM TOUCH */}
       {onToggleMapView && (
-        <Button
-          ref={mapViewRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={mapViewHandlers.onTouchStart}
-          onClick={mapViewHandlers.onClick}
-          onPointerDown={mapViewHandlers.onPointerDown}
-          className={cn(
-            buttonSize, 
-            baseButtonClass,
-            isSatelliteView ? "border-green-700" : "border-green-800",
-            mapViewVisible ? visibleClass : hiddenClass
-          )}
-          style={buttonStyle}
-          data-testid="button-toggle-view"
-          aria-label={isSatelliteView ? "Switch to map view" : "Switch to satellite view"}
-        >
-          <MapIcon className={iconSize} />
-        </Button>
+        <SatelliteButton
+          buttonSize={buttonSize}
+          baseButtonClass={baseButtonClass}
+          iconSize={iconSize}
+          isSatelliteView={isSatelliteView}
+          isVisible={mapViewVisible}
+          visibleClass={visibleClass}
+          hiddenClass={hiddenClass}
+          buttonStyle={buttonStyle}
+          onToggle={onToggleMapView}
+        />
       )}
 
       {/* 3. Compass - Blue border */}

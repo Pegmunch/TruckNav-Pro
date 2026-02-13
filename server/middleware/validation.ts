@@ -264,18 +264,16 @@ export const validateCoordinates = [
 export const validateLocation = [
   body('label')
     .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Location label must be between 1 and 100 characters')
-    .matches(/^[a-zA-Z0-9\s\-_\.,\/]+$/)
-    .withMessage('Location label contains invalid characters'),
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Location label must be between 1 and 200 characters'),
   
   body('coordinates.lat')
-    .isFloat({ min: 49.5, max: 61.0 })
-    .withMessage('Latitude must be within UK/Europe bounds'),
+    .isFloat({ min: -90.0, max: 90.0 })
+    .withMessage('Latitude must be between -90 and 90'),
   
   body('coordinates.lng')
-    .isFloat({ min: -11.0, max: 3.0 })
-    .withMessage('Longitude must be within UK/Europe bounds'),
+    .isFloat({ min: -180.0, max: 180.0 })
+    .withMessage('Longitude must be between -180 and 180'),
   
   body('isFavorite')
     .optional()
