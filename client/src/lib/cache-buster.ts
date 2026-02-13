@@ -63,6 +63,13 @@ export async function checkAppVersion(): Promise<void> {
         'pwa-install-dismissed', 'trucknav_country',
         'trucknav_language', 'measurement-system',
         'measurement-region', 'trucknav_cookie_status',
+        'navigation_recentDestinations', 'navigation_recentOrigins',
+        'trucknav_recent_locations', 'trucknav_cached_route',
+        'trucknav_voice_settings', 'trucknav_font_preferences',
+        'trucknav_map_preferences', 'trucknav_maplibre_preferences',
+        'trucknav_country_preferences', 'trucknav_onboarding',
+        'vehicleType', 'activeVehicleProfileId', 'isCarProfileMode',
+        'trucknav_gps_mode', 'trucknav_map_engine',
         STORAGE_KEY
       ];
       const keysToRemove: string[] = [];
