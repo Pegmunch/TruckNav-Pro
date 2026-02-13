@@ -136,7 +136,8 @@ export function IOSTouchProxyLayer() {
       const openSheet = document.querySelector('[data-state="open"][data-vaul-drawer]');
       const openOverlay = document.querySelector('[data-radix-dialog-overlay]');
       const openAlertDialog = document.querySelector('[role="alertdialog"]');
-      const dialogOpen = !!(openDialog || openSheet || openOverlay || openAlertDialog);
+      const openSettingsPanel = document.querySelector('[data-settings-overlay="true"]');
+      const dialogOpen = !!(openDialog || openSheet || openOverlay || openAlertDialog || openSettingsPanel);
       
       // Hide entire container when any modal is open
       containerRef.current.style.display = dialogOpen ? 'none' : 'block';

@@ -288,11 +288,12 @@ function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
             <div key={`pad-top-${i}`} style={{ height: itemHeight }} />
           ))}
           {voiceOptions.map((voice, index) => (
-            <div
+            <button
+              type="button"
               key={voice.value}
               onClick={() => handleItemClick(index)}
               className={cn(
-                "flex items-center justify-between px-4 cursor-pointer transition-all duration-150 select-none",
+                "w-full flex items-center justify-between px-4 cursor-pointer transition-all duration-150 select-none border-0 bg-transparent text-left",
                 index === activeIndex
                   ? "text-foreground font-semibold scale-100"
                   : "text-muted-foreground font-normal scale-95 opacity-70"
@@ -300,6 +301,7 @@ function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
               style={{
                 height: itemHeight,
                 scrollSnapAlign: 'start',
+                touchAction: 'pan-y',
               }}
             >
               <span className="truncate text-sm">{voice.label}</span>
@@ -308,7 +310,7 @@ function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
                   {voice.lang}
                 </span>
               )}
-            </div>
+            </button>
           ))}
           {Array.from({ length: paddingItems }).map((_, i) => (
             <div key={`pad-bot-${i}`} style={{ height: itemHeight }} />

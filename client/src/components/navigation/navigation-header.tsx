@@ -57,29 +57,13 @@ export function NavigationHeader({
 }: NavigationHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const touchHandledRef = useRef(false);
-  const itemTouchHandledRef = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handleItemClick = useCallback((callback?: () => void) => {
-    if (itemTouchHandledRef.current) {
-      itemTouchHandledRef.current = false;
-      return;
-    }
     setIsOpen(false);
     setTimeout(() => {
       callback?.();
-    }, 100);
-  }, []);
-
-  const handleItemTouch = useCallback((e: React.TouchEvent, callback?: () => void) => {
-    e.preventDefault();
-    e.stopPropagation();
-    itemTouchHandledRef.current = true;
-    setIsOpen(false);
-    setTimeout(() => {
-      callback?.();
-      itemTouchHandledRef.current = false;
-    }, 100);
+    }, 150);
   }, []);
 
   const handleToggle = useCallback(() => {
@@ -160,6 +144,7 @@ export function NavigationHeader({
             className="fixed inset-0 bg-black/30"
             style={{ zIndex: 500003 }}
             onClick={() => setIsOpen(false)}
+            data-settings-overlay="true"
           />
           <div
             ref={panelRef}
@@ -197,8 +182,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onRegionSettingsClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onRegionSettingsClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-region-settings"
                 >
                   <MapPinned className="h-4 w-4 mr-3 text-blue-500 flex-shrink-0" />
@@ -209,8 +192,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onLanguageClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onLanguageClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-language"
                 >
                   <Globe className="h-4 w-4 mr-3 text-purple-500 flex-shrink-0" />
@@ -221,8 +202,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onMapSettingsClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onMapSettingsClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-map-settings"
                 >
                   <Map className="h-4 w-4 mr-3 text-green-500 flex-shrink-0" />
@@ -239,8 +218,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onWeatherClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onWeatherClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-weather"
                 >
                   <Cloud className="h-4 w-4 mr-3 text-sky-500 flex-shrink-0" />
@@ -250,8 +227,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onEntertainmentClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onEntertainmentClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-entertainment"
                 >
                   <Music className="h-4 w-4 mr-3 text-pink-500 flex-shrink-0" />
@@ -261,8 +236,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onVoiceNavClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onVoiceNavClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-voice-nav"
                 >
                   <Mic className="h-4 w-4 mr-3 text-indigo-500 flex-shrink-0" />
@@ -272,8 +245,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onFuelPricesClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onFuelPricesClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-fuel-prices"
                 >
                   <Fuel className="h-4 w-4 mr-3 text-green-600 flex-shrink-0" />
@@ -283,8 +254,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onFatigueMonitorClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onFatigueMonitorClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-fatigue-monitor"
                 >
                   <Clock className="h-4 w-4 mr-3 text-amber-500 flex-shrink-0" />
@@ -294,8 +263,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onSettingsClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onSettingsClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-app-settings"
                 >
                   <Settings className="h-4 w-4 mr-3 text-gray-500 flex-shrink-0" />
@@ -311,8 +278,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg text-orange-600 hover:bg-orange-50 active:bg-orange-100 transition-colors"
                   onClick={() => handleItemClick(onClearRouteClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onClearRouteClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-clear-route"
                 >
                   <Trash2 className="h-4 w-4 mr-3 flex-shrink-0" />
@@ -322,8 +287,6 @@ export function NavigationHeader({
                 <button
                   className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
                   onClick={() => handleItemClick(onReplayTourClick)}
-                  onTouchEnd={(e) => handleItemTouch(e, onReplayTourClick)}
-                  style={{ touchAction: 'manipulation' }}
                   data-testid="dropdown-replay-tour"
                 >
                   <HelpCircle className="h-4 w-4 mr-3 flex-shrink-0" />
