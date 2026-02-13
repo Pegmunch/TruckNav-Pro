@@ -327,7 +327,7 @@ export function LeftActionStack({
           data-testid="button-nav-left"
           data-tour-id="nav-button"
         >
-          <Navigation className="h-5 w-5" />
+          <Navigation className="h-5 w-5" style={{ transform: 'rotate(-45deg)' }} />
         </Button>
       )}
 
