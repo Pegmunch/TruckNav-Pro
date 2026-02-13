@@ -742,21 +742,21 @@ function NavigationPageContent() {
   
   // Camera reset button state - tracks whether camera is at the saved navigation angles
   const [isCameraAtNavDefault, setIsCameraAtNavDefault] = useState(true);
+  const cameraResetSuppressUntilRef = useRef(0);
   
   // Poll camera state during navigation to detect zoom/pitch/bearing changes
   useEffect(() => {
     if (!isNavUIActive || !mapRef.current) return;
     
     const checkCamera = () => {
+      if (Date.now() < cameraResetSuppressUntilRef.current) return;
       if (mapRef.current) {
         const isAtDefault = mapRef.current.isAtNavigationCamera();
         setIsCameraAtNavDefault(isAtDefault);
       }
     };
     
-    // Check every 500ms
     const interval = setInterval(checkCamera, 500);
-    // Also check immediately
     checkCamera();
     
     return () => clearInterval(interval);
@@ -764,9 +764,9 @@ function NavigationPageContent() {
   
   const handleResetCamera = useCallback(() => {
     if (mapRef.current) {
+      setIsCameraAtNavDefault(true);
+      cameraResetSuppressUntilRef.current = Date.now() + 1200;
       mapRef.current.resetToSavedNavigationCamera();
-      // After reset animation, mark as at default
-      setTimeout(() => setIsCameraAtNavDefault(true), 900);
     }
   }, []);
   
