@@ -6369,7 +6369,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       performance.mark('api-document-upload-end');
       performance.measure('api-document-upload', 'api-document-upload-start', 'api-document-upload-end');
-      console.log('[PERF-API] ✅ Document uploaded in', performance.getEntriesByName('api-document-upload')[0].duration.toFixed(0), 'ms');
+      const uploadDuration = performance.getEntriesByName('api-document-upload').pop();
+      console.log('[PERF-API] ✅ Document uploaded in', uploadDuration ? uploadDuration.duration.toFixed(0) : '?', 'ms');
+      performance.clearMarks('api-document-upload-start');
+      performance.clearMarks('api-document-upload-end');
+      performance.clearMeasures('api-document-upload');
 
       res.json(attachment);
     } catch (error) {
@@ -6387,7 +6391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       performance.mark('api-documents-fetch-end');
       performance.measure('api-documents-fetch', 'api-documents-fetch-start', 'api-documents-fetch-end');
-      console.log('[PERF-API] ✅ Documents fetched in', performance.getEntriesByName('api-documents-fetch')[0].duration.toFixed(0), 'ms');
+      const fetchDuration = performance.getEntriesByName('api-documents-fetch').pop();
+      console.log('[PERF-API] ✅ Documents fetched in', fetchDuration ? fetchDuration.duration.toFixed(0) : '?', 'ms');
+      performance.clearMarks('api-documents-fetch-start');
+      performance.clearMarks('api-documents-fetch-end');
+      performance.clearMeasures('api-documents-fetch');
       
       res.json(attachments);
     } catch (error) {
@@ -6410,7 +6418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, return document metadata
       performance.mark('api-document-download-end');
       performance.measure('api-document-download', 'api-document-download-start', 'api-document-download-end');
-      console.log('[PERF-API] ✅ Document prepared in', performance.getEntriesByName('api-document-download')[0].duration.toFixed(0), 'ms');
+      const downloadDuration = performance.getEntriesByName('api-document-download').pop();
+      console.log('[PERF-API] ✅ Document prepared in', downloadDuration ? downloadDuration.duration.toFixed(0) : '?', 'ms');
+      performance.clearMarks('api-document-download-start');
+      performance.clearMarks('api-document-download-end');
+      performance.clearMeasures('api-document-download');
       
       res.json(attachment);
     } catch (error) {
@@ -6434,7 +6446,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       performance.mark('api-document-delete-end');
       performance.measure('api-document-delete', 'api-document-delete-start', 'api-document-delete-end');
-      console.log('[PERF-API] ✅ Document deleted in', performance.getEntriesByName('api-document-delete')[0].duration.toFixed(0), 'ms');
+      const deleteDuration = performance.getEntriesByName('api-document-delete').pop();
+      console.log('[PERF-API] ✅ Document deleted in', deleteDuration ? deleteDuration.duration.toFixed(0) : '?', 'ms');
+      performance.clearMarks('api-document-delete-start');
+      performance.clearMarks('api-document-delete-end');
+      performance.clearMeasures('api-document-delete');
       
       res.json({ message: "Document deleted successfully" });
     } catch (error) {

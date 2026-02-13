@@ -128,7 +128,7 @@ function Router() {
 function App() {
   return (
     <PWAEnvironmentProvider>
-      <ThemeProvider defaultTheme="day" storageKey="theme-mode">
+      <ThemeProvider defaultTheme="auto" storageKey="theme-mode">
         <MobileThemeEnforcer />
         <GPSProvider 
           enableHighAccuracy={true}
