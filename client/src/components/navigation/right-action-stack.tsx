@@ -493,8 +493,8 @@ export function RightActionStack({
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, bid('zoom-in-btn'), zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, bid('zoom-out-btn'), zoomOutVisible);
   const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, bid('compass-btn'), compassVisible);
-  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, bid('3d-toggle-btn'), toggle3DVisible, 20);
-  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, bid('traffic-btn'), trafficVisible, 10);
+  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, bid('3d-toggle-btn'), toggle3DVisible, 4);
+  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, bid('traffic-btn'), trafficVisible, 4);
   
   // Common button styles
   const baseButtonClass = "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150 transform-gpu";
@@ -655,7 +655,7 @@ export function RightActionStack({
             buttonSize, 
             baseButtonClass,
             showTraffic ? "border-orange-500" : "border-gray-400",
-            "mt-1",
+            "mt-3",
             trafficVisible ? visibleClass : hiddenClass
           )}
           style={buttonStyle}
