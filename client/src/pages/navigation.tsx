@@ -748,6 +748,10 @@ function NavigationPageContent() {
   useEffect(() => {
     if (!isNavUIActive || !mapRef.current) return;
     
+    // Suppress camera checks for 2s after navigation starts to let GO animation finish
+    cameraResetSuppressUntilRef.current = Math.max(cameraResetSuppressUntilRef.current, Date.now() + 2000);
+    setIsCameraAtNavDefault(true);
+    
     const checkCamera = () => {
       if (Date.now() < cameraResetSuppressUntilRef.current) return;
       if (mapRef.current) {
@@ -757,7 +761,6 @@ function NavigationPageContent() {
     };
     
     const interval = setInterval(checkCamera, 500);
-    checkCamera();
     
     return () => clearInterval(interval);
   }, [isNavUIActive]);
