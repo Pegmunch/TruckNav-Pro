@@ -2827,21 +2827,47 @@ function NavigationPageContent() {
       if (shouldAutoNavigateOnMobile) {
         console.log('[ROUTE-CALC] GO button flow - showing preview screen with route ready');
         
-        // CRITICAL: Reset any stale cancellation guard from previous navigation session
         isCancellingRouteRef.current = false;
-        
-        // Reset auto-navigation flag
         setShouldAutoNavigateOnMobile(false);
         
-        // Show the preview overlay with route info - user can choose to start navigation
         setIsShowingPreview(true);
         setShowNavControls(true);
         
-        // Decrement counter
+        // Fly to 3D route view centered on current GPS location (or route start)
+        if (route?.routePath && route.routePath.length >= 2) {
+          const startPt = route.routePath[0];
+          const secondPt = route.routePath[1];
+          const dLon = (secondPt.lng - startPt.lng) * Math.PI / 180;
+          const yB = Math.sin(dLon) * Math.cos(secondPt.lat * Math.PI / 180);
+          const xB = Math.cos(startPt.lat * Math.PI / 180) * Math.sin(secondPt.lat * Math.PI / 180) -
+                    Math.sin(startPt.lat * Math.PI / 180) * Math.cos(secondPt.lat * Math.PI / 180) * Math.cos(dLon);
+          const routeBearing = (Math.atan2(yB, xB) * 180 / Math.PI + 360) % 360;
+          
+          const gpsPos = gpsData?.position;
+          const centerLat = (gpsPos && gpsPos.latitude) ? gpsPos.latitude : startPt.lat;
+          const centerLng = (gpsPos && gpsPos.longitude) ? gpsPos.longitude : startPt.lng;
+          
+          console.log('[ROUTE-CALC] GO → 3D route view at current location:', centerLat, centerLng, 'bearing:', routeBearing);
+          
+          const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
+            detail: {
+              center: { lat: centerLat, lng: centerLng },
+              zoom: 16.5,
+              pitch: 60,
+              bearing: routeBearing,
+              duration: 1200
+            }
+          });
+          window.dispatchEvent(zoomEvent);
+          
+          setMap3DMode(true);
+          setIsCameraAtNavDefault(true);
+          cameraResetSuppressUntilRef.current = Date.now() + 2000;
+        }
+        
         routeCalculationCountRef.current = Math.max(0, routeCalculationCountRef.current - 1);
         console.log('[ROUTE-CALC] Calculation complete (preview path). Active calculations:', routeCalculationCountRef.current);
         
-        // Don't auto-start navigation - let user see the preview first
         return;
       }
       
@@ -2849,10 +2875,39 @@ function NavigationPageContent() {
       // Desktop clean map: don't auto-show controls - user opens via hamburger
       if (!isMobile && route) {
         setIsShowingPreview(true);
-        // Collapse sidebar to show full map with route
         if (sidebarState === 'open') {
           setSidebarState('collapsed');
           localStorage.setItem('navigationSidebarState', 'collapsed');
+        }
+        
+        // Desktop: also fly to 3D route view at current location
+        if (route.routePath && route.routePath.length >= 2) {
+          const startPt = route.routePath[0];
+          const secondPt = route.routePath[1];
+          const dLon = (secondPt.lng - startPt.lng) * Math.PI / 180;
+          const yB = Math.sin(dLon) * Math.cos(secondPt.lat * Math.PI / 180);
+          const xB = Math.cos(startPt.lat * Math.PI / 180) * Math.sin(secondPt.lat * Math.PI / 180) -
+                    Math.sin(startPt.lat * Math.PI / 180) * Math.cos(secondPt.lat * Math.PI / 180) * Math.cos(dLon);
+          const routeBearing = (Math.atan2(yB, xB) * 180 / Math.PI + 360) % 360;
+          
+          const gpsPos = gpsData?.position;
+          const centerLat = (gpsPos && gpsPos.latitude) ? gpsPos.latitude : startPt.lat;
+          const centerLng = (gpsPos && gpsPos.longitude) ? gpsPos.longitude : startPt.lng;
+          
+          const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
+            detail: {
+              center: { lat: centerLat, lng: centerLng },
+              zoom: 16.5,
+              pitch: 60,
+              bearing: routeBearing,
+              duration: 1200
+            }
+          });
+          window.dispatchEvent(zoomEvent);
+          
+          setMap3DMode(true);
+          setIsCameraAtNavDefault(true);
+          cameraResetSuppressUntilRef.current = Date.now() + 2000;
         }
       }
       
