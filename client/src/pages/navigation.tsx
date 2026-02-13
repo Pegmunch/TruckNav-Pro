@@ -3129,10 +3129,19 @@ function NavigationPageContent() {
     let finalStartCoords = fromCoordinates;
     let finalEndCoords = toCoordinates;
 
+    // GPS OVERRIDE: When GPS is available, always use actual GPS position as the start point
+    // The typed address in the "from" field is a rough reference - GPS gives the real vehicle location
+    if (gpsData?.position?.latitude && gpsData?.position?.longitude) {
+      const gpsCoords = { lat: gpsData.position.latitude, lng: gpsData.position.longitude };
+      console.log('[PLAN-ROUTE] 📍 GPS available - using real vehicle position:', gpsCoords, '(overrides typed origin)');
+      finalStartCoords = gpsCoords;
+      setFromCoordinates(gpsCoords);
+    }
+
     try {
-      // Geocode start location if coordinates are missing
+      // Geocode start location if coordinates are still missing (no GPS and no pre-set coords)
       if (!finalStartCoords && finalStartLoc) {
-        console.log('[PLAN-ROUTE] Geocoding start location with robust geocoding...');
+        console.log('[PLAN-ROUTE] No GPS - geocoding typed start location...');
         const startResult = await robustGeocode(finalStartLoc, fromCoordinates);
         finalStartCoords = startResult.coordinates;
         setFromCoordinates(finalStartCoords);

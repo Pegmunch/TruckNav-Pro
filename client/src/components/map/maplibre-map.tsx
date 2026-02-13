@@ -1621,10 +1621,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !isLoaded) return;
     const mapInstance = map.current;
     if (!mapInstance.isStyleLoaded()) return;
+    const visibility = showTraffic ? 'visible' : 'none';
     if (mapInstance.getLayer('traffic-flow-layer')) {
-      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showTraffic ? 'visible' : 'none');
-      console.log('[TRAFFIC-FLOW] Visibility toggled:', showTraffic ? 'visible' : 'none', '(works in all modes)');
+      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', visibility);
     }
+    if (mapInstance.getLayer('route-traffic-overlay-layer')) {
+      mapInstance.setLayoutProperty('route-traffic-overlay-layer', 'visibility', visibility);
+    }
+    console.log('[TRAFFIC-TOGGLE] All traffic layers visibility:', visibility);
   }, [showTraffic, isNavigating, isLoaded]);
 
   useEffect(() => {
@@ -3120,17 +3124,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const trafficSourceId = 'traffic-flow-source';
     const trafficLayerId = 'traffic-flow-layer';
 
-    if (!showTraffic) {
-      // If traffic is disabled, mark layer as not ready
-      setIsTrafficLayerReady(false);
-      
-      // Update visibility if layer exists
-      if (map.current.getLayer(trafficLayerId)) {
-        map.current.setLayoutProperty(trafficLayerId, 'visibility', 'none');
-      }
-      return;
-    }
-
     // Track tile load errors for fallback
     let tileErrorCount = 0;
     const maxTileErrors = 3;
@@ -3234,10 +3227,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Mark layer as ready after adding
       setIsTrafficLayerReady(true);
     } else {
-      // Visibility controlled by updateLayerVisibility effect
-      map.current.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
-      console.log('[TRAFFIC-LAYER] 🔄 Traffic layer already exists - set to VISIBLE');
-      // Mark layer as ready
+      // Layer already exists - visibility is controlled by the dedicated toggle effect
+      // Don't force visibility here to avoid overriding user's toggle state
+      console.log('[TRAFFIC-LAYER] 🔄 Traffic layer already exists - visibility managed by toggle effect');
       setIsTrafficLayerReady(true);
     }
 
@@ -3257,9 +3249,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [isLoaded, showTraffic]); // Removed preferences.mapViewMode - traffic visibility now handled by updateLayerVisibility
+  }, [isLoaded]); // Layer creation only - visibility handled by dedicated toggle effect
 
   // LAYER 2: Route Traffic Overlay - Colored segments on top of blue route line
+  // IMPORTANT: This effect ONLY handles data updates. Visibility is controlled by the
+  // dedicated toggle effect above (showTraffic). This prevents conflicts between effects.
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
@@ -3268,25 +3262,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const trafficSourceId = 'route-traffic-overlay-source';
     const trafficLayerId = 'route-traffic-overlay-layer';
     
-    // FIXED: Handle showTraffic toggle visibility
-    // If showTraffic is false, hide the layer but preserve data for quick toggle back
-    // CRITICAL: Never touch the base route layers (route-line, route-outline) - only traffic overlays
-    if (!showTraffic) {
-      if (mapInstance.getLayer(trafficLayerId)) {
-        mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
-        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 Hidden - traffic toggle OFF (base route unaffected)');
-      }
-      // DON'T return early - we need the rest of the effect to preserve route layers
-      return;
-    }
-    
     // If no traffic data, hide traffic overlay (but preserve source for fast re-toggle)
-    // FIXED: No longer requires isNavigating - show traffic during route preview too
-    // CRITICAL: NEVER remove the base route source/layer here
+    // CRITICAL: NEVER touch the base route layers (route-line, route-outline) - only traffic overlays
     if (!routeTrafficData.segments || routeTrafficData.segments.length === 0) {
       if (mapInstance.getLayer(trafficLayerId)) {
         mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
-        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 No traffic data - overlay hidden (base route preserved)');
+        console.log('[ROUTE-TRAFFIC-OVERLAY] No traffic data - overlay hidden (base route preserved)');
       }
       return;
     }
@@ -3294,7 +3275,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Build GeoJSON features for each traffic segment
     // Filter out 'unknown' segments - they should be transparent to show blue route underneath
     const features: GeoJSON.Feature<GeoJSON.LineString>[] = routeTrafficData.segments
-      .filter((segment) => segment.flowLevel !== 'unknown') // Skip unknown - let blue route show through
+      .filter((segment) => segment.flowLevel !== 'unknown')
       .map((segment, index) => ({
         type: 'Feature' as const,
         properties: {
@@ -3326,6 +3307,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // Add layer if it doesn't exist
     if (!mapInstance.getLayer(trafficLayerId)) {
+      // Respect current traffic toggle state when first creating the layer
+      const initialVisibility = showTrafficRef.current ? 'visible' : 'none';
       mapInstance.addLayer({
         id: trafficLayerId,
         type: 'line',
@@ -3333,7 +3316,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         layout: {
           'line-join': 'round',
           'line-cap': 'round',
-          'visibility': 'visible',
+          'visibility': initialVisibility,
         },
         paint: {
           'line-color': ['get', 'color'],
@@ -3350,31 +3333,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
       });
       
-      // Move route traffic overlay above the cyan route line
-      if (mapInstance.getLayer('route-line')) {
-        mapInstance.moveLayer(trafficLayerId);
-      } else {
-        // If route-line doesn't exist yet, move to top anyway
-        mapInstance.moveLayer(trafficLayerId);
-      }
+      // Move route traffic overlay above the route line
+      mapInstance.moveLayer(trafficLayerId);
 
-      // Add an interval to ensure layer ordering persists during navigation updates
-      // This ensures that even if other layers are added, the traffic overlay stays on top
+      // Enforce layer ordering for 10 seconds during initialization
       const enforceOrder = () => {
         if (mapInstance.getLayer(trafficLayerId) && mapInstance.getLayer('route-line')) {
           mapInstance.moveLayer(trafficLayerId);
         }
       };
       const orderInterval = setInterval(enforceOrder, 1000);
-      setTimeout(() => clearInterval(orderInterval), 10000); // Enforce for 10 seconds during initialization
-    } else {
-      // FIXED: Ensure layer is visible when showTraffic is toggled back ON
-      mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
-      console.log('[ROUTE-TRAFFIC-OVERLAY] 🟢 Shown - traffic toggle ON');
+      setTimeout(() => clearInterval(orderInterval), 10000);
     }
+    // NOTE: No else branch - visibility is managed solely by the toggle effect
+    // This prevents this effect from overriding the user's toggle state
     
-    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route (Preview + Navigation modes)`);
-  }, [isLoaded, showTraffic, routeTrafficData.segments, routeTrafficData.lastUpdated]);
+    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
+  }, [isLoaded, routeTrafficData.segments, routeTrafficData.lastUpdated]);
 
   // LAYER 3: Route Incident Markers - Icons along the route line
   useEffect(() => {
