@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGPS, type GPSContextValue } from '@/contexts/gps-context';
-import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import * as turf from '@turf/turf';
 import type { Route } from '@shared/schema';
@@ -48,7 +47,6 @@ export function useAutoReroute(
   config: Partial<AutoRerouteConfig> = {}
 ): UseAutoRerouteReturn {
   const gpsData = useGPS();
-  const { toast } = useToast();
   
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
   
@@ -66,6 +64,17 @@ export function useAutoReroute(
   const isReroutingRef = useRef(false);
   const offRouteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offRouteStartTimeRef = useRef<number | null>(null);
+
+  const gpsRef = useRef(gpsData);
+  const toCoordinatesRef = useRef(toCoordinates);
+  const activeProfileIdRef = useRef(activeProfileId);
+  const onRerouteSuccessRef = useRef(onRerouteSuccess);
+  const lastRerouteAtRef = useRef<number | null>(null);
+
+  useEffect(() => { gpsRef.current = gpsData; }, [gpsData]);
+  useEffect(() => { toCoordinatesRef.current = toCoordinates; }, [toCoordinates]);
+  useEffect(() => { activeProfileIdRef.current = activeProfileId; }, [activeProfileId]);
+  useEffect(() => { onRerouteSuccessRef.current = onRerouteSuccess; }, [onRerouteSuccess]);
   
   const isValidCoordinate = useCallback((coord: unknown): coord is [number, number] => {
     if (!Array.isArray(coord) || coord.length < 2) return false;
@@ -233,12 +242,25 @@ export function useAutoReroute(
   }, [mergedConfig.lateralThresholdMeters, mergedConfig.headingDeviationDegrees, hasValidGpsCoordinates, isValidCoordinate]);
   
   const triggerReroute = useCallback(async () => {
-    if (isReroutingRef.current || !toCoordinates || !hasValidGpsCoordinates(gpsData)) {
+    const latestGps = gpsRef.current;
+    const latestDest = toCoordinatesRef.current;
+    const latestProfileId = activeProfileIdRef.current;
+
+    if (isReroutingRef.current) {
+      console.log('[AUTO-REROUTE] Already rerouting, skipping');
+      return;
+    }
+    if (!latestDest) {
+      console.log('[AUTO-REROUTE] No destination coordinates, skipping reroute');
+      return;
+    }
+    if (!hasValidGpsCoordinates(latestGps)) {
+      console.log('[AUTO-REROUTE] No valid GPS position, skipping reroute');
       return;
     }
     
     const now = Date.now();
-    if (state.lastRerouteAt && (now - state.lastRerouteAt) < mergedConfig.minSecondsBetweenReroutes * 1000) {
+    if (lastRerouteAtRef.current && (now - lastRerouteAtRef.current) < mergedConfig.minSecondsBetweenReroutes * 1000) {
       console.log('[AUTO-REROUTE] Skipping - too soon since last reroute');
       return;
     }
@@ -246,27 +268,31 @@ export function useAutoReroute(
     isReroutingRef.current = true;
     setState(prev => ({ ...prev, isRerouting: true }));
     
-    console.log('[AUTO-REROUTE] Recalculating route from current position...');
+    const currentLat = latestGps!.position!.latitude;
+    const currentLng = latestGps!.position!.longitude;
+    
+    console.log('[AUTO-REROUTE] === REROUTING (same as GO button) ===');
+    console.log('[AUTO-REROUTE] From GPS:', { lat: currentLat, lng: currentLng });
+    console.log('[AUTO-REROUTE] To destination:', latestDest);
+    console.log('[AUTO-REROUTE] Vehicle profile:', latestProfileId);
     
     try {
-      const currentLat = gpsData!.position!.latitude;
-      const currentLng = gpsData!.position!.longitude;
-      
       const response = await apiRequest('POST', '/api/routes/calculate', {
         startLocation: `${currentLat},${currentLng}`,
-        endLocation: `${toCoordinates.lat},${toCoordinates.lng}`,
+        endLocation: `${latestDest.lat},${latestDest.lng}`,
         startCoordinates: {
           lat: currentLat,
           lng: currentLng,
         },
-        endCoordinates: toCoordinates,
-        vehicleProfileId: activeProfileId,
+        endCoordinates: latestDest,
+        vehicleProfileId: latestProfileId,
         routePreference: 'fastest',
         isReroute: true,
       });
       
       if (!response.ok) {
-        throw new Error(`Reroute failed: ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Reroute API failed: ${response.status} - ${errorText}`);
       }
       
       const newRoute = await response.json();
@@ -279,17 +305,22 @@ export function useAutoReroute(
             .map((p: any) => [p.lng, p.lat]),
         };
       }
+
+      newRoute._rerouteTimestamp = Date.now();
       
-      console.log('[AUTO-REROUTE] Successfully calculated new route:', {
+      console.log('[AUTO-REROUTE] New route received:', {
         routePathLength: newRoute.routePath?.length || 0,
         hasGeometry: !!newRoute.geometry,
+        geometryCoords: newRoute.geometry?.coordinates?.length || 0,
         instructionsCount: newRoute.instructions?.length || 0,
         distance: newRoute.distance,
         duration: newRoute.duration,
+        rerouteTimestamp: newRoute._rerouteTimestamp,
       });
       
-      onRerouteSuccess(newRoute);
+      onRerouteSuccessRef.current(newRoute);
       
+      lastRerouteAtRef.current = Date.now();
       setState(prev => ({
         ...prev,
         isOffRoute: false,
@@ -300,14 +331,15 @@ export function useAutoReroute(
       }));
       consecutiveOffRouteFixesRef.current = 0;
       
+      console.log('[AUTO-REROUTE] === REROUTE COMPLETE - Route updated ===');
+      
     } catch (error) {
       console.error('[AUTO-REROUTE] Reroute failed:', error);
-      
       setState(prev => ({ ...prev, isRerouting: false }));
     } finally {
       isReroutingRef.current = false;
     }
-  }, [toCoordinates, gpsData?.position, activeProfileId, state.lastRerouteAt, mergedConfig.minSecondsBetweenReroutes, onRerouteSuccess, hasValidGpsCoordinates]);
+  }, [mergedConfig.minSecondsBetweenReroutes, hasValidGpsCoordinates]);
   
   useEffect(() => {
     if (!isNavigating || !routeLineRef.current || isReroutingRef.current) {
@@ -396,6 +428,7 @@ export function useAutoReroute(
     consecutiveOffRouteFixesRef.current = 0;
     lastProgressDistanceRef.current = 0;
     routeLineRef.current = null;
+    lastRerouteAtRef.current = null;
   }, []);
   
   useEffect(() => {
