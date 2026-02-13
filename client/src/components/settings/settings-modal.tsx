@@ -55,7 +55,8 @@ import {
   RotateCcw,
   Users,
   Building2,
-  ClipboardCheck
+  ClipboardCheck,
+  CornerDownRight
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { type FleetVehicle, type Operator } from "@shared/schema";
@@ -1744,6 +1745,94 @@ const SettingsModal = memo(function SettingsModal({
                                 }}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                                 disabled={!alertSoundSettings.traffic.enabled}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Upcoming Turn Alerts */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <CornerDownRight className="w-5 h-5 text-indigo-500" />
+                              Upcoming Turn Alerts
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Enable Sound</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Play sound before upcoming turns
+                                </p>
+                              </div>
+                              <Switch
+                                checked={alertSoundSettings.upcomingTurn?.enabled ?? true}
+                                onCheckedChange={(checked) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    upcomingTurn: { ...(alertSoundSettings.upcomingTurn ?? { volume: 0.6, selectedSound: 'ping' }), enabled: checked }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                data-testid="switch-upcoming-turn-sound"
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">Sound Type</Label>
+                              <div className="flex flex-wrap gap-2">
+                                {SOUND_OPTIONS.upcomingTurn.map((sound) => (
+                                  <Button
+                                    key={sound.id}
+                                    variant={(alertSoundSettings.upcomingTurn?.selectedSound ?? 'ping') === sound.id ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      const newSettings = {
+                                        ...alertSoundSettings,
+                                        upcomingTurn: { ...(alertSoundSettings.upcomingTurn ?? { enabled: true, volume: 0.6 }), selectedSound: sound.id }
+                                      };
+                                      setAlertSoundSettings(newSettings);
+                                      getAlertSoundsService().saveSettings(newSettings);
+                                      if (sound.id !== 'none') {
+                                        getAlertSoundsService().previewSound('upcomingTurn', sound.id);
+                                      }
+                                    }}
+                                    className="gap-1"
+                                    data-testid={`btn-sound-turn-${sound.id}`}
+                                  >
+                                    {sound.id !== 'none' && <Play className="w-3 h-3" />}
+                                    {sound.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round((alertSoundSettings.upcomingTurn?.volume ?? 0.6) * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round((alertSoundSettings.upcomingTurn?.volume ?? 0.6) * 100)}
+                                onChange={(e) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    upcomingTurn: { ...(alertSoundSettings.upcomingTurn ?? { enabled: true, selectedSound: 'ping' }), volume: parseInt(e.target.value) / 100 }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                disabled={!(alertSoundSettings.upcomingTurn?.enabled ?? true)}
                               />
                             </div>
                           </CardContent>

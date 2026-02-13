@@ -13,7 +13,7 @@
  * - Web Audio API for reliable mobile playback
  */
 
-export type AlertType = 'speedLimit' | 'traffic' | 'fatigue';
+export type AlertType = 'speedLimit' | 'traffic' | 'fatigue' | 'upcomingTurn';
 
 export type SoundOption = {
   id: string;
@@ -43,6 +43,13 @@ export const SOUND_OPTIONS: Record<AlertType, SoundOption[]> = {
     { id: 'bell', name: 'Bell', description: 'Bell ring' },
     { id: 'none', name: 'None', description: 'No sound' },
   ],
+  upcomingTurn: [
+    { id: 'ping', name: 'Ping', description: 'Quick directional ping' },
+    { id: 'tick', name: 'Tick', description: 'Soft tick sound' },
+    { id: 'boop', name: 'Boop', description: 'Two-tone boop' },
+    { id: 'sonar', name: 'Sonar', description: 'Sonar-style pulse' },
+    { id: 'none', name: 'None', description: 'No sound' },
+  ],
 };
 
 export interface AlertSoundSettings {
@@ -55,6 +62,7 @@ export interface AllAlertSoundSettings {
   speedLimit: AlertSoundSettings;
   traffic: AlertSoundSettings;
   fatigue: AlertSoundSettings;
+  upcomingTurn: AlertSoundSettings;
   masterVolume: number; // 0-1
 }
 
@@ -76,6 +84,11 @@ const defaultSettings: AllAlertSoundSettings = {
     volume: 0.9,
     selectedSound: 'chime',
   },
+  upcomingTurn: {
+    enabled: true,
+    volume: 0.6,
+    selectedSound: 'ping',
+  },
   masterVolume: 0.8,
 };
 
@@ -89,11 +102,13 @@ class AlertSoundsService {
     speedLimit: 0,
     traffic: 0,
     fatigue: 0,
+    upcomingTurn: 0,
   };
   private cooldownMs: Record<AlertType, number> = {
-    speedLimit: 5000, // 5 seconds between speed alerts
-    traffic: 10000, // 10 seconds between traffic alerts
-    fatigue: 30000, // 30 seconds between fatigue alerts
+    speedLimit: 5000,
+    traffic: 10000,
+    fatigue: 30000,
+    upcomingTurn: 8000,
   };
 
   constructor() {
@@ -235,6 +250,9 @@ class AlertSoundsService {
       case 'fatigue':
         await this.playFatigueSound(ctx, gainNode, soundId);
         break;
+      case 'upcomingTurn':
+        await this.playUpcomingTurnSound(ctx, gainNode, soundId);
+        break;
     }
   }
 
@@ -309,6 +327,29 @@ class AlertSoundsService {
     }
   }
 
+  private async playUpcomingTurnSound(ctx: AudioContext, gainNode: GainNode, soundId: string): Promise<void> {
+    switch (soundId) {
+      case 'ping':
+        this.playTone(ctx, gainNode, 1320, 0.08, 'sine');
+        setTimeout(() => this.playTone(ctx, gainNode, 1760, 0.06, 'sine'), 80);
+        break;
+      case 'tick':
+        this.playTone(ctx, gainNode, 2000, 0.04, 'square');
+        break;
+      case 'boop':
+        this.playTone(ctx, gainNode, 660, 0.1, 'sine');
+        setTimeout(() => this.playTone(ctx, gainNode, 880, 0.12, 'sine'), 110);
+        break;
+      case 'sonar':
+        this.playTone(ctx, gainNode, 440, 0.2, 'sine');
+        const sonarGain = ctx.createGain();
+        sonarGain.connect(gainNode);
+        sonarGain.gain.value = 0.25;
+        this.playTone(ctx, sonarGain, 880, 0.18, 'sine');
+        break;
+    }
+  }
+
   private playTone(
     ctx: AudioContext, 
     destination: AudioNode, 
@@ -356,6 +397,9 @@ class AlertSoundsService {
           break;
         case 'fatigue':
           await this.playFatigueSound(ctx, gainNode, soundId);
+          break;
+        case 'upcomingTurn':
+          await this.playUpcomingTurnSound(ctx, gainNode, soundId);
           break;
       }
     } catch (error) {

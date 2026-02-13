@@ -78,6 +78,7 @@ import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { IOSTouchProxyLayer } from "@/components/navigation/ios-touch-proxy-layer";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
+import { getAlertSoundsService } from "@/lib/alert-sounds";
 import { audioBluetoothInit } from "@/lib/audio-bluetooth-init";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
@@ -640,6 +641,8 @@ function NavigationPageContent() {
     vertexIndex?: number;
   } | null>(null);
   
+  const lastAlertedTurnVertexRef = useRef<number>(-1);
+
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
@@ -1530,7 +1533,25 @@ function NavigationPageContent() {
       }
     }
   }, [isNavigating, isShowingPreview, currentRoute, gpsData?.position]);
-  
+
+  useEffect(() => {
+    if (!isNavigating) {
+      lastAlertedTurnVertexRef.current = -1;
+      return;
+    }
+    if (!nextTurn) return;
+    if (nextTurn.direction === 'straight') return;
+    const vertexIdx = nextTurn.vertexIndex ?? -1;
+    if (vertexIdx < 0) return;
+    if (vertexIdx === lastAlertedTurnVertexRef.current) return;
+    lastAlertedTurnVertexRef.current = vertexIdx;
+    try {
+      getAlertSoundsService().playAlert('upcomingTurn');
+    } catch (e) {
+      // silently ignore audio errors
+    }
+  }, [isNavigating, nextTurn?.vertexIndex, nextTurn?.direction]);
+
   useEffect(() => {
     if (!isNavigating || !nextTurn || !professionalVoiceEnabled) {
       return;
