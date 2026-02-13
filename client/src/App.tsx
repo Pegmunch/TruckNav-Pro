@@ -49,6 +49,7 @@ const SocialNetworkPage = lazyWithRetry(() => import("@/pages/social-network").t
 const ConnectStore = lazyWithRetry(() => import("@/pages/connect-store"));
 const ConnectSuccess = lazyWithRetry(() => import("@/pages/connect-success"));
 const ConnectDashboard = lazyWithRetry(() => import("@/pages/connect-dashboard"));
+const FeaturesPage = lazyWithRetry(() => import("@/pages/features"));
 
 function LoadingFallback() {
   // Return null to prevent any loading spinners from showing
@@ -115,6 +116,7 @@ function Router() {
             <Route path="/connect/store/:accountId" component={ConnectStore} />
             <Route path="/connect/success" component={ConnectSuccess} />
             <Route path="/connect/dashboard" component={ConnectDashboard} />
+            <Route path="/features" component={FeaturesPage} />
             <Route component={NotFound} />
           </Switch>
         </Suspense>
