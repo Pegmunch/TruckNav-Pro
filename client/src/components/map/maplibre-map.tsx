@@ -1521,7 +1521,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 0);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTraffic && !isNavigating;
+            const showGeneralTraffic = showTrafficRef.current && !isNavigating;
             mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Roads mode applied successfully');
@@ -1547,7 +1547,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 1);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTraffic && !isNavigating;
+            const showGeneralTraffic = showTrafficRef.current && !isNavigating;
             mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Satellite mode applied successfully');
@@ -1572,10 +1572,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     } else {
       doUpdate();
     }
-  }, [showTraffic, isNavigating]);
+  }, [isNavigating]);
 
   viewStateRef.current = viewState;
   updateLayerVisibilityRef.current = updateLayerVisibility;
+
+  // Lightweight traffic flow layer toggle - separate from heavy layer visibility updates
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    const mapInstance = map.current;
+    if (!mapInstance.isStyleLoaded()) return;
+    if (mapInstance.getLayer('traffic-flow-layer')) {
+      const showGeneralTraffic = showTraffic && !isNavigating;
+      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
+      console.log('[TRAFFIC-FLOW] Visibility toggled:', showGeneralTraffic ? 'visible' : 'none');
+    }
+  }, [showTraffic, isNavigating, isLoaded]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -2157,7 +2169,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const zoom = currentZoomRef.current;
     console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', mode, 'viewState:', viewState, 'zoom:', zoom);
     updateLayerVisibility(map.current, mode, zoom, viewState);
-  }, [preferences.mapViewMode, isLoaded, showTraffic, viewState, updateLayerVisibility]);
+  }, [preferences.mapViewMode, isLoaded, viewState, updateLayerVisibility]);
 
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {

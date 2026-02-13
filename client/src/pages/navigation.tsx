@@ -5114,7 +5114,7 @@ function NavigationPageContent() {
                 )}
 
                 {/* DESKTOP PREVIEW MODE - Full navigation UI overlay when route calculated but not yet navigating */}
-                {currentRoute && !isNavigating && showNavControls && (
+                {!isMobile && currentRoute && !isNavigating && showNavControls && (
                   <>
                     {/* Left Action Stack - Desktop Preview Mode */}
                     <div 
@@ -5435,7 +5435,7 @@ function NavigationPageContent() {
                 )}
                 
                       {/* NAVIGATE MODE OVERLAYS - Desktop ONLY when ACTIVELY NAVIGATING */}
-                      {isNavigating && (
+                      {!isMobile && isNavigating && (
                   <>
                     {/* Left Action Stack - Desktop Navigate Mode */}
                     <div 
