@@ -1082,19 +1082,43 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       let centerLat: number, centerLng: number, useBearing: number;
       
-      if (gps && isValidCoord(gps.latitude) && isValidCoord(gps.longitude)) {
-        centerLat = gps.latitude;
-        centerLng = gps.longitude;
-        useBearing = typeof gps.heading === 'number' && !isNaN(gps.heading) ? gps.heading : 0;
-      } else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+      const hasGPS = gps && isValidCoord(gps.latitude) && isValidCoord(gps.longitude);
+      const hasRoute = currentRoute?.routePath && currentRoute.routePath.length >= 2;
+      const hasGPSHeading = hasGPS && typeof gps.heading === 'number' && !isNaN(gps.heading) && gps.heading !== 0;
+      
+      const calcRouteBearing = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+        const dLon = (lng2 - lng1) * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+        const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                  Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      };
+      
+      if (hasGPS && gps) {
+        centerLat = gps.latitude!;
+        centerLng = gps.longitude!;
+        if (hasGPSHeading && gps.heading != null) {
+          useBearing = gps.heading;
+        } else if (hasRoute && currentRoute?.routePath) {
+          const path = currentRoute.routePath;
+          let nearestIdx = 0;
+          let minDist = Infinity;
+          for (let i = 0; i < path.length - 1; i++) {
+            const dlat = path[i].lat - centerLat;
+            const dlng = path[i].lng - centerLng;
+            const dist = dlat * dlat + dlng * dlng;
+            if (dist < minDist) { minDist = dist; nearestIdx = i; }
+          }
+          const nextIdx = Math.min(nearestIdx + 1, path.length - 1);
+          useBearing = calcRouteBearing(path[nearestIdx].lat, path[nearestIdx].lng, path[nextIdx].lat, path[nextIdx].lng);
+        } else {
+          useBearing = map.current.getBearing();
+        }
+      } else if (hasRoute && currentRoute?.routePath) {
         const path = currentRoute.routePath;
         centerLat = path[0].lat;
         centerLng = path[0].lng;
-        const dLon = (path[1].lng - path[0].lng) * Math.PI / 180;
-        const y = Math.sin(dLon) * Math.cos(path[1].lat * Math.PI / 180);
-        const x = Math.cos(path[0].lat * Math.PI / 180) * Math.sin(path[1].lat * Math.PI / 180) -
-                  Math.sin(path[0].lat * Math.PI / 180) * Math.cos(path[1].lat * Math.PI / 180) * Math.cos(dLon);
-        useBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        useBearing = calcRouteBearing(path[0].lat, path[0].lng, path[1].lat, path[1].lng);
       } else {
         map.current.easeTo({
           zoom: 16.5,
