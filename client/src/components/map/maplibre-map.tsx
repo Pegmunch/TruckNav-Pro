@@ -1693,6 +1693,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         // in the working double-tap handler and trigger button callbacks
         // ====================================================================
         if (e.changedTouches.length === 1 && buttonRegistry.size > 0) {
+          const openDialog = document.querySelector('[data-state="open"][role="dialog"]');
+          const openSheet = document.querySelector('[data-state="open"][data-vaul-drawer]');
+          if (openDialog || openSheet) {
+            console.log('[IOS-BUTTON-INTERCEPT] Dialog/menu open - skipping button intercept');
+            return;
+          }
+
           const touch = e.changedTouches[0];
           if (!touch) return;
           const x = touch.clientX;

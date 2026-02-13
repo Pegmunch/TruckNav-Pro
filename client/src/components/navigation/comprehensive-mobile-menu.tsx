@@ -699,6 +699,7 @@ function ComprehensiveMobileMenu({
       }}
       data-testid="comprehensive-mobile-menu"
       role="dialog"
+      data-state="open"
       aria-modal="true"
       aria-labelledby="mobile-menu-title"
     >
