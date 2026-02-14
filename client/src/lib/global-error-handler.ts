@@ -47,57 +47,65 @@ class GlobalErrorHandler {
   }
 
   private setupErrorHandler() {
+    window.addEventListener('error', (event) => {
+      const msg = event.message || event.error?.message || '';
+      if (msg.includes('cyclic') || msg.includes('circular') || msg.includes('Converting circular')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, true);
+
     window.onerror = (message, source, lineno, colno, error) => {
       this.errorCount++;
       
+      const msgStr = typeof message === 'string' ? message : 'Unknown error';
+
+      if (msgStr.includes('cyclic') || msgStr.includes('circular')) {
+        return true;
+      }
+      
       const errorLog: ErrorLog = {
         timestamp: Date.now(),
-        message: typeof message === 'string' ? message : 'Unknown error',
+        message: msgStr,
         stack: error?.stack,
         type: 'error',
         url: window.location.href,
         userAgent: navigator.userAgent
       };
 
-      // Log the error
-      console.error('🚨 Global error caught:', {
-        message,
-        source,
-        lineno,
-        colno,
-        error
-      });
+      console.error('Global error caught:', { message, source, lineno, colno, error });
 
-      // Store the error
       this.addErrorLog(errorLog);
 
-      // Check for error storm (too many errors in short time)
       if (this.isErrorStorm()) {
-        console.error('🌩️ Error storm detected! Initiating emergency recovery...');
+        console.error('Error storm detected! Initiating emergency recovery...');
         this.handleErrorStorm();
         return true;
       }
 
-      // Handle specific error types
       if (this.isRecoverableError(error)) {
-        console.log('🔧 Attempting to recover from error:', message);
+        console.log('Attempting to recover from error:', message);
         this.attemptRecovery(error);
-        return true; // Prevent default error handling
+        return true;
       }
 
-      // Check for critical errors that should not be suppressed
       if (this.isCriticalError(error)) {
-        console.error('💀 Critical error detected, allowing default handling');
-        return false; // Allow default error handling
+        console.error('Critical error detected, allowing default handling');
+        return false;
       }
 
-      // Suppress non-critical errors to prevent crashes
       return true;
     };
   }
 
   private setupRejectionHandler() {
     window.addEventListener('unhandledrejection', (event) => {
+      const reason = event.reason?.message || event.reason?.toString() || '';
+      if (reason.includes('cyclic') || reason.includes('circular')) {
+        event.preventDefault();
+        return;
+      }
+
       this.rejectionCount++;
       
       const errorLog: ErrorLog = {
@@ -109,10 +117,8 @@ class GlobalErrorHandler {
         userAgent: navigator.userAgent
       };
 
-      // Log the rejection
-      console.error('🚫 Unhandled promise rejection:', event.reason);
+      console.error('Unhandled promise rejection:', event.reason);
 
-      // Store the error
       this.addErrorLog(errorLog);
 
       // Check for specific rejection types
@@ -217,7 +223,10 @@ class GlobalErrorHandler {
       'Non-Error promise rejection captured',
       'ChunkLoadError',
       'Loading CSS chunk',
-      'Loading chunk'
+      'Loading chunk',
+      'cyclic structures',
+      'circular structure',
+      'Converting circular structure'
     ];
 
     return recoverablePatterns.some(pattern => 
