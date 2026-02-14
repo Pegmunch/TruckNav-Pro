@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Settings, 
-  Map, 
+  Map as MapIcon, 
   Palette, 
   Globe, 
   Ruler, 
@@ -711,7 +711,7 @@ const SettingsModal = memo(function SettingsModal({
     {
       id: "map-traffic",
       label: "Map",
-      icon: Map,
+      icon: MapIcon,
       description: "Map layers and traffic settings"
     },
     {

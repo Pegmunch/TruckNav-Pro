@@ -1,0 +1,15 @@
+Error Details
+Error #119:33:03
+Object is not a constructor (evaluating 'new Map()')
+groupVoicesByLanguage@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/src/components/settings/settings-modal.tsx:253:25
+VoiceWheelPicker@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/src/components/settings/settings-modal.tsx:285:46
+renderWithHooks@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:11548:35
+mountIndeterminateComponent@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:14926:36
+beginWork$1@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19753:31
+performUnitOfWork@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19198:31
+workLoopSync@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19137:30
+renderRootSync@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19116:27
+recoverFromConcurrentError@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18736:42
+performSyncWorkOnRoot@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18879:54
+flushSyncCallbacks@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:9119:38
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18627:39
