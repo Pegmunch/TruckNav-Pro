@@ -95,6 +95,7 @@ export interface MapLibreMapRef {
     onRetry?: (attemptNumber: number, maxAttempts: number) => void;
   }) => void;
   resetNavigationCamera: () => void;
+  setNorthUp: () => void;
   saveNavigationCamera: () => void;
   isAtNavigationCamera: () => boolean;
   resetToSavedNavigationCamera: () => void;
@@ -1151,6 +1152,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       } catch (e) {
         console.warn('[RESET-NAV-CAMERA] easeTo failed:', e);
       }
+    },
+    setNorthUp: () => {
+      if (!map.current) return;
+      viewStateRef.current = 'normal';
+      setViewState('normal');
+      map.current.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 400
+      });
     },
     saveNavigationCamera: () => {
       if (!map.current) return;
@@ -2343,10 +2354,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         cachedData.geometry.coordinates = validCoords;
       }
       
-      // Recreate source from cached GeoJSON
       map.current.addSource('route', {
         type: 'geojson',
-        data: cachedData
+        data: cachedData,
+        buffer: 0,
+        tolerance: 0.5
       });
 
       // Add route outline (white background for visibility) - matches traffic layer widths
@@ -2408,6 +2420,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // Helper: Render route layers
   const lastNearestIndexRef = useRef(0);
   const truckMarkerElementRef = useRef<HTMLDivElement | null>(null);
+  const processedRouteCoordsRef = useRef<number[][] | null>(null);
+  const processedRouteSourceRef = useRef<any>(null);
+  const layersOnTopRef = useRef(false);
 
   const renderRouteLayers = useCallback(() => {
     if (!map.current) return;
@@ -2421,30 +2436,30 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
     
-    let routeCoordinates = sourceCoords
-      .filter(coord => {
-        if (!coord) return false;
-        const hasValidLng = typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng);
-        const hasValidLat = typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat);
-        return hasValidLng && hasValidLat;
-      })
-      .map(coord => [coord.lng, coord.lat]);
-    
-    if (routeCoordinates.length < 2) {
-      return;
-    }
-
-    const deduplicated: number[][] = [routeCoordinates[0]];
-    for (let i = 1; i < routeCoordinates.length; i++) {
-      const prev = deduplicated[deduplicated.length - 1];
-      const curr = routeCoordinates[i];
-      const dx = curr[0] - prev[0];
-      const dy = curr[1] - prev[1];
-      if (dx * dx + dy * dy > 1e-12) {
-        deduplicated.push(curr);
+    let routeCoordinates: number[][];
+    if (processedRouteSourceRef.current === sourceCoords && processedRouteCoordsRef.current) {
+      routeCoordinates = processedRouteCoordsRef.current;
+    } else {
+      routeCoordinates = [];
+      let prevLng = NaN, prevLat = NaN;
+      for (let i = 0; i < sourceCoords.length; i++) {
+        const coord = sourceCoords[i];
+        if (!coord) continue;
+        const lng = coord.lng;
+        const lat = coord.lat;
+        if (typeof lng !== 'number' || typeof lat !== 'number' || lng !== lng || lat !== lat || !isFinite(lng) || !isFinite(lat)) continue;
+        const dx = lng - prevLng;
+        const dy = lat - prevLat;
+        if (dx * dx + dy * dy > 1e-12 || routeCoordinates.length === 0) {
+          routeCoordinates.push([lng, lat]);
+          prevLng = lng;
+          prevLat = lat;
+        }
       }
+      processedRouteCoordsRef.current = routeCoordinates;
+      processedRouteSourceRef.current = sourceCoords;
+      layersOnTopRef.current = false;
     }
-    routeCoordinates = deduplicated;
     
     if (routeCoordinates.length < 2) {
       return;
@@ -2538,7 +2553,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!map.current.getSource('route')) {
         map.current.addSource('route', {
           type: 'geojson',
-          data: geoJsonData
+          data: geoJsonData,
+          buffer: 0,
+          tolerance: 0.5
         });
 
         map.current.addLayer({
@@ -2617,30 +2634,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
     
-    try {
-      if (map.current.getLayer('route-outline')) {
-        map.current.moveLayer('route-outline');
-      }
-      if (map.current.getLayer('route-line')) {
-        map.current.moveLayer('route-line');
-      }
-      if (map.current.getLayer('route-traffic-overlay-layer')) {
-        map.current.moveLayer('route-traffic-overlay-layer');
-      }
-    } catch (e) {}
-
-    if (map.current && map.current.isStyleLoaded()) {
+    if (!layersOnTopRef.current) {
       try {
-        const layers = map.current.getStyle().layers;
-        layers.forEach((layer: any) => {
-          if (layer.id.includes('road') || layer.id.includes('tunnel') || layer.id.includes('bridge')) {
-            if (layer.type === 'line') {
-              if (preferences.mapViewMode === 'roads') {
-                map.current?.setPaintProperty(layer.id, 'line-color', '#ffffff');
-              }
-            }
-          }
-        });
+        if (map.current.getLayer('route-outline')) {
+          map.current.moveLayer('route-outline');
+        }
+        if (map.current.getLayer('route-line')) {
+          map.current.moveLayer('route-line');
+        }
+        if (map.current.getLayer('route-traffic-overlay-layer')) {
+          map.current.moveLayer('route-traffic-overlay-layer');
+        }
+        layersOnTopRef.current = true;
       } catch (e) {}
     }
 
@@ -2855,43 +2860,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
       console.log('[ROUTE-NAV-STATE] Route has', routeCoords!.length, 'coordinates (from', currentRoute?.routePath ? 'currentRoute' : 'persistentCache', ')');
       
-      // BULLETPROOF ROUTE RENDERING: Fast multiple attempts for quick rendering
-      const renderAttempts = [0, 50, 100, 200, 400];
+      layersOnTopRef.current = false;
       
-      renderAttempts.forEach((delay, index) => {
-        setTimeout(() => {
-          if (!map.current || !map.current.isStyleLoaded()) return;
-          
-          const hasRouteLayer = map.current.getLayer('route-line');
-          const hasRouteSource = map.current.getSource('route');
-          
-          // If route layer doesn't exist or source is missing, force render
-          if (!hasRouteLayer || !hasRouteSource) {
-            console.log(`[ROUTE-NAV-STATE] Attempt ${index + 1}/${renderAttempts.length}: Route layers missing - forcing render`);
-            ensureRouteLayers();
-            renderRouteLayers();
-          } else if (index === 0) {
-            // First attempt: always render to ensure data is fresh
-            console.log('[ROUTE-NAV-STATE] Force rendering route layers after navigation start');
-            renderRouteLayers();
-          }
-          
-          // Move route layers to top to ensure visibility
-          try {
-            if (map.current.getLayer('route-outline')) {
-              map.current.moveLayer('route-outline');
-            }
-            if (map.current.getLayer('route-line')) {
-              map.current.moveLayer('route-line');
-            }
-            if (index === 0) {
-              console.log('[ROUTE-NAV-STATE] ✅ Route layers moved to top');
-            }
-          } catch (e) {
-            // Layers might already be on top
-          }
-        }, delay);
-      });
+      const renderNow = () => {
+        if (!map.current || !map.current.isStyleLoaded()) return;
+        const hasRouteLayer = map.current.getLayer('route-line');
+        const hasRouteSource = map.current.getSource('route');
+        if (!hasRouteLayer || !hasRouteSource) {
+          ensureRouteLayers();
+        }
+        renderRouteLayers();
+      };
+      
+      renderNow();
+      setTimeout(() => {
+        if (!map.current?.getLayer('route-line')) renderNow();
+      }, 150);
     }
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
@@ -2997,8 +2981,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
-  const lastRouteUpdateTimeRef = useRef(0);
-  const pendingRouteRenderRef = useRef<number | null>(null);
+  const pendingRouteRafRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isNavigating || !isLoaded || !map.current) return;
     if (gpsPosition?.latitude == null || gpsPosition?.longitude == null) return;
@@ -3006,41 +2989,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     gpsPositionRef.current = gpsPosition;
     
-    const now = Date.now();
-    const elapsed = now - lastRouteUpdateTimeRef.current;
+    if (pendingRouteRafRef.current) return;
     
-    if (elapsed < 800) {
-      if (!pendingRouteRenderRef.current) {
-        pendingRouteRenderRef.current = window.setTimeout(() => {
-          pendingRouteRenderRef.current = null;
-          lastRouteUpdateTimeRef.current = Date.now();
-          if (!map.current || !map.current.isStyleLoaded()) return;
-          const hasSource = !!map.current.getSource('route');
-          const hasLayer = !!map.current.getLayer('route-line');
-          if (!hasSource || !hasLayer) {
-            ensureRouteLayers();
-          }
-          renderRouteLayers();
-        }, 800 - elapsed);
+    pendingRouteRafRef.current = requestAnimationFrame(() => {
+      pendingRouteRafRef.current = null;
+      if (!map.current || !map.current.isStyleLoaded()) return;
+      const hasSource = !!map.current.getSource('route');
+      const hasLayer = !!map.current.getLayer('route-line');
+      if (!hasSource || !hasLayer) {
+        ensureRouteLayers();
       }
-      return;
-    }
-    lastRouteUpdateTimeRef.current = now;
-    
-    if (!map.current.isStyleLoaded()) return;
-    
-    const hasSource = !!map.current.getSource('route');
-    const hasLayer = !!map.current.getLayer('route-line');
-    
-    if (!hasSource || !hasLayer) {
-      ensureRouteLayers();
-    }
-    renderRouteLayers();
+      renderRouteLayers();
+    });
     
     return () => {
-      if (pendingRouteRenderRef.current) {
-        clearTimeout(pendingRouteRenderRef.current);
-        pendingRouteRenderRef.current = null;
+      if (pendingRouteRafRef.current) {
+        cancelAnimationFrame(pendingRouteRafRef.current);
+        pendingRouteRafRef.current = null;
       }
     };
   }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers]);

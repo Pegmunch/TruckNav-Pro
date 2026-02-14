@@ -796,9 +796,14 @@ function NavigationPageContent() {
   
   const handleResetCamera = useCallback(() => {
     if (mapRef.current) {
-      setIsCameraAtNavDefault(true);
-      cameraResetSuppressUntilRef.current = Date.now() + 2000;
-      mapRef.current.resetNavigationCamera();
+      const currentVS = mapRef.current.getViewState();
+      if (currentVS === 'normal') {
+        setIsCameraAtNavDefault(true);
+        cameraResetSuppressUntilRef.current = Date.now() + 2000;
+        mapRef.current.resetNavigationCamera();
+      } else {
+        mapRef.current.setNorthUp();
+      }
     }
   }, []);
   
@@ -4292,7 +4297,7 @@ function NavigationPageContent() {
                       is3DMode={mapControlState.is3DMode}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
-                      bearing={(-mapBearing)}
+                      bearing={mapBearing}
                       isVisible={showNavControls}
                       hideIncidents={false}
                       compact={true}
@@ -4807,7 +4812,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         isNavigating={true}
                         compact={true}
-                        bearing={(-mapBearing)}
+                        bearing={mapBearing}
                       />
                     </div>
                   }
@@ -5312,7 +5317,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         showTraffic={showTrafficLayer}
                         isSatelliteView={mapControlState.isSatelliteView}
-                        bearing={(-mapBearing)}
+                        bearing={mapBearing}
                         isVisible={showNavControls}
                         hideIncidents={false}
                         compact={true}
@@ -5622,7 +5627,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         isNavigating={true}
                         compact={true}
-                        bearing={(-mapBearing)}
+                        bearing={mapBearing}
                       />
                     </div>
 
