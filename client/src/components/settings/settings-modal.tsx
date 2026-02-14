@@ -1614,7 +1614,7 @@ const SettingsModal = memo(function SettingsModal({
                             <VoiceWheelPicker
                               voices={availableVoices}
                               selectedVoiceName={selectedVoiceName}
-                              disabled={!voiceNavEnabled}
+                              disabled={false}
                               onSelect={(value) => {
                                 setSelectedVoiceName(value);
                                 if (value === 'auto') {
@@ -1645,7 +1645,6 @@ const SettingsModal = memo(function SettingsModal({
                                   navigationVoice.setVolume(newVolume);
                                 }}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                                disabled={!voiceNavEnabled}
                               />
                             </div>
 
@@ -1666,7 +1665,6 @@ const SettingsModal = memo(function SettingsModal({
                                     setVoiceNavRate(0.6);
                                     navigationVoice.updateSettings({ rate: 0.6 });
                                   }}
-                                  disabled={!voiceNavEnabled}
                                 >
                                   Slow
                                 </Button>
@@ -1677,7 +1675,6 @@ const SettingsModal = memo(function SettingsModal({
                                     setVoiceNavRate(0.8);
                                     navigationVoice.updateSettings({ rate: 0.8 });
                                   }}
-                                  disabled={!voiceNavEnabled}
                                 >
                                   Normal
                                 </Button>
@@ -1688,7 +1685,6 @@ const SettingsModal = memo(function SettingsModal({
                                     setVoiceNavRate(1.0);
                                     navigationVoice.updateSettings({ rate: 1.0 });
                                   }}
-                                  disabled={!voiceNavEnabled}
                                 >
                                   Fast
                                 </Button>
@@ -1710,7 +1706,6 @@ const SettingsModal = memo(function SettingsModal({
                                 onClick={() => {
                                   navigationVoice.testVoice();
                                 }}
-                                disabled={!voiceNavEnabled}
                               >
                                 <Play className="w-4 h-4 mr-1" />
                                 Test
