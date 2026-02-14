@@ -2406,28 +2406,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, []);
 
   // Helper: Render route layers
+  const lastNearestIndexRef = useRef(0);
+  const truckMarkerElementRef = useRef<HTMLDivElement | null>(null);
+
   const renderRouteLayers = useCallback(() => {
     if (!map.current) return;
     
-    // HEALTH & SAFETY: Use persistent cache if currentRoute is temporarily unavailable during navigation
     let sourceCoords = currentRoute?.routePath;
     if (!sourceCoords || sourceCoords.length < 2) {
       if (isNavigating && persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
-        console.log('[ROUTE-RENDER] Using persistent navigation cache -', persistentNavRouteRef.current.length, 'coordinates');
         sourceCoords = persistentNavRouteRef.current;
       } else {
-        console.log('[ROUTE-RENDER] No route data available');
         return;
       }
     }
     
-    console.log('[ROUTE-RENDER] Drawing route with', sourceCoords.length, 'coordinates');
-    
-    // CRITICAL FIX: Validate all coordinates are valid numbers before passing to MapLibre
-    // This prevents "coordinates must contain numbers" errors during navigation
     let routeCoordinates = sourceCoords
       .filter(coord => {
-        // Ensure coord exists and has valid numeric lat/lng
         if (!coord) return false;
         const hasValidLng = typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng);
         const hasValidLat = typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat);
@@ -2435,15 +2430,26 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       })
       .map(coord => [coord.lng, coord.lat]);
     
-    // Ensure we have at least 2 valid coordinates to form a line
     if (routeCoordinates.length < 2) {
-      console.warn('[ROUTE-RENDER] Insufficient valid coordinates:', routeCoordinates.length, '- need at least 2');
       return;
     }
 
-    // During navigation, show only remaining route from current GPS position
-    // CRITICAL: Only clip route if GPS coordinates are valid (non-zero, non-NaN)
-    // Uses ref to avoid dependency on gpsPosition which would cause effect cascade
+    const deduplicated: number[][] = [routeCoordinates[0]];
+    for (let i = 1; i < routeCoordinates.length; i++) {
+      const prev = deduplicated[deduplicated.length - 1];
+      const curr = routeCoordinates[i];
+      const dx = curr[0] - prev[0];
+      const dy = curr[1] - prev[1];
+      if (dx * dx + dy * dy > 1e-12) {
+        deduplicated.push(curr);
+      }
+    }
+    routeCoordinates = deduplicated;
+    
+    if (routeCoordinates.length < 2) {
+      return;
+    }
+
     const liveGps = gpsPositionRef.current;
     const hasValidGPS = isNavigating && 
       liveGps && 
@@ -2455,17 +2461,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       liveGps.longitude !== 0;
     
     if (hasValidGPS) {
-      const currentPoint = [liveGps.longitude, liveGps.latitude];
+      const gpLng = liveGps.longitude;
+      const gpLat = liveGps.latitude;
       
       try {
-        // Find nearest point on route to current GPS position
         let minDistance = Infinity;
         let nearestIndex = 0;
         
-        for (let i = 0; i < routeCoordinates.length; i++) {
-          const dx = routeCoordinates[i][0] - currentPoint[0];
-          const dy = routeCoordinates[i][1] - currentPoint[1];
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        const lastIdx = lastNearestIndexRef.current;
+        const searchStart = Math.max(0, lastIdx - 5);
+        const searchEnd = Math.min(routeCoordinates.length, lastIdx + 80);
+        
+        for (let i = searchStart; i < searchEnd; i++) {
+          const dx = routeCoordinates[i][0] - gpLng;
+          const dy = routeCoordinates[i][1] - gpLat;
+          const distance = dx * dx + dy * dy;
           
           if (distance < minDistance) {
             minDistance = distance;
@@ -2473,20 +2483,47 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           }
         }
         
-        // Show route from nearest point to destination (dynamic shortening)
+        if (minDistance > 0.0001) {
+          let fullMinDist = minDistance;
+          let fullNearestIdx = nearestIndex;
+          for (let i = 0; i < routeCoordinates.length; i++) {
+            if (i >= searchStart && i < searchEnd) continue;
+            const dx = routeCoordinates[i][0] - gpLng;
+            const dy = routeCoordinates[i][1] - gpLat;
+            const distance = dx * dx + dy * dy;
+            if (distance < fullMinDist) {
+              fullMinDist = distance;
+              fullNearestIdx = i;
+            }
+          }
+          nearestIndex = fullNearestIdx;
+        }
+        
+        lastNearestIndexRef.current = nearestIndex;
+        
         if (nearestIndex > 0 && nearestIndex < routeCoordinates.length - 1) {
-          routeCoordinates = routeCoordinates.slice(nearestIndex);
-          console.log(`[ROUTE-UPDATE] Route shortened - ${nearestIndex} points removed, ${routeCoordinates.length} remaining`);
+          const projIdx = nearestIndex;
+          const seg = routeCoordinates[projIdx];
+          const nextSeg = routeCoordinates[Math.min(projIdx + 1, routeCoordinates.length - 1)];
+          
+          const sdx = nextSeg[0] - seg[0];
+          const sdy = nextSeg[1] - seg[1];
+          const segLen = sdx * sdx + sdy * sdy;
+          
+          if (segLen > 1e-14) {
+            const t = Math.max(0, Math.min(1, ((gpLng - seg[0]) * sdx + (gpLat - seg[1]) * sdy) / segLen));
+            const projLng = seg[0] + t * sdx;
+            const projLat = seg[1] + t * sdy;
+            routeCoordinates = [[projLng, projLat], ...routeCoordinates.slice(projIdx + 1)];
+          } else {
+            routeCoordinates = routeCoordinates.slice(nearestIndex);
+          }
         }
       } catch (error) {
-        console.warn('Failed to calculate remaining route:', error);
+        console.warn('[ROUTE-RENDER] Route clipping failed - showing full route:', error);
       }
-    } else if (isNavigating) {
-      // GPS unavailable during navigation - show full route without clipping
-      console.log('[ROUTE-RENDER] Navigation active but GPS unavailable - showing full route');
     }
     
-    // CRITICAL: Cache the GeoJSON for rebuilding after style changes
     const geoJsonData: GeoJSON.Feature<GeoJSON.LineString> = {
       type: 'Feature',
       properties: {},
@@ -2497,78 +2534,89 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     cachedRouteGeoJsonRef.current = geoJsonData;
 
-    if (!map.current.getSource('route')) {
-      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - TomTom Blue #0067FF, thicker widths');
-      map.current.addSource('route', {
-        type: 'geojson',
-        data: geoJsonData
-      });
+    try {
+      if (!map.current.getSource('route')) {
+        map.current.addSource('route', {
+          type: 'geojson',
+          data: geoJsonData
+        });
 
-      // Add route outline (white background for visibility) - matches traffic layer widths
-      map.current.addLayer({
-        id: 'route-outline',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 6,
-            12, 10,
-            16, 14,
-            20, 18
-          ],
-          'line-opacity': 0.9
-        }
-      });
-
-      // Add route line on top - darker blue #0067FF for professional appearance
-      map.current.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#0067FF',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 4,
-            12, 8,
-            16, 12,
-            20, 16
-          ],
-          'line-opacity': 0.95
-        }
-      });
-
-      console.log('[ROUTE-RENDER] ✅ Route layers added (wider TomTom GO style)');
-    } else {
-      console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
-      const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
-      if (source && source.setData) {
-        source.setData({
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: routeCoordinates
+        map.current.addLayer({
+          id: 'route-outline',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              5, 6,
+              12, 10,
+              16, 14,
+              20, 18
+            ],
+            'line-opacity': 0.9
           }
         });
+
+        map.current.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#0067FF',
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              5, 4,
+              12, 8,
+              16, 12,
+              20, 16
+            ],
+            'line-opacity': 0.95
+          }
+        });
+      } else {
+        const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
+        if (source && source.setData) {
+          try {
+            source.setData(geoJsonData);
+          } catch (setDataError) {
+            console.warn('[ROUTE-RENDER] setData failed - rebuilding source:', setDataError);
+            try {
+              if (map.current.getLayer('route-traffic-overlay-layer')) map.current.removeLayer('route-traffic-overlay-layer');
+              if (map.current.getLayer('route-line')) map.current.removeLayer('route-line');
+              if (map.current.getLayer('route-outline')) map.current.removeLayer('route-outline');
+              if (map.current.getSource('route')) map.current.removeSource('route');
+            } catch (_) {}
+            map.current.addSource('route', { type: 'geojson', data: geoJsonData });
+            ensureRouteLayers();
+          }
+        }
+      }
+    } catch (layerError) {
+      console.warn('[ROUTE-RENDER] Layer creation failed - attempting recovery:', layerError);
+      try {
+        if (map.current.getLayer('route-line')) map.current.removeLayer('route-line');
+        if (map.current.getLayer('route-outline')) map.current.removeLayer('route-outline');
+        if (map.current.getSource('route')) map.current.removeSource('route');
+        map.current.addSource('route', { type: 'geojson', data: geoJsonData });
+        ensureRouteLayers();
+      } catch (recoveryError) {
+        console.error('[ROUTE-RENDER] Recovery failed:', recoveryError);
       }
     }
     
-    // CRITICAL: Always move route layers to top to ensure visibility over satellite/label layers
     try {
       if (map.current.getLayer('route-outline')) {
         map.current.moveLayer('route-outline');
@@ -2576,75 +2624,63 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (map.current.getLayer('route-line')) {
         map.current.moveLayer('route-line');
       }
-      // TRAFFIC FIX: Always move traffic overlay above route line
       if (map.current.getLayer('route-traffic-overlay-layer')) {
         map.current.moveLayer('route-traffic-overlay-layer');
       }
-      console.log('[ROUTE-RENDER] ✅ Route layers moved to top for visibility');
-    } catch (e) {
-      // Layer might already be on top or not exist yet
-    }
+    } catch (e) {}
 
-    // Add destination flag marker at the end of the route (ONLY in preview mode, hide during navigation)
-    // During active navigation, the flag clutters the view - driver knows destination
     if (map.current && map.current.isStyleLoaded()) {
       try {
         const layers = map.current.getStyle().layers;
         layers.forEach((layer: any) => {
           if (layer.id.includes('road') || layer.id.includes('tunnel') || layer.id.includes('bridge')) {
             if (layer.type === 'line') {
-              // Ensure road lines are not black in road mode (fix for black line issue)
               if (preferences.mapViewMode === 'roads') {
                 map.current?.setPaintProperty(layer.id, 'line-color', '#ffffff');
               }
             }
           }
         });
-      } catch (e) {
-        console.warn('[MAP-ROADS] Style cleanup failed:', e);
-      }
+      } catch (e) {}
     }
 
     if (routeCoordinates.length > 0) {
       const firstCoord = routeCoordinates[0];
-      const lastCoord = routeCoordinates[routeCoordinates.length - 1];
       
-      // Add truck icon at start of route during navigation (after GO button pressed)
-      // This shows vehicle position at the southern end of the clipped route line
       if (isNavigating && firstCoord && firstCoord[0] !== 0 && firstCoord[1] !== 0) {
         if (startMarkerRef.current) {
-          startMarkerRef.current.remove();
-        }
-        const truckEl = document.createElement('div');
-        truckEl.style.zIndex = '9999';
-        const markerSize = 24;
-        truckEl.innerHTML = `
-          <img 
-            src="/truck-marker-icon.png" 
-            width="${markerSize}" 
-            height="${markerSize}" 
-            style="
-              object-fit: contain;
-              filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-              border-radius: 2px;
-            "
-            alt="Vehicle"
-          />
-        `;
-        startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'top' })
-          .setLngLat(firstCoord as [number, number])
-          .addTo(map.current);
-        
-        // Ensure parent element also has high z-index
-        setTimeout(() => {
-          if (truckEl.parentElement) {
-            truckEl.parentElement.style.zIndex = '9999';
+          startMarkerRef.current.setLngLat(firstCoord as [number, number]);
+        } else {
+          if (!truckMarkerElementRef.current) {
+            const truckEl = document.createElement('div');
+            truckEl.style.zIndex = '9999';
+            const markerSize = 24;
+            truckEl.innerHTML = `
+              <img 
+                src="/truck-marker-icon.png" 
+                width="${markerSize}" 
+                height="${markerSize}" 
+                style="
+                  object-fit: contain;
+                  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+                  border-radius: 2px;
+                "
+                alt="Vehicle"
+              />
+            `;
+            truckMarkerElementRef.current = truckEl;
           }
-        }, 0);
-        
-        console.log('[ROUTE-MARKER] Truck icon placed at route start:', firstCoord);
+          startMarkerRef.current = new maplibregl.Marker({ element: truckMarkerElementRef.current, anchor: 'top' })
+            .setLngLat(firstCoord as [number, number])
+            .addTo(map.current);
+          
+          setTimeout(() => {
+            if (truckMarkerElementRef.current?.parentElement) {
+              truckMarkerElementRef.current.parentElement.style.zIndex = '9999';
+            }
+          }, 0);
+        }
       } else if (!isNavigating && startMarkerRef.current) {
-        // Remove truck icon when not navigating
         startMarkerRef.current.remove();
         startMarkerRef.current = null;
       }
@@ -2654,7 +2690,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         destinationMarkerRef.current = null;
       }
     } else {
-      // Remove markers when no route
       if (startMarkerRef.current) {
         startMarkerRef.current.remove();
         startMarkerRef.current = null;
@@ -2665,14 +2700,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
 
-    // Only auto-fit bounds when not navigating (during planning)
     if (!isNavigating && routeCoordinates.length >= 2) {
       const bounds = new maplibregl.LngLatBounds();
       if (safeExtendBounds(bounds, routeCoordinates as [number, number][])) {
         map.current.fitBounds(bounds, { padding: 50, duration: 400 });
       }
     }
-  }, [currentRoute, isNavigating]);
+  }, [currentRoute, isNavigating, ensureRouteLayers]);
 
   // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
