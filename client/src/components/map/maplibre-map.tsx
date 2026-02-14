@@ -2426,7 +2426,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const layersOnTopRef = useRef(false);
 
   const renderRouteLayers = useCallback(() => {
-    if (!map.current) return;
+    if (!map.current || !map.current.isStyleLoaded()) return;
     
     let sourceCoords = currentRoute?.routePath;
     if (!sourceCoords || sourceCoords.length < 2) {
@@ -2459,7 +2459,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
       processedRouteCoordsRef.current = routeCoordinates;
       processedRouteSourceRef.current = sourceCoords;
-      layersOnTopRef.current = false;
     }
     
     if (routeCoordinates.length < 2) {
@@ -2635,20 +2634,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
     
-    if (!layersOnTopRef.current) {
-      try {
-        if (map.current.getLayer('route-outline')) {
-          map.current.moveLayer('route-outline');
-        }
-        if (map.current.getLayer('route-line')) {
-          map.current.moveLayer('route-line');
-        }
-        if (map.current.getLayer('route-traffic-overlay-layer')) {
-          map.current.moveLayer('route-traffic-overlay-layer');
-        }
-        layersOnTopRef.current = true;
-      } catch (e) {}
-    }
+    try {
+      if (map.current.getLayer('route-outline')) {
+        map.current.moveLayer('route-outline');
+      }
+      if (map.current.getLayer('route-line')) {
+        map.current.moveLayer('route-line');
+      }
+      if (map.current.getLayer('route-traffic-overlay-layer')) {
+        map.current.moveLayer('route-traffic-overlay-layer');
+      }
+    } catch (e) {}
 
     if (routeCoordinates.length > 0) {
       const firstCoord = routeCoordinates[0];
@@ -2860,8 +2856,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (isNavigating && hasRouteData) {
       console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
       console.log('[ROUTE-NAV-STATE] Route has', routeCoords!.length, 'coordinates (from', currentRoute?.routePath ? 'currentRoute' : 'persistentCache', ')');
-      
-      layersOnTopRef.current = false;
       
       const renderNow = () => {
         if (!map.current || !map.current.isStyleLoaded()) return;
