@@ -1952,79 +1952,16 @@ function NavigationPageContent() {
     return () => clearInterval(interval);
   }, [mobileNavMode]);
   
-  // Real-time bearing rotation during navigation - BULLETPROOF with route fallback
   useEffect(() => {
-    const updateBearing = () => {
-      if (!mapRef.current || !isNavigating) {
-        // When not navigating, just track the current bearing for compass display
-        if (mapRef.current) {
-          const bearing = mapRef.current.getBearing();
-          setMapBearing(bearing);
-        }
-        return;
-      }
-
-      try {
-        const mapInstance = mapRef.current.getMap();
-        if (!mapInstance) return;
-
-        let targetBearing: number | null = null;
-
-        // Priority 1: Use GPS heading if available
-        if (gpsData?.position?.smoothedHeading !== null && gpsData?.position?.smoothedHeading !== undefined) {
-          targetBearing = gpsData.position.smoothedHeading;
-        }
-        // Priority 2: Calculate bearing from route direction (works without GPS!)
-        else if (currentRoute && currentRoute.routePath && currentRoute.routePath.length >= 2) {
-          const path = currentRoute.routePath;
-          // Use first two points to determine route direction
-          const start = path[0];
-          const end = path[1];
-          
-          // Calculate bearing between two points
-          const lon1 = start.lng * Math.PI / 180;
-          const lon2 = end.lng * Math.PI / 180;
-          const lat1 = start.lat * Math.PI / 180;
-          const lat2 = end.lat * Math.PI / 180;
-          
-          const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-          const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
-          const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-          
-          targetBearing = bearing;
-        }
-
-        if (targetBearing !== null) {
-          const currentBearing = mapRef.current.getBearing();
-          
-          // Only update if significant change (>5 degrees) to prevent jitter
-          let delta = targetBearing - currentBearing;
-          
-          // Normalize delta to [-180, 180] for shortest rotation path
-          while (delta > 180) delta -= 360;
-          while (delta < -180) delta += 360;
-          
-          const normalizedDelta = Math.abs(delta);
-          
-          if (normalizedDelta > 5) {
-            mapInstance.easeTo({
-              bearing: targetBearing,
-              duration: 800,
-              easing: (t) => t * (2 - t)
-            });
-          }
-          
-          setMapBearing(targetBearing);
-        }
-      } catch (err) {
-        console.error('[NAV] Bearing update failed:', err);
-      }
+    if (!mapRef.current) return;
+    const trackBearing = () => {
+      if (!mapRef.current) return;
+      const bearing = mapRef.current.getBearing();
+      setMapBearing(bearing);
     };
-
-    const interval = setInterval(updateBearing, 500);
-    
+    const interval = setInterval(trackBearing, 250);
     return () => clearInterval(interval);
-  }, [isNavigating, gpsData?.position?.smoothedHeading, currentRoute]);
+  }, [isNavigating]);
   
   // Extract current road name from GPS position for speedometer display
   useEffect(() => {
