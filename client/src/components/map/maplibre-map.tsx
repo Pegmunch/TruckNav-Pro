@@ -1078,6 +1078,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       console.log('[RESET-NAV-CAMERA] Resetting to default navigation view (flyby style)');
       
+      viewStateRef.current = 'tilted';
       setViewState('tilted');
       userPreferredZoomRef.current = 16.5;
       
@@ -2870,12 +2871,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           ensureRouteLayers();
         }
         renderRouteLayers();
+        try {
+          if (map.current.getLayer('route-outline')) {
+            map.current.moveLayer('route-outline');
+          }
+          if (map.current.getLayer('route-line')) {
+            map.current.moveLayer('route-line');
+          }
+        } catch (e) {}
       };
       
       renderNow();
-      setTimeout(() => {
-        if (!map.current?.getLayer('route-line')) renderNow();
-      }, 150);
+      setTimeout(() => renderNow(), 100);
+      setTimeout(() => renderNow(), 300);
     }
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
@@ -4157,20 +4165,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.55)}px`);
       console.log('[3D-NAV] ==========================================');
       
-      // Reset user's preferred zoom to default when navigation starts
       userPreferredZoomRef.current = 16.5;
       
-      // Calculate pitch based on current view state (respect user's tilt preference)
-      const targetPitch = viewState === 'tilted' ? 60 : 0;
-      const targetBearing = viewState === 'normal' ? 0 : useBearing;
+      viewStateRef.current = 'tilted';
+      setViewState('tilted');
       
-      // Apply TomTom GO style 3D navigation view
       try {
         mapInstance.easeTo({
           center: [centerLng, centerLat],
-          zoom: userPreferredZoomRef.current, // Street-level zoom for navigation
-          pitch: targetPitch, // Respect viewState: tilted=60°, overhead/normal=0°
-          bearing: targetBearing, // Heading-up rotation (or north-up for normal)
+          zoom: userPreferredZoomRef.current,
+          pitch: 60,
+          bearing: useBearing,
           padding: {
             top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
             bottom: 40, // Reduced gap - route extends closer to speedometer
@@ -4361,10 +4366,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             // - Pitch respects user's viewState preference (3-state tilt control)
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
-            // Calculate pitch and bearing based on current view state (respect user's tilt preference)
-            // tilted = 60° pitch (3D perspective), overhead = 0° pitch (keeps heading), normal = 0° pitch + north-up
-            const targetPitch = viewState === 'tilted' ? 60 : 0;
-            const targetBearing = viewState === 'normal' ? 0 : bearing;
+            const currentViewState = viewStateRef.current;
+            const targetPitch = currentViewState === 'tilted' ? 60 : 0;
+            const targetBearing = currentViewState === 'normal' ? 0 : bearing;
             
             try {
               const easeToOptions: maplibregl.EaseToOptions = {
@@ -4430,7 +4434,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Only reset initial view flag when NAVIGATION STOPS (not on every GPS update)
       // This prevents zoom from being reset to 16.5 on each GPS position change
     };
-  }, [isNavigating, isLoaded, gpsPosition, currentRoute, viewState]);
+  }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
   
   // Separate effect to reset initial view flag when navigation ENDS
   useEffect(() => {
