@@ -177,145 +177,278 @@ function saveSettings<T>(key: string, settings: T): void {
   }
 }
 
+const LANG_COUNTRY_MAP: Record<string, { flag: string; country: string; nativeLang: string }> = {
+  'en-US': { flag: '🇺🇸', country: 'United States', nativeLang: 'English' },
+  'en-GB': { flag: '🇬🇧', country: 'United Kingdom', nativeLang: 'English' },
+  'en-AU': { flag: '🇦🇺', country: 'Australia', nativeLang: 'English' },
+  'en-CA': { flag: '🇨🇦', country: 'Canada', nativeLang: 'English' },
+  'en-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'English' },
+  'en-IE': { flag: '🇮🇪', country: 'Ireland', nativeLang: 'English' },
+  'en-NZ': { flag: '🇳🇿', country: 'New Zealand', nativeLang: 'English' },
+  'en-ZA': { flag: '🇿🇦', country: 'South Africa', nativeLang: 'English' },
+  'en-SG': { flag: '🇸🇬', country: 'Singapore', nativeLang: 'English' },
+  'en': { flag: '🇬🇧', country: 'English', nativeLang: 'English' },
+  'de-DE': { flag: '🇩🇪', country: 'Deutschland', nativeLang: 'Deutsch' },
+  'de-AT': { flag: '🇦🇹', country: 'Österreich', nativeLang: 'Deutsch' },
+  'de-CH': { flag: '🇨🇭', country: 'Schweiz', nativeLang: 'Deutsch' },
+  'de': { flag: '🇩🇪', country: 'Deutschland', nativeLang: 'Deutsch' },
+  'fr-FR': { flag: '🇫🇷', country: 'France', nativeLang: 'Français' },
+  'fr-CA': { flag: '🇨🇦', country: 'Canada', nativeLang: 'Français' },
+  'fr-BE': { flag: '🇧🇪', country: 'Belgique', nativeLang: 'Français' },
+  'fr-CH': { flag: '🇨🇭', country: 'Suisse', nativeLang: 'Français' },
+  'fr': { flag: '🇫🇷', country: 'France', nativeLang: 'Français' },
+  'es-ES': { flag: '🇪🇸', country: 'España', nativeLang: 'Español' },
+  'es-MX': { flag: '🇲🇽', country: 'México', nativeLang: 'Español' },
+  'es-AR': { flag: '🇦🇷', country: 'Argentina', nativeLang: 'Español' },
+  'es-CO': { flag: '🇨🇴', country: 'Colombia', nativeLang: 'Español' },
+  'es-CL': { flag: '🇨🇱', country: 'Chile', nativeLang: 'Español' },
+  'es-US': { flag: '🇺🇸', country: 'Estados Unidos', nativeLang: 'Español' },
+  'es': { flag: '🇪🇸', country: 'España', nativeLang: 'Español' },
+  'it-IT': { flag: '🇮🇹', country: 'Italia', nativeLang: 'Italiano' },
+  'it': { flag: '🇮🇹', country: 'Italia', nativeLang: 'Italiano' },
+  'pt-BR': { flag: '🇧🇷', country: 'Brasil', nativeLang: 'Português' },
+  'pt-PT': { flag: '🇵🇹', country: 'Portugal', nativeLang: 'Português' },
+  'pt': { flag: '🇵🇹', country: 'Portugal', nativeLang: 'Português' },
+  'nl-NL': { flag: '🇳🇱', country: 'Nederland', nativeLang: 'Nederlands' },
+  'nl-BE': { flag: '🇧🇪', country: 'België', nativeLang: 'Nederlands' },
+  'nl': { flag: '🇳🇱', country: 'Nederland', nativeLang: 'Nederlands' },
+  'pl-PL': { flag: '🇵🇱', country: 'Polska', nativeLang: 'Polski' },
+  'pl': { flag: '🇵🇱', country: 'Polska', nativeLang: 'Polski' },
+  'ro-RO': { flag: '🇷🇴', country: 'România', nativeLang: 'Română' },
+  'ro': { flag: '🇷🇴', country: 'România', nativeLang: 'Română' },
+  'ru-RU': { flag: '🇷🇺', country: 'Россия', nativeLang: 'Русский' },
+  'ru': { flag: '🇷🇺', country: 'Россия', nativeLang: 'Русский' },
+  'tr-TR': { flag: '🇹🇷', country: 'Türkiye', nativeLang: 'Türkçe' },
+  'tr': { flag: '🇹🇷', country: 'Türkiye', nativeLang: 'Türkçe' },
+  'ar-SA': { flag: '🇸🇦', country: 'السعودية', nativeLang: 'العربية' },
+  'ar-AE': { flag: '🇦🇪', country: 'الإمارات', nativeLang: 'العربية' },
+  'ar-EG': { flag: '🇪🇬', country: 'مصر', nativeLang: 'العربية' },
+  'ar': { flag: '🇸🇦', country: 'العربية', nativeLang: 'العربية' },
+  'hi-IN': { flag: '🇮🇳', country: 'भारत', nativeLang: 'हिन्दी' },
+  'hi': { flag: '🇮🇳', country: 'भारत', nativeLang: 'हिन्दी' },
+  'zh-CN': { flag: '🇨🇳', country: '中国', nativeLang: '中文' },
+  'zh-TW': { flag: '🇹🇼', country: '台灣', nativeLang: '中文' },
+  'zh-HK': { flag: '🇭🇰', country: '香港', nativeLang: '中文' },
+  'zh': { flag: '🇨🇳', country: '中国', nativeLang: '中文' },
+  'ja-JP': { flag: '🇯🇵', country: '日本', nativeLang: '日本語' },
+  'ja': { flag: '🇯🇵', country: '日本', nativeLang: '日本語' },
+  'ko-KR': { flag: '🇰🇷', country: '한국', nativeLang: '한국어' },
+  'ko': { flag: '🇰🇷', country: '한국', nativeLang: '한국어' },
+  'sv-SE': { flag: '🇸🇪', country: 'Sverige', nativeLang: 'Svenska' },
+  'sv': { flag: '🇸🇪', country: 'Sverige', nativeLang: 'Svenska' },
+  'da-DK': { flag: '🇩🇰', country: 'Danmark', nativeLang: 'Dansk' },
+  'da': { flag: '🇩🇰', country: 'Danmark', nativeLang: 'Dansk' },
+  'no-NO': { flag: '🇳🇴', country: 'Norge', nativeLang: 'Norsk' },
+  'nb-NO': { flag: '🇳🇴', country: 'Norge', nativeLang: 'Norsk Bokmål' },
+  'nn-NO': { flag: '🇳🇴', country: 'Norge', nativeLang: 'Nynorsk' },
+  'no': { flag: '🇳🇴', country: 'Norge', nativeLang: 'Norsk' },
+  'fi-FI': { flag: '🇫🇮', country: 'Suomi', nativeLang: 'Suomi' },
+  'fi': { flag: '🇫🇮', country: 'Suomi', nativeLang: 'Suomi' },
+  'cs-CZ': { flag: '🇨🇿', country: 'Česko', nativeLang: 'Čeština' },
+  'cs': { flag: '🇨🇿', country: 'Česko', nativeLang: 'Čeština' },
+  'hu-HU': { flag: '🇭🇺', country: 'Magyarország', nativeLang: 'Magyar' },
+  'hu': { flag: '🇭🇺', country: 'Magyarország', nativeLang: 'Magyar' },
+  'el-GR': { flag: '🇬🇷', country: 'Ελλάδα', nativeLang: 'Ελληνικά' },
+  'el': { flag: '🇬🇷', country: 'Ελλάδα', nativeLang: 'Ελληνικά' },
+  'he-IL': { flag: '🇮🇱', country: 'ישראל', nativeLang: 'עברית' },
+  'he': { flag: '🇮🇱', country: 'ישראל', nativeLang: 'עברית' },
+  'th-TH': { flag: '🇹🇭', country: 'ประเทศไทย', nativeLang: 'ไทย' },
+  'th': { flag: '🇹🇭', country: 'ประเทศไทย', nativeLang: 'ไทย' },
+  'vi-VN': { flag: '🇻🇳', country: 'Việt Nam', nativeLang: 'Tiếng Việt' },
+  'vi': { flag: '🇻🇳', country: 'Việt Nam', nativeLang: 'Tiếng Việt' },
+  'id-ID': { flag: '🇮🇩', country: 'Indonesia', nativeLang: 'Bahasa Indonesia' },
+  'id': { flag: '🇮🇩', country: 'Indonesia', nativeLang: 'Bahasa Indonesia' },
+  'ms-MY': { flag: '🇲🇾', country: 'Malaysia', nativeLang: 'Bahasa Melayu' },
+  'ms': { flag: '🇲🇾', country: 'Malaysia', nativeLang: 'Bahasa Melayu' },
+  'uk-UA': { flag: '🇺🇦', country: 'Україна', nativeLang: 'Українська' },
+  'uk': { flag: '🇺🇦', country: 'Україна', nativeLang: 'Українська' },
+  'bg-BG': { flag: '🇧🇬', country: 'България', nativeLang: 'Български' },
+  'bg': { flag: '🇧🇬', country: 'България', nativeLang: 'Български' },
+  'hr-HR': { flag: '🇭🇷', country: 'Hrvatska', nativeLang: 'Hrvatski' },
+  'hr': { flag: '🇭🇷', country: 'Hrvatska', nativeLang: 'Hrvatski' },
+  'sk-SK': { flag: '🇸🇰', country: 'Slovensko', nativeLang: 'Slovenčina' },
+  'sk': { flag: '🇸🇰', country: 'Slovensko', nativeLang: 'Slovenčina' },
+  'sl-SI': { flag: '🇸🇮', country: 'Slovenija', nativeLang: 'Slovenščina' },
+  'sl': { flag: '🇸🇮', country: 'Slovenija', nativeLang: 'Slovenščina' },
+  'ca-ES': { flag: '🇪🇸', country: 'Catalunya', nativeLang: 'Català' },
+  'ca': { flag: '🇪🇸', country: 'Catalunya', nativeLang: 'Català' },
+  'eu-ES': { flag: '🇪🇸', country: 'Euskadi', nativeLang: 'Euskara' },
+  'gl-ES': { flag: '🇪🇸', country: 'Galicia', nativeLang: 'Galego' },
+  'cy-GB': { flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', country: 'Cymru', nativeLang: 'Cymraeg' },
+  'ga-IE': { flag: '🇮🇪', country: 'Éire', nativeLang: 'Gaeilge' },
+  'af-ZA': { flag: '🇿🇦', country: 'Suid-Afrika', nativeLang: 'Afrikaans' },
+  'af': { flag: '🇿🇦', country: 'Suid-Afrika', nativeLang: 'Afrikaans' },
+  'sw-KE': { flag: '🇰🇪', country: 'Kenya', nativeLang: 'Kiswahili' },
+  'sw': { flag: '🇰🇪', country: 'Kenya', nativeLang: 'Kiswahili' },
+  'ta-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'தமிழ்' },
+  'te-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'తెలుగు' },
+  'bn-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'বাংলা' },
+  'bn-BD': { flag: '🇧🇩', country: 'Bangladesh', nativeLang: 'বাংলা' },
+  'mr-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'मराठी' },
+  'gu-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'ગુજરાતી' },
+  'kn-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'ಕನ್ನಡ' },
+  'ml-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'മലയാളം' },
+  'pa-IN': { flag: '🇮🇳', country: 'India', nativeLang: 'ਪੰਜਾਬੀ' },
+  'ur-PK': { flag: '🇵🇰', country: 'پاکستان', nativeLang: 'اردو' },
+  'fa-IR': { flag: '🇮🇷', country: 'ایران', nativeLang: 'فارسی' },
+};
+
+function getVoiceCountryInfo(lang: string): { flag: string; country: string; nativeLang: string } {
+  const normalized = lang.replace('_', '-');
+  if (LANG_COUNTRY_MAP[normalized]) return LANG_COUNTRY_MAP[normalized];
+  const base = normalized.split('-')[0];
+  if (LANG_COUNTRY_MAP[base]) return LANG_COUNTRY_MAP[base];
+  return { flag: '🌍', country: lang, nativeLang: lang };
+}
+
+function getVoiceDisplayName(voice: SpeechSynthesisVoice): string {
+  let name = voice.name;
+  name = name.replace(/Microsoft\s+/i, '').replace(/Google\s+/i, '').replace(/Apple\s+/i, '');
+  name = name.replace(/\s*Online\s*(\(Natural\))?/i, '');
+  name = name.replace(/\s*\(Enhanced\)/i, ' *');
+  name = name.replace(/\s*\(Premium\)/i, ' *');
+  return name.trim();
+}
+
+function groupVoicesByLanguage(voices: SpeechSynthesisVoice[]): { groupKey: string; flag: string; groupLabel: string; voices: SpeechSynthesisVoice[] }[] {
+  const groups = new Map<string, { flag: string; groupLabel: string; voices: SpeechSynthesisVoice[] }>();
+
+  for (const voice of voices) {
+    const info = getVoiceCountryInfo(voice.lang);
+    const normalized = voice.lang.replace('_', '-');
+    const groupKey = normalized;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        flag: info.flag,
+        groupLabel: `${info.nativeLang} — ${info.country}`,
+        voices: [],
+      });
+    }
+    groups.get(groupKey)!.voices.push(voice);
+  }
+
+  groups.forEach(g => g.voices.sort((a, b) => a.name.localeCompare(b.name)));
+
+  const sorted = Array.from(groups.entries()).sort(([keyA, a], [keyB, b]) => {
+    const aIsEn = keyA.startsWith('en');
+    const bIsEn = keyB.startsWith('en');
+    if (aIsEn && !bIsEn) return -1;
+    if (!aIsEn && bIsEn) return 1;
+    return a.groupLabel.localeCompare(b.groupLabel);
+  });
+
+  return sorted.map(([groupKey, data]) => ({ groupKey, ...data }));
+}
+
 function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
   voices: SpeechSynthesisVoice[];
   selectedVoiceName: string;
   disabled: boolean;
   onSelect: (value: string) => void;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const itemHeight = 44;
-  const visibleItems = 5;
-  const isScrollingRef = useRef(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const groupedVoices = groupVoicesByLanguage(voices);
 
-  const voiceOptions = [
-    { value: 'auto', label: 'Auto (Female preferred)', lang: '' },
-    ...voices
-      .filter(v => v.lang.startsWith('en'))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map(v => ({ value: v.name, label: v.name, lang: v.lang })),
-    ...voices
-      .filter(v => !v.lang.startsWith('en'))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map(v => ({ value: v.name, label: v.name, lang: v.lang })),
-  ];
-
-  const selectedIndex = voiceOptions.findIndex(v => v.value === selectedVoiceName);
-  const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
+  const selectedVoice = voices.find(v => v.name === selectedVoiceName);
+  const selectedInfo = selectedVoice ? getVoiceCountryInfo(selectedVoice.lang) : null;
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const targetScroll = activeIndex * itemHeight;
-    el.scrollTop = targetScroll;
-  }, [activeIndex, voiceOptions.length]);
-
-  const handleScroll = useCallback(() => {
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    isScrollingRef.current = true;
-    scrollTimeoutRef.current = setTimeout(() => {
-      isScrollingRef.current = false;
-      const el = scrollRef.current;
-      if (!el) return;
-      const scrollPos = el.scrollTop;
-      const snappedIndex = Math.round(scrollPos / itemHeight);
-      const clampedIndex = Math.max(0, Math.min(snappedIndex, voiceOptions.length - 1));
-      el.scrollTo({ top: clampedIndex * itemHeight, behavior: 'smooth' });
-      if (voiceOptions[clampedIndex] && voiceOptions[clampedIndex].value !== selectedVoiceName) {
-        onSelect(voiceOptions[clampedIndex].value);
-      }
-    }, 120);
-  }, [voiceOptions, selectedVoiceName, onSelect, itemHeight]);
-
-  const handleItemClick = useCallback((index: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
-    if (voiceOptions[index]) {
-      onSelect(voiceOptions[index].value);
+    if (selectedVoice) {
+      setExpandedGroup(selectedVoice.lang.replace('_', '-'));
     }
-  }, [voiceOptions, onSelect, itemHeight]);
-
-  const wheelHeight = itemHeight * visibleItems;
-  const paddingItems = Math.floor(visibleItems / 2);
+  }, []);
 
   return (
     <div className="space-y-3">
       <Label className="text-base font-medium">Voice Selection</Label>
       <p className="text-sm text-muted-foreground">
-        Scroll to choose a voice for navigation
+        Choose a country, then pick a voice
       </p>
-      <div
-        className={cn(
-          "relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden",
-          disabled && "opacity-50 pointer-events-none"
-        )}
-        style={{ height: wheelHeight }}
-      >
-        <div
-          className="absolute left-0 right-0 pointer-events-none z-10 border-y-2 border-blue-500 bg-blue-50/30 dark:bg-blue-900/20"
-          style={{
-            top: paddingItems * itemHeight,
-            height: itemHeight,
+      {selectedVoiceName !== 'auto' && selectedInfo && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+          <span className="text-lg">{selectedInfo.flag}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Active voice</p>
+            <p className="text-sm font-semibold truncate">{getVoiceDisplayName(selectedVoice!)}</p>
+          </div>
+        </div>
+      )}
+      <div className={cn(
+        "rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden",
+        disabled && "opacity-50 pointer-events-none"
+      )}>
+        <button
+          type="button"
+          onClick={() => {
+            onSelect('auto');
+            setExpandedGroup(null);
           }}
-        />
-        <div
-          className="absolute left-0 right-0 top-0 pointer-events-none z-10"
-          style={{
-            height: paddingItems * itemHeight,
-            background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)',
-          }}
-        />
-        <div
-          className="absolute left-0 right-0 bottom-0 pointer-events-none z-10"
-          style={{
-            height: paddingItems * itemHeight,
-            background: 'linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)',
-          }}
-        />
-        <div
-          ref={scrollRef}
-          className="h-full overflow-y-auto"
-          onScroll={handleScroll}
-          style={{
-            scrollSnapType: 'y mandatory',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-0 bg-transparent",
+            selectedVoiceName === 'auto'
+              ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold"
+              : "text-foreground hover:bg-muted/50"
+          )}
         >
-          {Array.from({ length: paddingItems }).map((_, i) => (
-            <div key={`pad-top-${i}`} style={{ height: itemHeight }} />
-          ))}
-          {voiceOptions.map((voice, index) => (
-            <button
-              type="button"
-              key={voice.value}
-              onClick={() => handleItemClick(index)}
-              className={cn(
-                "w-full flex items-center justify-between px-4 cursor-pointer transition-all duration-150 select-none border-0 bg-transparent text-left",
-                index === activeIndex
-                  ? "text-foreground font-semibold scale-100"
-                  : "text-muted-foreground font-normal scale-95 opacity-70"
-              )}
-              style={{
-                height: itemHeight,
-                scrollSnapAlign: 'start',
-                touchAction: 'pan-y',
-              }}
-            >
-              <span className="truncate text-sm">{voice.label}</span>
-              {voice.lang && (
-                <span className="text-xs text-muted-foreground ml-2 shrink-0">
-                  {voice.lang}
-                </span>
-              )}
-            </button>
-          ))}
-          {Array.from({ length: paddingItems }).map((_, i) => (
-            <div key={`pad-bot-${i}`} style={{ height: itemHeight }} />
-          ))}
+          <span className="text-lg">🤖</span>
+          <span className="text-sm flex-1">Auto (Female preferred)</span>
+          {selectedVoiceName === 'auto' && (
+            <span className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 px-2 py-0.5 rounded-full">Active</span>
+          )}
+        </button>
+        <div className="max-h-[320px] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {groupedVoices.map((group) => {
+            const isExpanded = expandedGroup === group.groupKey;
+            const hasSelectedVoice = group.voices.some(v => v.name === selectedVoiceName);
+            return (
+              <div key={group.groupKey}>
+                <button
+                  type="button"
+                  onClick={() => setExpandedGroup(isExpanded ? null : group.groupKey)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-0 bg-transparent border-t border-gray-100 dark:border-gray-800",
+                    hasSelectedVoice
+                      ? "bg-blue-50/50 dark:bg-blue-900/20"
+                      : "hover:bg-muted/50"
+                  )}
+                >
+                  <span className="text-lg">{group.flag}</span>
+                  <span className="text-sm flex-1 font-medium">{group.groupLabel}</span>
+                  <span className="text-xs text-muted-foreground">{group.voices.length}</span>
+                  <span className={cn(
+                    "text-xs transition-transform",
+                    isExpanded ? "rotate-90" : ""
+                  )}>▶</span>
+                </button>
+                {isExpanded && (
+                  <div className="bg-muted/30">
+                    {group.voices.map((voice) => {
+                      const isSelected = voice.name === selectedVoiceName;
+                      return (
+                        <button
+                          type="button"
+                          key={voice.name}
+                          onClick={() => onSelect(voice.name)}
+                          className={cn(
+                            "w-full flex items-center gap-2 pl-10 pr-3 py-2 text-left transition-colors border-0 bg-transparent",
+                            isSelected
+                              ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 font-semibold"
+                              : "text-foreground hover:bg-muted/80"
+                          )}
+                        >
+                          <span className="text-sm flex-1 truncate">{getVoiceDisplayName(voice)}</span>
+                          {isSelected && (
+                            <span className="text-xs bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100 px-1.5 py-0.5 rounded-full shrink-0">✓</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       {selectedVoiceName !== 'auto' && (
@@ -323,7 +456,10 @@ function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
           variant="ghost"
           size="sm"
           className="text-xs text-muted-foreground"
-          onClick={() => onSelect('auto')}
+          onClick={() => {
+            onSelect('auto');
+            setExpandedGroup(null);
+          }}
         >
           Reset to auto
         </Button>
