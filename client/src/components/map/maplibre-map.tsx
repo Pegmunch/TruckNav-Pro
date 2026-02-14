@@ -2998,29 +2998,51 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
   const lastRouteUpdateTimeRef = useRef(0);
+  const pendingRouteRenderRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isNavigating || !isLoaded || !map.current) return;
     if (gpsPosition?.latitude == null || gpsPosition?.longitude == null) return;
     if (typeof gpsPosition.latitude !== 'number' || typeof gpsPosition.longitude !== 'number') return;
     
+    gpsPositionRef.current = gpsPosition;
+    
     const now = Date.now();
-    if (now - lastRouteUpdateTimeRef.current < 2000) return;
+    const elapsed = now - lastRouteUpdateTimeRef.current;
+    
+    if (elapsed < 800) {
+      if (!pendingRouteRenderRef.current) {
+        pendingRouteRenderRef.current = window.setTimeout(() => {
+          pendingRouteRenderRef.current = null;
+          lastRouteUpdateTimeRef.current = Date.now();
+          if (!map.current || !map.current.isStyleLoaded()) return;
+          const hasSource = !!map.current.getSource('route');
+          const hasLayer = !!map.current.getLayer('route-line');
+          if (!hasSource || !hasLayer) {
+            ensureRouteLayers();
+          }
+          renderRouteLayers();
+        }, 800 - elapsed);
+      }
+      return;
+    }
     lastRouteUpdateTimeRef.current = now;
     
     if (!map.current.isStyleLoaded()) return;
-    
-    gpsPositionRef.current = gpsPosition;
     
     const hasSource = !!map.current.getSource('route');
     const hasLayer = !!map.current.getLayer('route-line');
     
     if (!hasSource || !hasLayer) {
-      console.log('[ROUTE-GPS] Route layers missing during GPS update - rebuilding');
       ensureRouteLayers();
-      renderRouteLayers();
-    } else {
-      renderRouteLayers();
     }
+    renderRouteLayers();
+    
+    return () => {
+      if (pendingRouteRenderRef.current) {
+        clearTimeout(pendingRouteRenderRef.current);
+        pendingRouteRenderRef.current = null;
+      }
+    };
   }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers]);
 
   // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
@@ -3069,8 +3091,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       previousRouteIdRef.current = currentRouteId;
       previousRoutePathLengthRef.current = currentPathLength;
       
-      // Clear cached data to force fresh render
       cachedRouteGeoJsonRef.current = null;
+      lastNearestIndexRef.current = 0;
       
       // CRITICAL FIX: Update route data seamlessly without removing layers (prevents flickering)
       // Try to update the source data directly first, only remove/re-add if source doesn't exist
