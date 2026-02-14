@@ -4292,7 +4292,7 @@ function NavigationPageContent() {
                       is3DMode={mapControlState.is3DMode}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
-                      bearing={mapControlState.bearing}
+                      bearing={(-mapBearing)}
                       isVisible={showNavControls}
                       hideIncidents={false}
                       compact={true}
@@ -4547,6 +4547,7 @@ function NavigationPageContent() {
                       showMenuButton={false}
                       isCameraAtNavDefault={isCameraAtNavDefault}
                       onResetCamera={handleResetCamera}
+                      bearing={mapBearing}
                       onToggle3D={() => {
                         mapRef.current?.toggle3DMode();
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
@@ -4723,7 +4724,7 @@ function NavigationPageContent() {
                       >
                         <Compass 
                           className="h-5 w-5 transition-transform duration-300"
-                          style={{ transform: `rotate(${mapControlState.bearing}deg)` }}
+                          style={{ transform: `rotate(${(-mapBearing)}deg)` }}
                         />
                       </Button>
                       
@@ -4806,7 +4807,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         isNavigating={true}
                         compact={true}
-                        bearing={mapControlState.bearing}
+                        bearing={(-mapBearing)}
                       />
                     </div>
                   }
@@ -5133,6 +5134,7 @@ function NavigationPageContent() {
                         showMenuButton={false}
                         isCameraAtNavDefault={isCameraAtNavDefault}
                         onResetCamera={handleResetCamera}
+                        bearing={mapBearing}
                         onToggle3D={() => {
                           mapRef.current?.toggle3DMode();
                           setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
@@ -5310,7 +5312,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         showTraffic={showTrafficLayer}
                         isSatelliteView={mapControlState.isSatelliteView}
-                        bearing={mapControlState.bearing}
+                        bearing={(-mapBearing)}
                         isVisible={showNavControls}
                         hideIncidents={false}
                         compact={true}
@@ -5452,6 +5454,7 @@ function NavigationPageContent() {
                         showMenuButton={false}
                         isCameraAtNavDefault={isCameraAtNavDefault}
                         onResetCamera={handleResetCamera}
+                        bearing={mapBearing}
                         onToggle3D={() => {
                           mapRef.current?.toggle3DMode();
                           setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
@@ -5619,7 +5622,7 @@ function NavigationPageContent() {
                         is3DMode={mapControlState.is3DMode}
                         isNavigating={true}
                         compact={true}
-                        bearing={mapControlState.bearing}
+                        bearing={(-mapBearing)}
                       />
                     </div>
 

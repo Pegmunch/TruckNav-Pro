@@ -152,6 +152,7 @@ interface LeftActionStackProps {
   onResetCamera?: () => void;
   onToggle3D?: () => void;
   is3DMode?: boolean;
+  bearing?: number;
 }
 
 const MUTE_STATE_KEY = "trucknav_mute_all_alerts";
@@ -170,7 +171,8 @@ export function LeftActionStack({
   isCameraAtNavDefault = true,
   onResetCamera,
   onToggle3D,
-  is3DMode = false
+  is3DMode = false,
+  bearing = 0
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isMuted, setIsMuted] = useState<boolean>(() => {
@@ -312,14 +314,14 @@ export function LeftActionStack({
   
   return (
     <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* Nav/Tilt button - green at default (tilt toggle), red when camera moved (reset) */}
+      {/* North-up indicator & camera reset - green when facing north, red when rotated */}
       {isNavigating && (
         <Button
           ref={navButtonRef}
           variant="ghost"
           size="icon"
           className={`h-10 w-10 rounded-xl active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            isCameraAtNavDefault
+            Math.abs(bearing) < 5
               ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
               : 'bg-red-500 hover:bg-red-600 active:bg-red-700'
           } ${
@@ -329,7 +331,7 @@ export function LeftActionStack({
           data-testid="button-nav-left"
           data-tour-id="nav-button"
         >
-          <Navigation className="h-5 w-5" style={{ transform: 'rotate(-45deg)' }} />
+          <Navigation className="h-5 w-5" style={{ transform: `rotate(${-bearing - 45}deg)`, transition: 'transform 0.3s ease' }} />
         </Button>
       )}
 
