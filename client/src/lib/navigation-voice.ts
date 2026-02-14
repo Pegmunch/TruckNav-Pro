@@ -210,12 +210,27 @@ export class NavigationVoice {
       return;
     }
     
-    // Try to find the user's preferred voice
     if (this.settings.voice) {
-      this.selectedVoice = this.voices.find(v => v.name === this.settings.voice) || null;
+      const exactMatch = this.voices.find(v => v.name === this.settings.voice);
+      if (exactMatch) {
+        this.selectedVoice = exactMatch;
+        console.log(`[NavigationVoice] Restored user's saved voice: ${exactMatch.name}`);
+        return;
+      }
+      const partialMatch = this.voices.find(v => 
+        v.name.toLowerCase().includes(this.settings.voice!.toLowerCase()) ||
+        this.settings.voice!.toLowerCase().includes(v.name.toLowerCase())
+      );
+      if (partialMatch) {
+        this.selectedVoice = partialMatch;
+        this.settings.voice = partialMatch.name;
+        this.saveSettings();
+        console.log(`[NavigationVoice] Restored user's voice via partial match: ${partialMatch.name}`);
+        return;
+      }
+      console.log(`[NavigationVoice] Saved voice "${this.settings.voice}" not found in ${this.voices.length} available voices`);
     }
     
-    // If no preferred voice or not found, select based on language
     if (!this.selectedVoice) {
       this.selectVoiceForLanguage(this.settings.language);
     }
@@ -286,7 +301,9 @@ export class NavigationVoice {
   public setLanguage(langCode: string): void {
     this.settings.language = langCode;
     this.saveSettings();
-    this.selectVoiceForLanguage(langCode);
+    if (!this.settings.voice) {
+      this.selectVoiceForLanguage(langCode);
+    }
     console.log(`[NavigationVoice] Language set to ${langCode}`);
   }
   
@@ -299,15 +316,12 @@ export class NavigationVoice {
   
   /**
    * Load settings from localStorage
-   * Always ensures volume is at maximum (1.0) for clear navigation audio
    */
   private loadSettings(): VoiceSettings {
     try {
       const stored = localStorage.getItem('trucknav_voice_settings');
       if (stored) {
         const parsedSettings = { ...this.DEFAULT_SETTINGS, ...JSON.parse(stored) };
-        // ALWAYS force maximum volume for clear navigation audio
-        parsedSettings.volume = 1.0;
         return parsedSettings;
       }
     } catch (error) {
@@ -553,6 +567,14 @@ export class NavigationVoice {
     
     if (this.voices.length === 0 || !this.selectedVoice) {
       this.loadVoices();
+    }
+    
+    if (!this.selectedVoice && this.settings.voice && this.voices.length > 0) {
+      const savedVoice = this.voices.find(v => v.name === this.settings.voice);
+      if (savedVoice) {
+        this.selectedVoice = savedVoice;
+        console.log(`[NavigationVoice] Late-resolved saved voice: ${savedVoice.name}`);
+      }
     }
     
     this.synthesis.cancel();
@@ -956,6 +978,14 @@ export class NavigationVoice {
       this.loadVoices();
     }
     
+    if (!this.selectedVoice && this.settings.voice && this.voices.length > 0) {
+      const savedVoice = this.voices.find(v => v.name === this.settings.voice);
+      if (savedVoice) {
+        this.selectedVoice = savedVoice;
+        console.log(`[NavigationVoice] Test: late-resolved saved voice: ${savedVoice.name}`);
+      }
+    }
+    
     this.synthesis.cancel();
     
     const testText = 'Voice navigation is ready. Turn left in 500 feet onto High Street.';
@@ -1061,11 +1091,18 @@ export class NavigationVoice {
     this.settings.voice = voiceName;
     this.settings.preferFemaleVoice = false;
     this.saveSettings();
+    
+    if (this.voices.length === 0) {
+      this.voices = this.synthesis?.getVoices() || [];
+    }
+    
     const voice = this.voices.find(v => v.name === voiceName);
     if (voice) {
       this.selectedVoice = voice;
+      console.log(`[NavigationVoice] Voice manually set to: ${voiceName}`);
+    } else {
+      console.log(`[NavigationVoice] Voice "${voiceName}" saved but not yet in voices list (${this.voices.length} voices loaded). Will apply when voices load.`);
     }
-    console.log(`[NavigationVoice] Voice manually set to: ${voiceName}`);
   }
 
   /**
@@ -1142,6 +1179,13 @@ export class NavigationVoice {
     
     if (this.voices.length === 0 || !this.selectedVoice) {
       this.loadVoices();
+    }
+    
+    if (!this.selectedVoice && this.settings.voice && this.voices.length > 0) {
+      const savedVoice = this.voices.find(v => v.name === this.settings.voice);
+      if (savedVoice) {
+        this.selectedVoice = savedVoice;
+      }
     }
     
     this.synthesis.cancel();
