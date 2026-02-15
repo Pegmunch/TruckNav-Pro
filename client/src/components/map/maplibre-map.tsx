@@ -2428,6 +2428,96 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const processedRouteCoordsRef = useRef<number[][] | null>(null);
   const processedRouteSourceRef = useRef<any>(null);
   const layersOnTopRef = useRef(false);
+  const lastClipIndexRef = useRef(-1);
+
+  const updateRouteClipping = useCallback(() => {
+    if (!map.current || !map.current.isStyleLoaded()) return;
+    const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
+    if (!source || !source.setData) return;
+
+    const liveGps = gpsPositionRef.current;
+    if (!liveGps || typeof liveGps.latitude !== 'number' || typeof liveGps.longitude !== 'number' ||
+        isNaN(liveGps.latitude) || isNaN(liveGps.longitude) || liveGps.latitude === 0 || liveGps.longitude === 0) return;
+
+    let fullCoords = processedRouteCoordsRef.current;
+    if (!fullCoords || fullCoords.length < 2) return;
+
+    const gpLng = liveGps.longitude;
+    const gpLat = liveGps.latitude;
+
+    let minDistance = Infinity;
+    let nearestIndex = 0;
+    const lastIdx = lastNearestIndexRef.current;
+    const searchStart = Math.max(0, lastIdx - 5);
+    const searchEnd = Math.min(fullCoords.length, lastIdx + 80);
+
+    for (let i = searchStart; i < searchEnd; i++) {
+      const dx = fullCoords[i][0] - gpLng;
+      const dy = fullCoords[i][1] - gpLat;
+      const distance = dx * dx + dy * dy;
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestIndex = i;
+      }
+    }
+
+    if (minDistance > 0.0001) {
+      let fullMinDist = minDistance;
+      let fullNearestIdx = nearestIndex;
+      for (let i = 0; i < fullCoords.length; i++) {
+        if (i >= searchStart && i < searchEnd) continue;
+        const dx = fullCoords[i][0] - gpLng;
+        const dy = fullCoords[i][1] - gpLat;
+        const distance = dx * dx + dy * dy;
+        if (distance < fullMinDist) {
+          fullMinDist = distance;
+          fullNearestIdx = i;
+        }
+      }
+      nearestIndex = fullNearestIdx;
+    }
+
+    if (nearestIndex === lastClipIndexRef.current) return;
+    lastClipIndexRef.current = nearestIndex;
+    lastNearestIndexRef.current = nearestIndex;
+
+    let clippedCoords: number[][];
+    if (nearestIndex > 0 && nearestIndex < fullCoords.length - 1) {
+      const seg = fullCoords[nearestIndex];
+      const nextSeg = fullCoords[Math.min(nearestIndex + 1, fullCoords.length - 1)];
+      const sdx = nextSeg[0] - seg[0];
+      const sdy = nextSeg[1] - seg[1];
+      const segLen = sdx * sdx + sdy * sdy;
+
+      if (segLen > 1e-14) {
+        const t = Math.max(0, Math.min(1, ((gpLng - seg[0]) * sdx + (gpLat - seg[1]) * sdy) / segLen));
+        const projLng = seg[0] + t * sdx;
+        const projLat = seg[1] + t * sdy;
+        clippedCoords = [[projLng, projLat], ...fullCoords.slice(nearestIndex + 1)];
+      } else {
+        clippedCoords = fullCoords.slice(nearestIndex);
+      }
+    } else {
+      clippedCoords = fullCoords.slice(nearestIndex);
+    }
+
+    if (clippedCoords.length < 2) return;
+
+    const geoJsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: clippedCoords }
+    };
+    cachedRouteGeoJsonRef.current = geoJsonData;
+
+    try {
+      source.setData(geoJsonData);
+    } catch (_) {}
+
+    if (startMarkerRef.current && clippedCoords[0]) {
+      startMarkerRef.current.setLngLat(clippedCoords[0] as [number, number]);
+    }
+  }, []);
 
   const renderRouteLayers = useCallback(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
@@ -2779,7 +2869,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
     
     const safetyRenderTimer = setTimeout(() => {
-      if (map.current && map.current.isStyleLoaded() && currentRoute?.routePath?.length >= 2) {
+      if (map.current && map.current.isStyleLoaded() && currentRoute?.routePath && currentRoute.routePath.length >= 2) {
         const hasRouteLayer = map.current.getLayer('route-line');
         const hasRouteSource = map.current.getSource('route');
         if (!hasRouteLayer || !hasRouteSource) {
@@ -3016,8 +3106,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const hasLayer = !!map.current.getLayer('route-line');
       if (!hasSource || !hasLayer) {
         ensureRouteLayers();
+        renderRouteLayers();
+      } else {
+        updateRouteClipping();
       }
-      renderRouteLayers();
     });
     
     return () => {
@@ -3026,7 +3118,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         pendingRouteRafRef.current = null;
       }
     };
-  }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers]);
+  }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers, updateRouteClipping]);
 
   // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
   // This ensures the blue line updates when user selects a different route
@@ -3076,6 +3168,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       cachedRouteGeoJsonRef.current = null;
       lastNearestIndexRef.current = 0;
+      lastClipIndexRef.current = -1;
       
       // CRITICAL FIX: Update route data seamlessly without removing layers (prevents flickering)
       // Try to update the source data directly first, only remove/re-add if source doesn't exist
