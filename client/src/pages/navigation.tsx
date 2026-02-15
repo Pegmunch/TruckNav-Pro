@@ -1381,12 +1381,12 @@ function NavigationPageContent() {
           
           if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
             let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
-            if (turnAngle >= 115) direction = 'sharp_left';
-            else if (turnAngle >= 50) direction = 'left';
-            else if (turnAngle > 25) direction = 'slight_left';
-            else if (turnAngle <= -115) direction = 'sharp_right';
-            else if (turnAngle <= -50) direction = 'right';
-            else if (turnAngle < -25) direction = 'slight_right';
+            if (turnAngle >= 115) direction = 'sharp_right';
+            else if (turnAngle >= 50) direction = 'right';
+            else if (turnAngle > 25) direction = 'slight_right';
+            else if (turnAngle <= -115) direction = 'sharp_left';
+            else if (turnAngle <= -50) direction = 'left';
+            else if (turnAngle < -25) direction = 'slight_left';
             return { direction, turnIndex: i, turnAngle };
           }
         }
