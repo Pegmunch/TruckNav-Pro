@@ -6124,7 +6124,7 @@ export default function NavigationPage() {
   // Listen for navigation reset events (triggered by stop button or destination reached)
   useEffect(() => {
     const handleNavigationReset = (event: CustomEvent) => {
-      console.log('[NAV-RESET] 🔄 Full navigation reset triggered - fast in-memory reset', event.detail);
+      console.log('[NAV-RESET] 🔄 Full navigation reset triggered', event.detail);
       
       const keysToRemove = [
         'navigation_ui_active',
@@ -6143,9 +6143,8 @@ export default function NavigationPage() {
       document.body.classList.remove('navigation-active');
       document.documentElement.classList.remove('overlay-safe-mode');
       
-      if (mapRef.current) {
-        mapRef.current.resetBearing();
-      }
+      // Short delay so UI state clears visually before reload
+      setTimeout(() => window.location.reload(), 150);
     };
     
     window.addEventListener('navigation:fullReset', handleNavigationReset as EventListener);
