@@ -3797,100 +3797,14 @@ function NavigationPageContent() {
       return;
     }
     
-    // CRITICAL: Set cancellation guard to prevent race condition where
-    // currentJourney still exists and triggers route re-fetch before completion
-    isCancellingRouteRef.current = true;
-    console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
-    
-    // Safety timeout: Reset guard after 3 seconds in case mutation fails
-    setTimeout(() => {
-      if (isCancellingRouteRef.current) {
-        isCancellingRouteRef.current = false;
-        console.log('[NAV-STOP] ⚠️ Safety timeout - guard force reset');
-      }
-    }, 3000);
-    
-    // CRITICAL FIX: Immediately clear navigation UI state to return to plan mode
-    // This ensures the hamburger button reappears immediately
-    setIsLocalNavActive(false);
-    setIsShowingPreview(false); // CRITICAL: Reset preview mode so isNavUIActive becomes false
-    setShowComprehensiveMenu(false); // Reset menu state to allow fresh opening
-    setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
-    setSidebarState(isMobile ? 'closed' : 'collapsed'); // CRITICAL: Reset sidebar - collapsed on desktop (slim white strip), closed on mobile
-    resetRerouteState(); // Reset auto-reroute state for next navigation session
-    setShowSmartTrafficLights(false); // Hide Smart Traffic Lights Panel when navigation stops
-    // CRITICAL: Clear the persistent route ref on explicit stop to prevent restoration
+    // Clear refs that won't survive reload
     lastCalculatedRouteRef.current = null;
-    // CRITICAL FIX: Clear currentRoute immediately to prevent NavigationLayout from blocking
-    // This ensures the hamburger menu button becomes visible immediately
-    setCurrentRoute(null);
-    setPreviewRoute(null);
-    localStorage.removeItem('navigation_ui_active');
-    localStorage.removeItem('navigation_mode');
-    localStorage.removeItem('navigation_timestamp');
-    localStorage.removeItem('activeRouteId');
-    localStorage.removeItem('activeJourneyId');
-    // NOTE: Do NOT remove activeVehicleProfileId - preserve user's vehicle selection
-    console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
-
-    // AUTO-RESET CAR MODE: If user was using Car mode for this route, reset to Lorry
-    if (isCarProfileMode) {
-      console.log('[NAV-STOP] 🔄 Resetting Car mode back to Class 1 Lorry');
-      setIsCarProfileMode(false);
-    }
+    isCancellingRouteRef.current = false;
     
+    // Complete the journey on the server (fire-and-forget before reload)
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
-      // Capture current session at invocation time for stale detection
-      completeJourneyMutation.mutate({ 
-        journeyId: currentJourney.id, 
-        sessionAtInvocation: navigationSessionRef.current 
-      });
-    } else {
-      // No journey to complete - just reset guard (route already cleared above)
-      isCancellingRouteRef.current = false;
-      console.log('[NAV-STOP] ℹ️ No journey to complete - guard reset immediately');
+      apiRequest('POST', `/api/journeys/${currentJourney.id}/complete`, {}).catch(() => {});
     }
-    
-    // Clear URL parameter
-    const url = new URL(window.location.href);
-    if (url.searchParams.has('journey')) {
-      url.searchParams.delete('journey');
-      window.history.replaceState({}, '', url.pathname);
-    }
-    
-    // Reset destination reached state for next journey
-    hasShownDestinationDialogRef.current = false;
-    setShowDestinationReached(false);
-    
-    // Clear location inputs to allow fresh route planning
-    setFromLocation('');
-    setToLocation('');
-    setFromCoordinates(null);
-    setToCoordinates(null);
-    
-    // CRITICAL: Trigger menu input reset to clear local state in ComprehensiveMobileMenu
-    setMenuResetTrigger(prev => prev + 1);
-    
-    // Clear alternative routes state
-    setIsAlternativeRoutesOpen(false);
-    setSelectedAlternativeRouteId(null);
-    setIsApplyingRoute(false);
-    
-    // Reset UI states - but preserve map position/expansion unless in fullscreen nav
-    // Only collapse map if we were in fullscreen navigation mode
-    if (isFullscreenNav) {
-      setIsMapExpanded(false);
-    }
-    setShowLaneGuidance(false);
-    setIsARMode(false);
-    setIsFullscreenNav(false);
-    
-    // NOTE: Do NOT reset showNavControls here - HUD buttons should remain functional
-    // The hamburger menu visibility is controlled by mobileNavMode derived from isLocalNavActive
-    // which we already set to false above, so hamburger will reappear automatically
-    
-    // NOTE: Sidebar state already set to 'closed' on mobile at line 2773 - do NOT overwrite
-    // This ensures the UI returns to the exact initial state (same as after T&C accept)
     
     // Dispatch navigation stopped event for notification system
     const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
@@ -3898,14 +3812,13 @@ function NavigationPageContent() {
     });
     window.dispatchEvent(navigationStoppedEvent);
     
-    // CRITICAL: Dispatch full reset event to trigger complete state reset
-    // This remounts NavigationPageContent with fresh initial state (same as after T&C accept)
+    // Trigger full reset immediately - skip React state updates to avoid broken partial UI
     const resetEvent = new CustomEvent('navigation:fullReset', {
       detail: { source: 'stopNavigation', timestamp: Date.now() }
     });
     window.dispatchEvent(resetEvent);
     
-    console.log('[ROUTE-CANCEL] ✅ Route cancelled - full reset triggered for fresh start');
+    console.log('[NAV-STOP] ✅ Full reset triggered - reload handles all cleanup');
   };
 
   const handleOpenLaneSelection = () => {
@@ -6149,8 +6062,7 @@ export default function NavigationPage() {
       document.body.classList.remove('navigation-active');
       document.documentElement.classList.remove('overlay-safe-mode');
       
-      // Short delay so UI state clears visually before reload
-      setTimeout(() => window.location.reload(), 150);
+      window.location.reload();
     };
     
     window.addEventListener('navigation:fullReset', handleNavigationReset as EventListener);
