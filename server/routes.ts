@@ -434,20 +434,22 @@ async function callTomTomRoutingAPI(
       return maneuverMap[maneuver] || 0;
     };
     
-    // Extract turn-by-turn instructions
-    const instructions: Array<{ text: string; distance: number; time: number; sign: number }> = [];
+    // Extract turn-by-turn instructions with route offset for accurate turn detection
+    const instructions: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters: number; roadName: string }> = [];
     
     for (const leg of legs) {
       if (leg.instructions && Array.isArray(leg.instructions)) {
         for (const instruction of leg.instructions) {
-          // Use lengthInMeters for per-instruction distance, not routeOffsetInMeters (cumulative)
-          const distanceMeters = instruction.lengthInMeters || instruction.routeOffsetInMeters || 0;
+          const distanceMeters = instruction.lengthInMeters || 0;
+          const routeOffset = instruction.routeOffsetInMeters || 0;
           
           instructions.push({
             text: instruction.message || instruction.instruction || '',
             distance: Math.round(distanceMeters / 1609.34 * 100) / 100, // meters to miles
             time: Math.round((instruction.travelTimeInSeconds || 0)), // seconds
-            sign: mapTomTomManeuverToSign(instruction.maneuver || '')
+            sign: mapTomTomManeuverToSign(instruction.maneuver || ''),
+            routeOffsetMeters: routeOffset,
+            roadName: instruction.street || instruction.roadName || ''
           });
         }
       }
@@ -656,17 +658,22 @@ async function callHERERoutingAPI(
       return actionMap[action] || 0;
     };
 
-    const instructions: Array<{ text: string; distance: number; time: number; sign: number }> = [];
+    const instructions: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters: number; roadName: string }> = [];
+    let cumulativeOffset = 0;
 
     for (const section of sections) {
       if (section.actions && Array.isArray(section.actions)) {
         for (const action of section.actions) {
+          const lengthMeters = action.length || 0;
           instructions.push({
             text: action.instruction || action.action || '',
-            distance: Math.round((action.length || 0) / 1609.34 * 100) / 100,
+            distance: Math.round(lengthMeters / 1609.34 * 100) / 100,
             time: Math.round(action.duration || 0),
-            sign: mapHEREActionToSign(action.action || '')
+            sign: mapHEREActionToSign(action.action || ''),
+            routeOffsetMeters: action.offset || cumulativeOffset,
+            roadName: action.currentRoad?.name?.[0]?.value || action.nextRoad?.name?.[0]?.value || ''
           });
+          cumulativeOffset += lengthMeters;
         }
       }
     }
