@@ -642,29 +642,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 7. Traffic Layer Toggle - Orange when active */}
-      {onToggleTraffic && (
-        <Button
-          ref={trafficRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={trafficHandlers.onTouchStart}
-          onClick={trafficHandlers.onClick}
-          onPointerDown={trafficHandlers.onPointerDown}
-          className={cn(
-            buttonSize, 
-            baseButtonClass,
-            showTraffic ? "border-orange-500" : "border-gray-400",
-            "mt-3",
-            trafficVisible ? visibleClass : hiddenClass
-          )}
-          style={buttonStyle}
-          data-testid="button-toggle-traffic"
-          aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
-        >
-          <Layers className={iconSize} />
-        </Button>
-      )}
+      {/* 7. Traffic Layer Toggle - Hidden: traffic always on */}
 
       {/* 8. Recenter (hidden from main stack, only shown when needed) */}
       {onRecenter && (

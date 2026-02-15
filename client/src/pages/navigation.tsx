@@ -354,8 +354,9 @@ function NavigationPageContent() {
     destination: string | null;
   } | null>(null);
   
-  // Traffic and Incidents toggle state for mobile
-  const [showTrafficLayer, setShowTrafficLayer] = useState(true);
+  // Traffic always on - button hidden, state forced to true
+  const showTrafficLayer = true;
+  const setShowTrafficLayer = (_v: boolean | ((prev: boolean) => boolean)) => {};
   const [showIncidents, setShowIncidents] = useState(true);
   
   // Map control state for RightActionStack (rendered outside map container)
@@ -2671,11 +2672,17 @@ function NavigationPageContent() {
       // Cache route for offline use
       if (route && route.startLocation && route.endLocation) {
         try {
-          // Cache as active route
-          localStorage.setItem('trucknav_active_route', JSON.stringify(route));
-          // Also cache by destination for future offline lookups
+          const seen = new WeakSet();
+          const safeStringify = (obj: any) => JSON.stringify(obj, (_k, v) => {
+            if (typeof v === 'object' && v !== null) {
+              if (seen.has(v)) return undefined;
+              seen.add(v);
+            }
+            return v;
+          });
+          localStorage.setItem('trucknav_active_route', safeStringify(route));
           const cacheKey = `trucknav_cached_route_${route.startLocation}_${route.endLocation}`;
-          localStorage.setItem(cacheKey, JSON.stringify(route));
+          localStorage.setItem(cacheKey, safeStringify(route));
           console.log('[ROUTE-CACHE] Route cached for offline use:', cacheKey);
         } catch (error) {
           console.error('[ROUTE-CACHE] Failed to cache route:', error);

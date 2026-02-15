@@ -27,6 +27,17 @@ const WINDOW_ID = `window_${Date.now()}_${Math.random().toString(36).substring(2
 const STORAGE_KEY = 'trucknav_window_sync';
 const CHANNEL_NAME = 'trucknav_sync';
 
+function safeJsonStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return undefined;
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
 export function useWindowSync() {
   // Initialize state from localStorage if available
   const [syncState, setSyncState] = useState<WindowSyncState>(() => {
@@ -201,7 +212,7 @@ export function useWindowSync() {
   // Save state to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(syncState));
+      localStorage.setItem(STORAGE_KEY, safeJsonStringify(syncState));
     } catch (error) {
       console.error('Failed to save window sync state:', error);
     }
@@ -209,13 +220,18 @@ export function useWindowSync() {
 
   // Helper function to broadcast current state
   const broadcastCurrentState = useCallback((channel: BroadcastChannel) => {
-    const message: WindowSyncMessage = {
-      type: 'SYNC_STATE',
-      payload: syncState,
-      timestamp: Date.now(),
-      windowId: WINDOW_ID
-    };
-    channel.postMessage(message);
+    try {
+      const safePayload = JSON.parse(safeJsonStringify(syncState));
+      const message: WindowSyncMessage = {
+        type: 'SYNC_STATE',
+        payload: safePayload,
+        timestamp: Date.now(),
+        windowId: WINDOW_ID
+      };
+      channel.postMessage(message);
+    } catch (error) {
+      console.debug('BroadcastChannel not ready for state sync');
+    }
   }, [syncState]);
 
   // Action functions to update state and broadcast changes
@@ -229,15 +245,15 @@ export function useWindowSync() {
 
     if (broadcastChannel) {
       try {
+        const safePayload = JSON.parse(safeJsonStringify(route));
         const message: WindowSyncMessage = {
           type: 'ROUTE_UPDATE',
-          payload: route,
+          payload: safePayload,
           timestamp,
           windowId: WINDOW_ID
         };
         broadcastChannel.postMessage(message);
       } catch (error) {
-        // Silently fail if channel is not ready or closed
         console.debug('BroadcastChannel not ready for route update');
       }
     }

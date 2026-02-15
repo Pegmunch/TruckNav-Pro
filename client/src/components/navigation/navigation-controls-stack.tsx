@@ -158,24 +158,7 @@ export function NavigationControlsStack({
         <Map className="h-4 w-4" />
       </Button>
 
-      {/* 7. Traffic Layer Toggle - Orange when active, gray when inactive */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log('[RIGHT-BTN-7-TRAFFIC] ✅ Traffic clicked - Current:', showTrafficLayer);
-          onToggleTraffic();
-        }}
-        className={`h-8 w-8 rounded-xl shadow-lg ${
-          showTrafficLayer
-            ? "bg-orange-500 hover:bg-orange-600"
-            : "bg-gray-500 hover:bg-gray-600"
-        } text-white`}
-        data-testid="nav-control-traffic"
-        aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
-      >
-        <Layers className="h-4 w-4" />
-      </Button>
+      {/* 7. Traffic Layer Toggle - Hidden: traffic always on */}
 
       {/* 8. 3D Mode Toggle - Blue when active, gray when inactive (BOTTOM) */}
       <Button
