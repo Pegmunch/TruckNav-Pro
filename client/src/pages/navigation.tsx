@@ -673,6 +673,8 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
+  const cachedCumulativeDistancesRef = useRef<{ routeId: string | null; distances: number[]; totalLength: number }>({ routeId: null, distances: [], totalLength: 0 });
+  
   const lastVoiceAnnouncementRef = useRef<{ direction: string; threshold: string; turnIndex: number } | null>(null);
   
   // Helper: Generate fallback lane guidance based on turn direction
@@ -1241,12 +1243,22 @@ function NavigationPageContent() {
         return (toDegrees(Math.atan2(y, x)) + 360) % 360;
       };
 
-      const cumulativeDistances: number[] = [0];
-      for (let i = 0; i < routePath.length - 1; i++) {
-        const d = calculateDistance(routePath[i].lat, routePath[i].lng, routePath[i+1].lat, routePath[i+1].lng);
-        cumulativeDistances.push(cumulativeDistances[i] + d);
+      const routeId = currentRoute.id ?? `${routePath.length}-${routePath[0]?.lat}-${routePath[routePath.length-1]?.lat}`;
+      let cumulativeDistances: number[];
+      let totalRouteLength: number;
+      
+      if (cachedCumulativeDistancesRef.current.routeId === routeId && cachedCumulativeDistancesRef.current.distances.length === routePath.length + 1) {
+        cumulativeDistances = cachedCumulativeDistancesRef.current.distances;
+        totalRouteLength = cachedCumulativeDistancesRef.current.totalLength;
+      } else {
+        cumulativeDistances = [0];
+        for (let i = 0; i < routePath.length - 1; i++) {
+          const d = calculateDistance(routePath[i].lat, routePath[i].lng, routePath[i+1].lat, routePath[i+1].lng);
+          cumulativeDistances.push(cumulativeDistances[i] + d);
+        }
+        totalRouteLength = cumulativeDistances[cumulativeDistances.length - 1];
+        cachedCumulativeDistancesRef.current = { routeId: String(routeId), distances: cumulativeDistances, totalLength: totalRouteLength };
       }
-      const totalRouteLength = cumulativeDistances[cumulativeDistances.length - 1];
 
       const vehicleHeading = gpsData?.position?.smoothedHeading ?? gpsData?.position?.heading;
       
@@ -1344,22 +1356,44 @@ function NavigationPageContent() {
         }
       }
 
-      // PRIMARY: Use TomTom/HERE instruction-based turn detection (accurate junction data)
-      const instructions = (currentRoute as any).instructions as Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }> | undefined;
-      
-      const mapSignToDirection = (sign: number): 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' => {
-        switch (sign) {
-          case -3: return 'sharp_left';
-          case -2: return 'left';
-          case -1: case -7: return 'slight_left';
-          case 3: return 'sharp_right';
-          case 2: return 'right';
-          case 1: case 7: return 'slight_right';
-          case -8: return 'sharp_left';
-          case 8: return 'sharp_right';
-          default: return 'straight';
+      const computeGeometryDirection = (fromIndex: number): { direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left'; turnIndex: number; turnAngle: number } => {
+        const TURN_THRESHOLD = 25;
+        const LOOK_AHEAD_LIMIT = Math.min(fromIndex + 100, routePath.length - 2);
+        
+        for (let i = Math.max(1, fromIndex); i < LOOK_AHEAD_LIMIT; i++) {
+          const prevPoint = routePath[i - 1];
+          const currPoint = routePath[i];
+          const nextPoint = routePath[i + 1];
+          
+          const inX = currPoint.lng - prevPoint.lng;
+          const inY = currPoint.lat - prevPoint.lat;
+          const outX = nextPoint.lng - currPoint.lng;
+          const outY = nextPoint.lat - currPoint.lat;
+          const crossProduct = inX * outY - inY * outX;
+          
+          const inMag = Math.sqrt(inX * inX + inY * inY);
+          const outMag = Math.sqrt(outX * outX + outY * outY);
+          const dotProduct = inX * outX + inY * outY;
+          const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
+          const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
+          
+          const turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
+          
+          if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
+            let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
+            if (turnAngle >= 115) direction = 'sharp_left';
+            else if (turnAngle >= 50) direction = 'left';
+            else if (turnAngle > 25) direction = 'slight_left';
+            else if (turnAngle <= -115) direction = 'sharp_right';
+            else if (turnAngle <= -50) direction = 'right';
+            else if (turnAngle < -25) direction = 'slight_right';
+            return { direction, turnIndex: i, turnAngle };
+          }
         }
+        return { direction: 'straight', turnIndex: -1, turnAngle: 0 };
       };
+
+      const instructions = (currentRoute as any).instructions as Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }> | undefined;
       
       let foundInstructionTurn = false;
       
@@ -1378,16 +1412,27 @@ function NavigationPageContent() {
           const distanceToInstruction = offsetMeters - projectedDistanceAlongRoute;
           
           if (distanceToInstruction > 10 && distanceToInstruction < 10000) {
-            const direction = mapSignToDirection(inst.sign);
-            
-            if (direction !== 'straight') {
+            let turnPointIndex = -1;
+            let minOffsetDiff = Infinity;
+            for (let j = bestSegmentIndex; j < Math.min(routePath.length, bestSegmentIndex + 200); j++) {
+              const diff = Math.abs(cumulativeDistances[j] - offsetMeters);
+              if (diff < minOffsetDiff) {
+                minOffsetDiff = diff;
+                turnPointIndex = j;
+              }
+            }
+
+            const geomResult = computeGeometryDirection(Math.max(1, turnPointIndex > 0 ? turnPointIndex - 3 : bestSegmentIndex + 1));
+            const geoDir = geomResult.direction;
+
+            if (geoDir !== 'straight') {
               setNextTurn({
-                direction,
+                direction: geoDir,
                 distance: distanceToInstruction,
-                roadName: inst.roadName || undefined
+                roadName: inst.roadName || undefined,
+                vertexIndex: geomResult.turnIndex
               });
               foundInstructionTurn = true;
-              console.log(`[TURN-INST] Next turn: ${direction} in ${distanceToInstruction.toFixed(0)}m (instruction ${i}: "${inst.text}", sign=${inst.sign})`);
               break;
             }
           }
@@ -1396,59 +1441,18 @@ function NavigationPageContent() {
         }
       }
       
-      // FALLBACK: Only use geometry-based detection when no instruction data available
       if (!foundInstructionTurn) {
-        const TURN_THRESHOLD = 25;
-        const startSearchIndex = bestSegmentIndex + 1;
-        const LOOK_AHEAD_LIMIT = Math.min(startSearchIndex + 100, routePath.length - 2);
+        const geomResult = computeGeometryDirection(bestSegmentIndex + 1);
         
-        let nextTurnIndex = -1;
-        let turnAngleAtPoint = 0;
-        
-        for (let i = Math.max(1, startSearchIndex); i < LOOK_AHEAD_LIMIT; i++) {
-          const prevPoint = routePath[i - 1];
-          const currPoint = routePath[i];
-          const nextPoint = routePath[i + 1];
-          
-          const inX = currPoint.lng - prevPoint.lng;
-          const inY = currPoint.lat - prevPoint.lat;
-          const outX = nextPoint.lng - currPoint.lng;
-          const outY = nextPoint.lat - currPoint.lat;
-          const crossProduct = inX * outY - inY * outX;
-          
-          const inMag = Math.sqrt(inX * inX + inY * inY);
-          const outMag = Math.sqrt(outX * outX + outY * outY);
-          const dotProduct = inX * outX + inY * outY;
-          const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
-          const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
-          
-          let turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
-          
-          if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
-            nextTurnIndex = i;
-            turnAngleAtPoint = turnAngle;
-            break;
-          }
-        }
-        
-        if (nextTurnIndex > 0) {
-          const turnDistanceAlongRoute = cumulativeDistances[nextTurnIndex];
-          let distanceToTurn = Math.max(10, turnDistanceAlongRoute - projectedDistanceAlongRoute);
-          
-          let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
-          
-          if (turnAngleAtPoint >= 115) direction = 'sharp_left';
-          else if (turnAngleAtPoint >= 50) direction = 'left';
-          else if (turnAngleAtPoint > 25) direction = 'slight_left';
-          else if (turnAngleAtPoint <= -115) direction = 'sharp_right';
-          else if (turnAngleAtPoint <= -50) direction = 'right';
-          else if (turnAngleAtPoint < -25) direction = 'slight_right';
+        if (geomResult.turnIndex > 0) {
+          const turnDistanceAlongRoute = cumulativeDistances[geomResult.turnIndex];
+          const distanceToTurn = Math.max(10, turnDistanceAlongRoute - projectedDistanceAlongRoute);
 
           setNextTurn({
-            direction,
+            direction: geomResult.direction,
             distance: distanceToTurn,
             roadName: undefined,
-            vertexIndex: nextTurnIndex
+            vertexIndex: geomResult.turnIndex
           });
         } else {
           const remainingDist = totalRouteLength - projectedDistanceAlongRoute;
