@@ -3163,6 +3163,12 @@ function NavigationPageContent() {
 
   // Handle cancel route - stop navigation and reset to default Class 1 Truck
   const handleCancelRoute = () => {
+    // Cancel any active flyby animation immediately
+    if (mapRef.current) {
+      mapRef.current.cancelFlyBy();
+    }
+    setIsFlyByInProgress(false);
+    
     // CRITICAL: Set cancellation guard to prevent race condition where
     // currentJourney still exists and triggers route re-fetch before completion
     isCancellingRouteRef.current = true;
