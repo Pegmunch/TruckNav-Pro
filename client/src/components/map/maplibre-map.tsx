@@ -1131,7 +1131,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       } else {
         map.current.easeTo({
           zoom: 16.5,
-          pitch: 60,
+          pitch: 55,
           duration: 1200,
           easing: (t: number) => 1 - Math.pow(1 - t, 3)
         });
@@ -1142,11 +1142,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         map.current.easeTo({
           center: [centerLng, centerLat],
           zoom: 16.5,
-          pitch: 60,
+          pitch: 55,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.55),
-            bottom: 40,
+            top: Math.round(containerHeight * 0.45),
+            bottom: Math.round(containerHeight * 0.15),
             left: 0,
             right: 0
           },
@@ -4264,8 +4264,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[3D-NAV] 🚀 INITIAL 3D NAVIGATION VIEW ACTIVATED');
       console.log(`[3D-NAV] Center: ${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`);
       console.log(`[3D-NAV] Initial bearing: ${useBearing.toFixed(1)}°`);
-      console.log(`[3D-NAV] Pitch: 60° (TomTom GO style)`);
-      console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.55)}px`);
+      console.log(`[3D-NAV] Pitch: 55°`);
+      console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.45)}px, Bottom: ${Math.round(containerHeight * 0.15)}px`);
       console.log('[3D-NAV] ==========================================');
       
       userPreferredZoomRef.current = 16.5;
@@ -4277,16 +4277,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         mapInstance.easeTo({
           center: [centerLng, centerLat],
           zoom: userPreferredZoomRef.current,
-          pitch: 60,
+          pitch: 55,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-            bottom: 40, // Reduced gap - route extends closer to speedometer
+            top: Math.round(containerHeight * 0.45),
+            bottom: Math.round(containerHeight * 0.15),
             left: 0,
             right: 0
           },
           duration: 1200,
-          easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
+          easing: (t) => 1 - Math.pow(1 - t, 3),
           essential: true
         });
       } catch (e) {
@@ -4470,19 +4470,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             const currentViewState = viewStateRef.current;
-            const targetPitch = currentViewState === 'tilted' ? 60 : 0;
+            const targetPitch = currentViewState === 'tilted' ? 55 : 0;
             const targetBearing = currentViewState === 'normal' ? 0 : bearing;
             
             try {
               const easeToOptions: maplibregl.EaseToOptions = {
                 center: [longitude, latitude],
-                pitch: targetPitch, // Respect viewState: tilted=60°, overhead/normal=0°
-                bearing: targetBearing, // Heading-up (tilted/overhead) or north-up (normal)
+                pitch: targetPitch,
+                bearing: targetBearing,
                 padding: { 
-                  // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
-                  // This makes the route line extend upward from the speedometer area
-                  top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-                  bottom: 40, // Reduced gap - route extends closer to speedometer
+                  top: Math.round(containerHeight * 0.45),
+                  bottom: Math.round(containerHeight * 0.15),
                   left: 0, 
                   right: 0 
                 },
