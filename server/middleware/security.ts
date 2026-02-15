@@ -591,9 +591,8 @@ export const intrusionDetection = (req: express.Request, res: express.Response, 
     const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
     ipActivity.count++;
     
-    // More lenient limits for development/localhost
-    const limit = isLocalhost ? 1000 : 100; // 1000 requests for localhost, 100 for production
-    const timeWindow = isLocalhost ? 60000 : 30000; // 60s for localhost, 30s for production
+    const limit = isLocalhost ? 2000 : 500;
+    const timeWindow = isLocalhost ? 60000 : 60000;
     
     if (now - ipActivity.firstRequest < timeWindow && ipActivity.count > limit) {
       console.error(`[SECURITY] Potential DDoS attack detected from IP: ${ip}`);
@@ -608,10 +607,9 @@ export const intrusionDetection = (req: express.Request, res: express.Response, 
     suspiciousActivity.set(ip, ipActivity);
   }
   
-  // Reset counter every 2 minutes for non-development requests
   if (!isDevelopmentRequest) {
     const ipActivity = suspiciousActivity.get(ip);
-    if (ipActivity && now - ipActivity.firstRequest > 120000) {
+    if (ipActivity && now - ipActivity.firstRequest > 60000) {
       ipActivity.count = 1;
       ipActivity.firstRequest = now;
       suspiciousActivity.set(ip, ipActivity);
