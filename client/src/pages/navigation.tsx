@@ -1838,14 +1838,15 @@ function NavigationPageContent() {
         console.log('[NAV-ZOOM] Starting 3D heading-up navigation...');
         
         // Start directly in 3D navigation mode with heading-up orientation
+        const containerHeight = mapInstance.getContainer().clientHeight || 800;
         mapInstance.flyTo({
           center: [targetLng, targetLat],
-          zoom: 17,    // Navigation zoom showing road ahead (like TomTom GO)
-          pitch: 60,   // Steep 3D tilt for professional navigation perspective
-          bearing: initialBearing, // Route pointing upward (heading-up)
+          zoom: 16,
+          pitch: 50,
+          bearing: initialBearing,
           padding: { 
-            top: 180,    // Space for HUD
-            bottom: 250, // Space for speedometer
+            top: Math.round(containerHeight * 0.65),
+            bottom: 0,
             left: 0, 
             right: 0 
           },
@@ -1865,12 +1866,13 @@ function NavigationPageContent() {
           if (mapRef.current) {
             const retryMap = mapRef.current.getMap();
             if (retryMap) {
+              const retryContainerHeight = retryMap.getContainer().clientHeight || 800;
               retryMap.flyTo({
                 center: [targetLng, targetLat],
-                zoom: 17,
-                pitch: 60,
+                zoom: 16,
+                pitch: 50,
                 bearing: initialBearing,
-                padding: { top: 180, bottom: 250, left: 0, right: 0 },
+                padding: { top: Math.round(retryContainerHeight * 0.65), bottom: 0, left: 0, right: 0 },
                 duration: 1500,
                 essential: true
               });
@@ -2749,8 +2751,8 @@ function NavigationPageContent() {
           const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
             detail: {
               center: { lat: centerLat, lng: centerLng },
-              zoom: 16.5,
-              pitch: 60,
+              zoom: 16,
+              pitch: 50,
               bearing: routeBearing,
               duration: 1200
             }
@@ -2794,8 +2796,8 @@ function NavigationPageContent() {
           const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
             detail: {
               center: { lat: centerLat, lng: centerLng },
-              zoom: 16.5,
-              pitch: 60,
+              zoom: 16,
+              pitch: 50,
               bearing: routeBearing,
               duration: 1200
             }
@@ -3551,7 +3553,7 @@ function NavigationPageContent() {
       
       // NOTE: Camera setup for 3D navigation view is handled by the GPS heading effect
       // in maplibre-map.tsx to prevent conflicting camera animations
-      console.log('[NAV-ACTIVATION] 🎯 Camera will be set by GPS heading effect (60° pitch, 16.5 zoom)');
+      console.log('[NAV-ACTIVATION] 🎯 Camera will be set by GPS heading effect (50° pitch, 16 zoom)');
       
       console.log('[NAV-ACTIVATION] Step 2: Set navigation active state for CSS styling');
       // Set navigation active state for CSS styling
@@ -3668,8 +3670,8 @@ function NavigationPageContent() {
         const zoomToStartEvent = new CustomEvent('zoom_to_navigation_start', {
           detail: {
             center: { lat: startPoint.lat, lng: startPoint.lng },
-            zoom: 16.5,
-            pitch: 60,
+            zoom: 16,
+            pitch: 50,
             bearing: initialBearing,
             duration: 1200
           }

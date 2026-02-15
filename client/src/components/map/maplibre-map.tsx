@@ -248,7 +248,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const previousBearingRef = useRef(0);
   const initialNavViewSetupRef = useRef(false); // Track if initial 3D nav view has been set up
   const savedNavigationCameraRef = useRef<{ zoom: number; pitch: number; bearing: number } | null>(null);
-  const userPreferredZoomRef = useRef(16.5); // User's preferred zoom level (respects manual zoom changes)
+  const userPreferredZoomRef = useRef(16); // User's preferred zoom level (respects manual zoom changes)
   const zoomAnimationInProgressRef = useRef(false); // Prevents GPS tracking from overriding zoom during button animations
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
@@ -772,8 +772,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             pitch,
             bearing,
             padding: {
-              top: Math.round(containerHeight * 0.55), // TomTom GO style - vehicle at lower 45%
-              bottom: 40, // Reduced gap - route extends closer to speedometer
+              top: Math.round(containerHeight * 0.65),
+              bottom: 0,
               left: 0,
               right: 0
             },
@@ -1182,8 +1182,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!map.current) return true;
       const currentZoom = map.current.getZoom();
       const currentPitch = map.current.getPitch();
-      const zoomDiff = Math.abs(currentZoom - 16.5);
-      const pitchDiff = Math.abs(currentPitch - 60);
+      const zoomDiff = Math.abs(currentZoom - 16);
+      const pitchDiff = Math.abs(currentPitch - 50);
       return zoomDiff < 1.5 && pitchDiff < 10;
     },
     resetToSavedNavigationCamera: () => {
@@ -1204,8 +1204,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         pitch: saved.pitch,
         bearing: saved.bearing,
         padding: {
-          top: Math.round(containerHeight * 0.55),
-          bottom: 40,
+          top: Math.round(containerHeight * 0.65),
+          bottom: 0,
           left: 0,
           right: 0
         },
@@ -1577,8 +1577,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 0);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTrafficRef.current;
-            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
+            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Roads mode applied successfully');
         } else {
@@ -1603,8 +1602,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           safeSetOpacity('labels-overlay-layer', 1);
           
           if (mapInstance.getLayer('traffic-flow-layer')) {
-            const showGeneralTraffic = showTrafficRef.current;
-            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
+            mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
           }
           console.log('[MAP-VIEW-SWITCH] Satellite mode applied successfully');
         }
@@ -1637,14 +1635,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !isLoaded) return;
     const mapInstance = map.current;
     if (!mapInstance.isStyleLoaded()) return;
-    const visibility = showTraffic ? 'visible' : 'none';
     if (mapInstance.getLayer('traffic-flow-layer')) {
-      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', visibility);
+      mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
     }
     if (mapInstance.getLayer('route-traffic-overlay-layer')) {
-      mapInstance.setLayoutProperty('route-traffic-overlay-layer', 'visibility', visibility);
+      mapInstance.setLayoutProperty('route-traffic-overlay-layer', 'visibility', 'visible');
     }
-    console.log('[TRAFFIC-TOGGLE] All traffic layers visibility:', visibility);
   }, [showTraffic, isNavigating, isLoaded]);
 
   useEffect(() => {
@@ -3309,36 +3305,33 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
-          visibility: 'visible'
+          visibility: 'none'
         },
         paint: {
           'line-color': [
             'case',
-            // Check if we have speed data
             ['all', ['has', 'current_speed'], ['has', 'free_flow_speed'], ['>', ['get', 'free_flow_speed'], 0]],
             [
               'step',
               ['/', ['get', 'current_speed'], ['get', 'free_flow_speed']],
-              '#CC0000',  // 0.0 - 0.25: Dark red (standstill) - MORE PROMINENT
-              0.25, '#FF0000',  // 0.25 - 0.4: Bright red (heavy traffic) - VERY PROMINENT
-              0.4, '#FF6600',  // 0.4 - 0.6: Orange-red (slow)
-              0.6, '#FFAA00',  // 0.6 - 0.8: Orange-yellow (moderate)
-              0.8, '#3B82F6'  // 0.8+: Blue (free flow) - normal traffic
+              '#CC0000',
+              0.25, '#FF0000',
+              0.4, '#FF6600',
+              0.6, '#FFAA00',
+              0.8, '#3B82F6'
             ],
-            // Fallback: check for traffic_level property (some tile versions)
             ['has', 'traffic_level'],
             [
               'match',
               ['get', 'traffic_level'],
-              0, '#3B82F6',  // Unknown -> blue (assume free flow)
-              1, '#3B82F6',  // Free flow -> blue
-              2, '#66AAFF',  // Light -> light blue  
-              3, '#FFAA00',  // Moderate -> orange-yellow
-              4, '#FF0000',  // Heavy -> bright red
-              5, '#CC0000',  // Standstill -> dark red
-              '#3B82F6'      // Default -> blue
+              0, '#3B82F6',
+              1, '#3B82F6',
+              2, '#66AAFF',
+              3, '#FFAA00',
+              4, '#FF0000',
+              5, '#CC0000',
+              '#3B82F6'
             ],
-            // Default fallback: blue (free flow assumed)
             '#3B82F6'
           ],
           'line-width': [
@@ -3445,8 +3438,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // Add layer if it doesn't exist
     if (!mapInstance.getLayer(trafficLayerId)) {
-      // Respect current traffic toggle state when first creating the layer
-      const initialVisibility = showTrafficRef.current ? 'visible' : 'none';
       mapInstance.addLayer({
         id: trafficLayerId,
         type: 'line',
@@ -3454,7 +3445,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         layout: {
           'line-join': 'round',
           'line-cap': 'round',
-          'visibility': initialVisibility,
+          'visibility': 'visible',
         },
         paint: {
           'line-color': ['get', 'color'],
@@ -4600,12 +4591,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         map.current.easeTo({
           center: [center.lng, center.lat],
-          zoom: zoom || 16.5,
-          pitch: pitch || 55,
+          zoom: zoom || 16,
+          pitch: pitch || 50,
           bearing: bearing || 0,
           padding: {
-            top: Math.round(containerHeight * 0.55),
-            bottom: 40,
+            top: Math.round(containerHeight * 0.65),
+            bottom: 0,
             left: 0,
             right: 0
           },
