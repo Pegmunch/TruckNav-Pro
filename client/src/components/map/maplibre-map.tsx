@@ -359,7 +359,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             
             if (prev === 'normal') {
               newState = 'tilted';
-              mapInstance.easeTo({ pitch: 55, duration: 300 });
+              mapInstance.easeTo({ pitch: 50, duration: 300 });
             } else if (prev === 'tilted') {
               newState = 'overhead';
               // Keep bearing, set pitch to 0 for plan view
@@ -685,7 +685,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (currentVS === 'normal') {
         newState = 'tilted';
         map.current.easeTo({
-          pitch: 55,
+          pitch: 50,
           duration: 400
         });
       } else if (currentVS === 'tilted') {
@@ -737,7 +737,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const {
         forceStreetMode = true,
         zoom = 16, // TomTom GO style - slightly pulled back for wider view
-        pitch = 55, // TomTom GO style 3D tilt - slightly lower for more road visibility
+        pitch = 50,
         bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
@@ -1337,7 +1337,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Navigation started - store previous state and set 3D mode flag
     // NOTE: Actual camera setup is done by GPS heading rotation effect's setupInitialNavigationView()
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - 3D mode enabled (55° pitch, zoom 16)');
+      console.log('[NAV-3D] Navigation started - 3D mode enabled (50° pitch, zoom 16)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
       setViewState('tilted');
@@ -3165,67 +3165,66 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       cachedRouteGeoJsonRef.current = null;
       lastNearestIndexRef.current = 0;
       lastClipIndexRef.current = -1;
+      processedRouteCoordsRef.current = null;
+      processedRouteSourceRef.current = null;
       
-      // CRITICAL FIX: Update route data seamlessly without removing layers (prevents flickering)
-      // Try to update the source data directly first, only remove/re-add if source doesn't exist
       const updateRouteData = () => {
         if (!map.current || !map.current.isStyleLoaded() || !currentRoute?.routePath) return;
         
-        // Validate coordinates
-        const validCoords = currentRoute.routePath
-          .filter(coord => coord && 
-            typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng) &&
-            typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat))
-          .map(coord => [coord.lng, coord.lat]);
+        let routeCoordinates: number[][] = [];
+        let prevLng = NaN, prevLat = NaN;
+        for (let i = 0; i < currentRoute.routePath.length; i++) {
+          const coord = currentRoute.routePath[i];
+          if (!coord) continue;
+          const lng = coord.lng;
+          const lat = coord.lat;
+          if (typeof lng !== 'number' || typeof lat !== 'number' || lng !== lng || lat !== lat || !isFinite(lng) || !isFinite(lat)) continue;
+          const dx = lng - prevLng;
+          const dy = lat - prevLat;
+          if (dx * dx + dy * dy > 1e-12 || routeCoordinates.length === 0) {
+            routeCoordinates.push([lng, lat]);
+            prevLng = lng;
+            prevLat = lat;
+          }
+        }
         
-        if (validCoords.length < 2) {
+        if (routeCoordinates.length < 2) {
           console.warn('[ROUTE-CHANGE] Insufficient valid coordinates');
           return;
         }
+        
+        processedRouteCoordsRef.current = routeCoordinates;
+        processedRouteSourceRef.current = currentRoute.routePath;
         
         const geoJsonData = {
           type: 'Feature' as const,
           properties: {},
           geometry: {
             type: 'LineString' as const,
-            coordinates: validCoords
+            coordinates: routeCoordinates
           }
         };
         
         const routeSource = map.current.getSource('route') as maplibregl.GeoJSONSource;
         
         if (routeSource) {
-          // Source exists - just update the data (no flicker!)
-          console.log('[ROUTE-CHANGE] Updating existing route source data');
+          console.log('[ROUTE-CHANGE] Updating route source + clipping refs with', routeCoordinates.length, 'coords');
           routeSource.setData(geoJsonData);
           cachedRouteGeoJsonRef.current = geoJsonData;
           
-          // Ensure layers are on top
           try {
-            if (map.current.getLayer('route-outline')) {
-              map.current.moveLayer('route-outline');
-            }
-            if (map.current.getLayer('route-line')) {
-              map.current.moveLayer('route-line');
-            }
-            // TRAFFIC FIX: Always move traffic overlay above route line
-            if (map.current.getLayer('route-traffic-overlay-layer')) {
-              map.current.moveLayer('route-traffic-overlay-layer');
-            }
-          } catch (e) {
-            // Ignore
-          }
+            if (map.current.getLayer('route-outline')) map.current.moveLayer('route-outline');
+            if (map.current.getLayer('route-line')) map.current.moveLayer('route-line');
+            if (map.current.getLayer('route-traffic-overlay-layer')) map.current.moveLayer('route-traffic-overlay-layer');
+          } catch (e) {}
         } else {
-          // Source doesn't exist - use full render
           console.log('[ROUTE-CHANGE] No existing source - full render');
           renderRouteLayers();
         }
       };
       
-      // Immediate update
       updateRouteData();
       
-      // Backup render attempt after short delay
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
           updateRouteData();
@@ -4461,7 +4460,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             const currentViewState = viewStateRef.current;
-            const targetPitch = currentViewState === 'tilted' ? 55 : 0;
+            const targetPitch = currentViewState === 'tilted' ? 50 : 0;
             const targetBearing = currentViewState === 'normal' ? 0 : bearing;
             
             try {
@@ -4858,7 +4857,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (viewState === 'normal') {
       newState = 'tilted';
       map.current.easeTo({
-        pitch: 55,
+        pitch: 50,
         duration: 500
       });
     } else if (viewState === 'tilted') {
