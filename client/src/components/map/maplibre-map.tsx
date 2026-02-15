@@ -290,6 +290,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const gpsPositionRef = useRef(gpsPosition);
   gpsPositionRef.current = gpsPosition;
   
+  const navZoomAnimatingRef = useRef(false);
+  const renderRouteLayersRef = useRef<() => void>(() => {});
+  const ensureRouteLayersRef = useRef<() => boolean>(() => false);
+  
   // Force loading overlay to hide after 1 second - map should be interactive even if tiles still loading
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -2702,13 +2706,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
 
-    if (!isNavigating && routeCoordinates.length >= 2) {
+    if (!isNavigating && !navZoomAnimatingRef.current && routeCoordinates.length >= 2) {
       const bounds = new maplibregl.LngLatBounds();
       if (safeExtendBounds(bounds, routeCoordinates as [number, number][])) {
         map.current.fitBounds(bounds, { padding: 50, duration: 400 });
       }
     }
   }, [currentRoute, isNavigating, ensureRouteLayers]);
+
+  renderRouteLayersRef.current = renderRouteLayers;
+  ensureRouteLayersRef.current = ensureRouteLayers;
 
   // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
@@ -2765,13 +2772,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     }
 
-    // Render route immediately if style is loaded
     if (mapInstance.isStyleLoaded()) {
       renderRouteLayers();
     } else {
-      // Style not ready yet - schedule render when it becomes ready
       console.log('[ROUTE-RENDER] Style not loaded yet - will render on styledata event');
     }
+    
+    const safetyRenderTimer = setTimeout(() => {
+      if (map.current && map.current.isStyleLoaded() && currentRoute?.routePath?.length >= 2) {
+        const hasRouteLayer = map.current.getLayer('route-line');
+        const hasRouteSource = map.current.getSource('route');
+        if (!hasRouteLayer || !hasRouteSource) {
+          console.log('[ROUTE-RENDER] Safety re-render: route layers missing after 1.5s - rebuilding');
+          renderRouteLayers();
+        }
+      }
+    }, 1500);
 
     // CRITICAL: Listen CONTINUOUSLY for styledata events to re-render route after view mode changes
     // This ensures the route layer persists when switching roads ⇄ satellite or during zoom
@@ -2836,8 +2852,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     mapInstance.on('styledata', handleStyleChange);
 
-    // Cleanup: Remove continuous listener on unmount or deps change
     return () => {
+      clearTimeout(safetyRenderTimer);
       mapInstance.off('styledata', handleStyleChange);
     };
   }, [currentRoute, isNavigating, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
@@ -4486,7 +4502,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       console.log('[NAV-START-ZOOM] 🎯 Zooming to navigation start:', center, 'bearing:', bearing);
       
-      // Get container height for padding calculation
+      navZoomAnimatingRef.current = true;
+      
       const containerHeight = map.current.getContainer().clientHeight || 800;
       
       try {
@@ -4496,22 +4513,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           pitch: pitch || 55,
           bearing: bearing || 0,
           padding: {
-            top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+            top: Math.round(containerHeight * 0.55),
             bottom: 40,
             left: 0,
             right: 0
           },
           duration: duration || 1200,
-          easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
+          easing: (t) => 1 - Math.pow(1 - t, 3),
           essential: true
         });
         
-        // Mark initial nav view as set up to prevent double-setup
         initialNavViewSetupRef.current = true;
         
-        // Save the navigation camera state after animation completes
         const animDuration = duration || 1200;
         setTimeout(() => {
+          navZoomAnimatingRef.current = false;
           if (map.current) {
             savedNavigationCameraRef.current = {
               zoom: map.current.getZoom(),
@@ -4519,9 +4535,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               bearing: map.current.getBearing()
             };
             console.log('[NAV-CAMERA] Auto-saved actual camera state after Go animation:', savedNavigationCameraRef.current);
+            
+            if (map.current.isStyleLoaded()) {
+              console.log('[NAV-START-ZOOM] Camera settled - forcing route layer re-render');
+              const routeSource = map.current.getSource('route') as maplibregl.GeoJSONSource;
+              if (!routeSource && cachedRouteGeoJsonRef.current) {
+                ensureRouteLayersRef.current();
+              }
+              renderRouteLayersRef.current();
+              try {
+                if (map.current.getLayer('route-outline')) map.current.moveLayer('route-outline');
+                if (map.current.getLayer('route-line')) map.current.moveLayer('route-line');
+                if (map.current.getLayer('route-traffic-overlay-layer')) map.current.moveLayer('route-traffic-overlay-layer');
+              } catch (_) {}
+            }
           }
-        }, animDuration + 100);
+        }, animDuration + 150);
       } catch (e) {
+        navZoomAnimatingRef.current = false;
         console.warn('[NAV-START-ZOOM] easeTo failed:', e);
       }
     };
