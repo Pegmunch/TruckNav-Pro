@@ -1200,22 +1200,6 @@ function NavigationPageContent() {
       return;
     }
     
-    // Helper: Map routing API sign value to direction string
-    // GraphHopper/routing sign codes: 
-    // -3 = sharp left, -2 = left, -1 = slight left/keep left
-    // 0 = straight/continue
-    // 1 = slight right/keep right, 2 = right, 3 = sharp right
-    // 4 = arrive, 5 = via reached, 6 = roundabout
-    const mapSignToDirection = (sign: number): 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' => {
-      if (sign === 2) return 'right';
-      if (sign === -2) return 'left';
-      if (sign === 1) return 'slight_right';
-      if (sign === -1) return 'slight_left';
-      if (sign === 3) return 'sharp_right';
-      if (sign === -3) return 'sharp_left';
-      return 'straight';
-    };
-
     // If no GPS position available, clear turn info and wait
     if (!gpsData?.position) {
       setNextTurn(null);
@@ -4410,12 +4394,7 @@ function NavigationPageContent() {
                         <MapTurnLaneIndicator
                           turnInfo={nextTurn}
                           unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          laneInfo={currentRoute?.laneGuidance?.[0]?.laneOptions ? {
-                            lanes: currentRoute.laneGuidance[0].laneOptions.map(l => ({
-                              direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
-                              isRecommended: l.recommended || false
-                            }))
-                          } : getFallbackLaneInfo(nextTurn.direction)}
+                          laneInfo={getFallbackLaneInfo(nextTurn.direction)}
                           isVisible={true}
                         />
                       )}
@@ -5637,12 +5616,7 @@ function NavigationPageContent() {
                       <MapTurnLaneIndicator
                         turnInfo={nextTurn}
                         unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                        laneInfo={currentRoute?.laneGuidance?.[0]?.laneOptions ? {
-                          lanes: currentRoute.laneGuidance[0].laneOptions.map(l => ({
-                            direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
-                            isRecommended: l.recommended || false
-                          }))
-                        } : getFallbackLaneInfo(nextTurn.direction)}
+                        laneInfo={getFallbackLaneInfo(nextTurn.direction)}
                         isVisible={true}
                       />
                     )}

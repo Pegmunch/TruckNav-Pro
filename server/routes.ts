@@ -62,7 +62,7 @@ async function callGraphHopperAPI(
   duration: number;
   coordinates: Array<{ lat: number; lng: number }>;
   geometry: any;
-  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }>;
 } | null> {
   try {
     const apiKey = process.env.GRAPHHOPPER_API_KEY;
@@ -241,7 +241,7 @@ async function callTomTomRoutingAPI(
   duration: number;
   coordinates: Array<{ lat: number; lng: number }>;
   geometry: any;
-  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }>;
   summary?: { lengthInMeters: number; travelTimeInSeconds: number; trafficDelayInSeconds: number };
 } | null> {
   try {
@@ -490,7 +490,7 @@ async function callHERERoutingAPI(
   duration: number;
   coordinates: Array<{ lat: number; lng: number }>;
   geometry: any;
-  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }>;
   summary?: { lengthInMeters: number; travelTimeInSeconds: number; trafficDelayInSeconds: number };
 } | null> {
   try {
@@ -716,7 +716,7 @@ async function calculateStrictVehicleClassRoute(
   coordinates: Array<{ lat: number; lng: number }>;
   restrictionsAvoided: string[];
   geometry: any;
-  instructions: Array<{ text: string; distance: number; time: number; sign: number }>;
+  instructions: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }>;
   violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
   isRouteAllowed: boolean;
 } | null> {
@@ -889,7 +889,7 @@ async function tryRerouteWithWaypoints(
   coordinates: Array<{ lat: number; lng: number }>;
   restrictionsAvoided: string[];
   geometry: any;
-  instructions: Array<{ text: string; distance: number; time: number; sign: number }>;
+  instructions: Array<{ text: string; distance: number; time: number; sign: number; routeOffsetMeters?: number; roadName?: string }>;
   violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
   isRouteAllowed: boolean;
 } | null> {
