@@ -3165,8 +3165,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       cachedRouteGeoJsonRef.current = null;
       lastNearestIndexRef.current = 0;
       lastClipIndexRef.current = -1;
-      processedRouteCoordsRef.current = null;
-      processedRouteSourceRef.current = null;
       
       const updateRouteData = () => {
         if (!map.current || !map.current.isStyleLoaded() || !currentRoute?.routePath) return;
