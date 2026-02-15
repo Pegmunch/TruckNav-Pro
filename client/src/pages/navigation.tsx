@@ -6124,9 +6124,8 @@ export default function NavigationPage() {
   // Listen for navigation reset events (triggered by stop button or destination reached)
   useEffect(() => {
     const handleNavigationReset = (event: CustomEvent) => {
-      console.log('[NAV-RESET] 🔄 Full navigation reset triggered - reloading page for fresh state', event.detail);
+      console.log('[NAV-RESET] 🔄 Full navigation reset triggered - fast in-memory reset', event.detail);
       
-      // Clear all navigation-related localStorage keys
       const keysToRemove = [
         'navigation_ui_active',
         'navigation_mode', 
@@ -6141,10 +6140,12 @@ export default function NavigationPage() {
       ];
       keysToRemove.forEach(key => localStorage.removeItem(key));
       
-      // CRITICAL FIX: Full page reload to get identical state as after T&C acceptance
-      // This ensures all React state, DOM, and iOS Safari portals are completely reset
-      // The epoch-based remount was not sufficient to fix iOS Safari dialog issues
-      window.location.reload();
+      document.body.classList.remove('navigation-active');
+      document.documentElement.classList.remove('overlay-safe-mode');
+      
+      if (mapRef.current) {
+        mapRef.current.resetBearing();
+      }
     };
     
     window.addEventListener('navigation:fullReset', handleNavigationReset as EventListener);
