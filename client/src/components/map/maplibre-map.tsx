@@ -1084,7 +1084,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       viewStateRef.current = 'tilted';
       setViewState('tilted');
-      userPreferredZoomRef.current = 16.5;
+      userPreferredZoomRef.current = 16;
       
       const gps = gpsPosition;
       const containerHeight = map.current.getContainer().clientHeight || 800;
@@ -1130,8 +1130,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         useBearing = calcRouteBearing(path[0].lat, path[0].lng, path[1].lat, path[1].lng);
       } else {
         map.current.easeTo({
-          zoom: 16.5,
-          pitch: 55,
+          zoom: 16,
+          pitch: 50,
           duration: 1200,
           easing: (t: number) => 1 - Math.pow(1 - t, 3)
         });
@@ -1141,12 +1141,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         map.current.easeTo({
           center: [centerLng, centerLat],
-          zoom: 16.5,
-          pitch: 55,
+          zoom: 16,
+          pitch: 50,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.45),
-            bottom: Math.round(containerHeight * 0.15),
+            top: Math.round(containerHeight * 0.65),
+            bottom: 0,
             left: 0,
             right: 0
           },
@@ -4268,7 +4268,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.45)}px, Bottom: ${Math.round(containerHeight * 0.15)}px`);
       console.log('[3D-NAV] ==========================================');
       
-      userPreferredZoomRef.current = 16.5;
+      userPreferredZoomRef.current = 16;
       
       viewStateRef.current = 'tilted';
       setViewState('tilted');
@@ -4276,12 +4276,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         mapInstance.easeTo({
           center: [centerLng, centerLat],
-          zoom: userPreferredZoomRef.current,
-          pitch: 55,
+          zoom: 16,
+          pitch: 50,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.45),
-            bottom: Math.round(containerHeight * 0.15),
+            top: Math.round(containerHeight * 0.65),
+            bottom: 0,
             left: 0,
             right: 0
           },
@@ -4479,8 +4479,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 pitch: targetPitch,
                 bearing: targetBearing,
                 padding: { 
-                  top: Math.round(containerHeight * 0.45),
-                  bottom: Math.round(containerHeight * 0.15),
+                  top: Math.round(containerHeight * 0.65),
+                  bottom: 0,
                   left: 0, 
                   right: 0 
                 },
