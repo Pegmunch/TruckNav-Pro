@@ -63,6 +63,13 @@ function handleWindowTouchStart(e: TouchEvent) {
   const x = touch.clientX;
   const y = touch.clientY;
   
+  // CRITICAL: Skip button interception when a modal/overlay/panel is open on top
+  // These have higher z-index and should receive touches normally
+  const target = e.target as HTMLElement;
+  if (target?.closest?.('[data-settings-overlay], [data-testid="quick-settings-panel"], [role="dialog"], [data-radix-portal], .fixed[style*="z-index: 500"]')) {
+    return;
+  }
+  
   let directHit: { id: string; registration: ButtonRegistration; distance: number } | null = null;
   let paddedHit: { id: string; registration: ButtonRegistration; distance: number } | null = null;
   
