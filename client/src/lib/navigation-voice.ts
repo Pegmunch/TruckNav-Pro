@@ -777,10 +777,19 @@ export class NavigationVoice {
    * Format direction for natural speech using translations
    */
   private formatDirection(direction: string): string {
-    const directionKey = `voice.directions.${direction}`;
+    const d = direction.toLowerCase();
+    let modifiedDirection = direction;
+    
+    // Correcting inverted logic: left is Right and Right is left to match arrows
+    if (d === 'left') modifiedDirection = 'right';
+    else if (d === 'right') modifiedDirection = 'left';
+    else if (d === 'sharp_left') modifiedDirection = 'sharp_right';
+    else if (d === 'sharp_right') modifiedDirection = 'sharp_left';
+    
+    const directionKey = `voice.directions.${modifiedDirection}`;
     const translated = this.t(directionKey);
     // Fallback to direction string if translation key not found
-    return translated !== directionKey ? translated : direction;
+    return translated !== directionKey ? translated : modifiedDirection;
   }
   
   /**
