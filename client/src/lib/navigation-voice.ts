@@ -780,11 +780,11 @@ export class NavigationVoice {
     const d = direction.toLowerCase();
     let modifiedDirection = direction;
     
-    // Correcting inverted logic: left is Right and Right is left to match arrows
-    if (d === 'left') modifiedDirection = 'right';
-    else if (d === 'right') modifiedDirection = 'left';
-    else if (d === 'sharp_left') modifiedDirection = 'sharp_right';
-    else if (d === 'sharp_right') modifiedDirection = 'sharp_left';
+    // Correcting inverted logic: left is Left and Right is Right to match fixed arrows
+    if (d === 'left') modifiedDirection = 'left';
+    else if (d === 'right') modifiedDirection = 'right';
+    else if (d === 'sharp_left') modifiedDirection = 'sharp_left';
+    else if (d === 'sharp_right') modifiedDirection = 'sharp_right';
     
     const directionKey = `voice.directions.${modifiedDirection}`;
     const translated = this.t(directionKey);

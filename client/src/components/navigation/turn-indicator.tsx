@@ -66,11 +66,11 @@ const TurnIndicator = memo(function TurnIndicator({
       case 'right':
       case 'sharp_right':
       case 'slight_right':
-        return <ArrowRight {...iconProps} />;
+        return <ArrowLeft {...iconProps} />;
       case 'left':
       case 'sharp_left':
       case 'slight_left':
-        return <ArrowLeft {...iconProps} />;
+        return <ArrowRight {...iconProps} />;
       default:
         return <ArrowUp {...iconProps} />;
     }
