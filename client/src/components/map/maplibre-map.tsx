@@ -252,6 +252,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const savedNavigationCameraRef = useRef<{ zoom: number; pitch: number; bearing: number } | null>(null);
   const userPreferredZoomRef = useRef(16); // User's preferred zoom level (respects manual zoom changes)
   const zoomAnimationInProgressRef = useRef(false); // Prevents GPS tracking from overriding zoom during button animations
+  const tiltTransitionUntilRef = useRef(0); // Prevents GPS loop from overriding camera during tilt toggle
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
@@ -357,13 +358,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           const currentVS = viewStateRef.current;
           let newState: ViewState;
           
+          tiltTransitionUntilRef.current = Date.now() + 600;
+          
           if (currentVS === 'tilted') {
             newState = 'plan';
-            mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+            mapInstance.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
           } else {
             newState = 'tilted';
             const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
-            mapInstance.easeTo({ pitch: 60, bearing: heading, duration: 400 });
+            const containerHeight = mapInstance.getContainer().clientHeight || 800;
+            mapInstance.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
           }
           console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
           viewStateRef.current = newState;
@@ -677,13 +681,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const currentVS = viewStateRef.current;
       let newState: ViewState;
       
+      tiltTransitionUntilRef.current = Date.now() + 600;
+      
       if (currentVS === 'tilted') {
         newState = 'plan';
-        map.current.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+        map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
       } else {
         newState = 'tilted';
         const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-        map.current.easeTo({ pitch: 60, bearing: heading, duration: 400 });
+        const containerHeight = map.current.getContainer().clientHeight || 800;
+        map.current.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
       }
       viewStateRef.current = newState;
       setViewState(newState);
@@ -4446,9 +4453,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               return;
             }
             
-            // CRITICAL: Skip entire GPS loop during active zoom animation
-            // MapLibre's easeTo calls cancel previous animations - we must let staggered zoom complete
+            // CRITICAL: Skip GPS loop during active zoom or tilt transition
+            // MapLibre's easeTo calls cancel previous animations
             if (zoomAnimationInProgressRef.current) {
+              return;
+            }
+            if (Date.now() < tiltTransitionUntilRef.current) {
               return;
             }
             
@@ -4887,13 +4897,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const currentVS = viewStateRef.current;
     let newState: ViewState;
     
+    tiltTransitionUntilRef.current = Date.now() + 600;
+    
     if (currentVS === 'tilted') {
       newState = 'plan';
-      map.current.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+      map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
     } else {
       newState = 'tilted';
       const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-      map.current.easeTo({ pitch: 60, bearing: heading, duration: 400 });
+      const containerHeight = map.current.getContainer().clientHeight || 800;
+      map.current.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
     }
     
     console.log(`[3D-TOGGLE] View state cycling: ${currentVS} → ${newState} (isNavigating: ${isNavigating})`);
