@@ -104,10 +104,10 @@ export function CompactTripStrip({
         return <ArrowUpLeft {...iconProps} />;
       case 'right':
       case 'sharp_right': 
-        return <ArrowRight {...iconProps} />;
+        return <ArrowUp {...iconProps} />;
       case 'left':
       case 'sharp_left': 
-        return <ArrowLeft {...iconProps} />;
+        return <ArrowRight {...iconProps} />;
       default: 
         return <ArrowUp {...iconProps} />;
     }
