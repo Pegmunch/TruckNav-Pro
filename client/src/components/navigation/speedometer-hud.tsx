@@ -12,6 +12,8 @@ import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { useSpeedLimit } from '@/hooks/use-speed-limit';
 import { useToast } from '@/hooks/use-toast';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
+import { buttonRegistry, attachWindowTouchListener, detachWindowTouchListener } from '@/components/navigation/right-action-stack';
+import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
 interface SpeedometerHUDProps {
   className?: string;
@@ -32,6 +34,130 @@ interface SpeedometerHUDProps {
   timeRemainingSeconds?: number; // Time remaining to destination in seconds (for countdown display)
   distanceRemainingMeters?: number; // Distance remaining to destination in meters
   vehicleType?: string; // Vehicle type for speed-based travel time calculation
+}
+
+const STOP_BTN_ID = 'speedometer-stop-btn';
+
+function StopButtonCrescent({ isNavigating, onStopNavigation }: { isNavigating: boolean; onStopNavigation: () => void }) {
+  const stopBtnRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const lastFiredRef = useRef(0);
+  
+  useEffect(() => { setMounted(true); }, []);
+  
+  useEffect(() => {
+    if (!mounted || !isNavigating) {
+      buttonRegistry.delete(STOP_BTN_ID);
+      return;
+    }
+    
+    attachWindowTouchListener();
+    
+    buttonRegistry.set(STOP_BTN_ID, {
+      id: STOP_BTN_ID,
+      getRect: () => stopBtnRef.current?.getBoundingClientRect() || null,
+      callback: () => {
+        console.log('[STOP-BTN] 🔘 Window touch interceptor triggered');
+        hapticButtonPress();
+        onStopNavigation();
+      },
+      lastFired: lastFiredRef.current,
+      isVisible: true,
+      touchPadding: 30
+    });
+    
+    const button = stopBtnRef.current;
+    if (button) {
+      const handleDirectTouch = (e: TouchEvent) => {
+        const now = Date.now();
+        if (now - lastFiredRef.current < 200) return;
+        lastFiredRef.current = now;
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[STOP-BTN] 🔘 Direct TouchStart triggered');
+        hapticButtonPress();
+        onStopNavigation();
+      };
+      
+      button.addEventListener('touchstart', handleDirectTouch, { passive: false, capture: true });
+      
+      return () => {
+        button.removeEventListener('touchstart', handleDirectTouch, { capture: true });
+        buttonRegistry.delete(STOP_BTN_ID);
+        detachWindowTouchListener();
+      };
+    }
+    
+    return () => {
+      buttonRegistry.delete(STOP_BTN_ID);
+      detachWindowTouchListener();
+    };
+  }, [mounted, isNavigating, onStopNavigation]);
+  
+  return (
+    <div 
+      className="relative h-[48px] sm:h-[52px] md:h-[56px] w-[70px] sm:w-[75px] ml-0.5"
+      style={{ marginLeft: '-2px' }}
+    >
+      <svg 
+        viewBox="0 0 70 48" 
+        className="absolute inset-0 w-full h-full"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="stopGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ef4444" />
+            <stop offset="100%" stopColor="#dc2626" />
+          </linearGradient>
+        </defs>
+        <path 
+          d="M 15,0 Q -5,24 15,48 L 46,48 Q 70,48 70,24 Q 70,0 46,0 Z"
+          fill="url(#stopGradient)"
+          className="transition-all duration-200"
+        />
+      </svg>
+      <button
+        ref={stopBtnRef}
+        onPointerDown={(e) => {
+          if (e.pointerType === 'mouse' && isNavigating) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[STOP-BTN] 🔘 PointerDown (mouse) triggered');
+            hapticButtonPress();
+            onStopNavigation();
+          }
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (isNavigating) {
+            console.log('[STOP-BTN] 🔘 Click triggered');
+            hapticButtonPress();
+            onStopNavigation();
+          }
+        }}
+        disabled={!isNavigating}
+        className={cn(
+          'absolute inset-0 w-full h-full',
+          'text-white font-bold text-base sm:text-lg tracking-wide',
+          'flex items-center justify-center',
+          'select-none active:scale-95 transition-transform touch-manipulation',
+          !isNavigating && 'opacity-40 cursor-not-allowed'
+        )}
+        style={{ 
+          touchAction: 'manipulation',
+          background: 'transparent',
+          textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+          WebkitTapHighlightColor: 'transparent',
+          lineHeight: 1,
+          paddingLeft: '8px'
+        }}
+        data-testid="button-stop-speedometer"
+      >
+        STOP
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -692,74 +818,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
 
       {/* STOP BUTTON - Right crescent hugging speedometer's right edge */}
       {showStopButton && onStopNavigation && (
-        <div 
-          className="relative h-[48px] sm:h-[52px] md:h-[56px] w-[70px] sm:w-[75px] ml-0.5"
-          style={{ marginLeft: '-2px' }}
-        >
-          <svg 
-            viewBox="0 0 70 48" 
-            className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="stopGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#ef4444" />
-                <stop offset="100%" stopColor="#dc2626" />
-              </linearGradient>
-            </defs>
-            {/* Crescent shape: left convex curve bulging outward, right rounded */}
-            <path 
-              d="M 15,0 Q -5,24 15,48 L 46,48 Q 70,48 70,24 Q 70,0 46,0 Z"
-              fill="url(#stopGradient)"
-              className="transition-all duration-200"
-            />
-          </svg>
-          <button
-            onTouchStart={(e) => {
-              if (isNavigating && onStopNavigation) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('[STOP-BTN] 🔘 TouchStart triggered');
-                onStopNavigation();
-              }
-            }}
-            onPointerDown={(e) => {
-              if (e.pointerType === 'mouse' && isNavigating && onStopNavigation) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('[STOP-BTN] 🔘 PointerDown (mouse) triggered');
-                onStopNavigation();
-              }
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (isNavigating && onStopNavigation) {
-                console.log('[STOP-BTN] 🔘 Click triggered');
-                onStopNavigation();
-              }
-            }}
-            disabled={!isNavigating}
-            className={cn(
-              'absolute inset-0 w-full h-full',
-              'text-white font-bold text-base sm:text-lg tracking-wide',
-              'flex items-center justify-center',
-              'select-none active:scale-95 transition-transform touch-manipulation',
-              !isNavigating && 'opacity-40 cursor-not-allowed'
-            )}
-            style={{ 
-              touchAction: 'manipulation',
-              background: 'transparent',
-              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-              WebkitTapHighlightColor: 'transparent',
-              lineHeight: 1,
-              paddingLeft: '8px'
-            }}
-            data-testid="button-stop-speedometer"
-          >
-            STOP
-          </button>
-        </div>
+        <StopButtonCrescent isNavigating={isNavigating} onStopNavigation={onStopNavigation} />
       )}
       </div>
     </div>
