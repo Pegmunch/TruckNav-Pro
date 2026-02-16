@@ -97,14 +97,19 @@ export function CompactTripStrip({
     const iconProps = { className: "w-8 h-8 md:w-10 md:h-10 stroke-[2.5px]" };
     switch (direction) {
       case 'straight':
-      case 'slight_right':
-      case 'slight_left':
         return <ArrowUp {...iconProps} />;
+      case 'slight_right':
+        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[45deg]")} />;
+      case 'slight_left':
+        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[-45deg]")} />;
       case 'right':
-      case 'sharp_right': return <ArrowRight {...iconProps} />;
+      case 'sharp_right': 
+        return <ArrowRight {...iconProps} />;
       case 'left':
-      case 'sharp_left': return <ArrowLeft {...iconProps} />;
-      default: return <ArrowUp {...iconProps} />;
+      case 'sharp_left': 
+        return <ArrowLeft {...iconProps} />;
+      default: 
+        return <ArrowUp {...iconProps} />;
     }
   };
 
