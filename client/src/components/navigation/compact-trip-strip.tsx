@@ -115,10 +115,7 @@ export function CompactTripStrip({
 
   // Convert turn distance
   const formatTurnDistance = (distanceM: number): string => {
-    // Convert meters to feet
-    const feet = Math.round(distanceM * 3.28084);
-    if (feet <= 0) return "";
-    return `${feet} ft`;
+    return ""; // Distance removed per user request
   };
 
   // Get road badge style
@@ -154,10 +151,10 @@ export function CompactTripStrip({
 
     // Recommended lane: show blue arrow in direction
     switch (direction) {
-      case 'left': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
-      case 'right': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
+      case 'left': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
+      case 'right': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
       case 'straight': return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
-      case 'exit': return <ArrowUpLeft className={cn(iconClass, "text-blue-600")} />;
+      case 'exit': return <ArrowUpRight className={cn(iconClass, "text-blue-600")} />;
       default: return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
     }
   };
