@@ -534,6 +534,9 @@ function NavigationPageContent() {
       setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
     
+    // Reset live ETA tracking for new route
+    lastProjectedDistanceRef.current = 0;
+    
     lastCalculatedRouteRef.current = newRoute;
     currentRouteIdRef.current = newRoute.id || null;
     
@@ -756,9 +759,8 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
-  // Rolling speed history for live ETA calculation (last 30 seconds of speed samples)
+  // Rolling speed history for live ETA calculation (last 60 seconds of speed samples)
   const speedHistoryRef = useRef<Array<{ speed: number; timestamp: number }>>([]);
-  const navigationStartTimeRef = useRef<number>(0);
   const distanceTravelledRef = useRef<number>(0);
   const lastProjectedDistanceRef = useRef<number>(0);
   
@@ -1423,31 +1425,65 @@ function NavigationPageContent() {
       if (remainingDistance >= 0) {
         setDynamicDistanceRemaining(remainingDistance);
         
+        // Track distance travelled for journey average speed
+        if (lastProjectedDistanceRef.current > 0 && projectedDistanceAlongRoute > lastProjectedDistanceRef.current) {
+          distanceTravelledRef.current += (projectedDistanceAlongRoute - lastProjectedDistanceRef.current);
+        }
+        lastProjectedDistanceRef.current = projectedDistanceAlongRoute;
+        
+        // Live ETA calculation with rolling speed history
         const rawSpeed = gpsData?.position?.speed;
-        const MAX_TRUCK_SPEED = 36;
-        const MIN_RELIABLE_SPEED = 1.0;
-        const clampedSpeed = typeof rawSpeed === 'number' && rawSpeed > MIN_RELIABLE_SPEED && rawSpeed < MAX_TRUCK_SPEED
+        const MAX_TRUCK_SPEED = 36; // ~130 km/h
+        const MIN_RELIABLE_SPEED = 1.0; // ~3.6 km/h
+        const now = Date.now();
+        
+        const validSpeed = typeof rawSpeed === 'number' && rawSpeed > MIN_RELIABLE_SPEED && rawSpeed < MAX_TRUCK_SPEED
           ? rawSpeed : 0;
+        
+        // Add to rolling speed history (keep last 60 seconds)
+        if (validSpeed > 0) {
+          speedHistoryRef.current.push({ speed: validSpeed, timestamp: now });
+        }
+        const SPEED_WINDOW_MS = 60000;
+        speedHistoryRef.current = speedHistoryRef.current.filter(s => now - s.timestamp < SPEED_WINDOW_MS);
+        
+        // Calculate rolling average speed from recent samples
+        const recentSpeeds = speedHistoryRef.current;
+        const rollingAvgSpeed = recentSpeeds.length > 0
+          ? recentSpeeds.reduce((sum, s) => sum + s.speed, 0) / recentSpeeds.length
+          : 0;
+        
+        // Calculate journey average speed (total distance / total time)
+        const elapsedSeconds = navigationStartTimeRef.current > 0 ? (now - navigationStartTimeRef.current) / 1000 : 0;
+        const journeyAvgSpeed = elapsedSeconds > 30 && distanceTravelledRef.current > 100
+          ? distanceTravelledRef.current / elapsedSeconds
+          : 0;
         
         const originalDurationMinutes = currentRoute.duration || 0;
         
-        if (clampedSpeed > 0 && remainingDistance > 0 && totalRouteLength > 0) {
-          const speedBasedMinutes = (remainingDistance / clampedSpeed) / 60;
-          const proportionRemaining = remainingDistance / totalRouteLength;
-          const proportionalMinutes = originalDurationMinutes * proportionRemaining;
-          const blendedMinutes = proportionalMinutes > 0 
-            ? speedBasedMinutes * 0.6 + proportionalMinutes * 0.4
-            : speedBasedMinutes;
-          const prevEta = dynamicEtaMinutes;
-          const maxDelta = Math.max(3, prevEta * 0.2);
-          const smoothedMinutes = prevEta > 0 
-            ? Math.max(1, Math.ceil(Math.max(blendedMinutes, prevEta - maxDelta)))
-            : Math.max(1, Math.ceil(blendedMinutes));
-          setDynamicEtaMinutes(smoothedMinutes);
-        } else if (totalRouteLength > 0 && originalDurationMinutes > 0) {
-          const proportionRemaining = remainingDistance / totalRouteLength;
-          const remainingMinutes = originalDurationMinutes * proportionRemaining;
-          setDynamicEtaMinutes(Math.max(1, Math.ceil(remainingMinutes)));
+        if (remainingDistance > 0 && totalRouteLength > 0) {
+          let etaMinutes: number;
+          
+          if (rollingAvgSpeed > 0) {
+            // Primary: use rolling average speed from last 60s of live GPS data
+            // Blend with journey average if available for stability
+            const effectiveSpeed = journeyAvgSpeed > 0
+              ? rollingAvgSpeed * 0.7 + journeyAvgSpeed * 0.3
+              : rollingAvgSpeed;
+            etaMinutes = (remainingDistance / effectiveSpeed) / 60;
+          } else if (journeyAvgSpeed > 0) {
+            // Fallback 1: journey average speed (stopped but have history)
+            etaMinutes = (remainingDistance / journeyAvgSpeed) / 60;
+          } else if (originalDurationMinutes > 0) {
+            // Fallback 2: proportional from original route duration (no speed data yet)
+            const proportionRemaining = remainingDistance / totalRouteLength;
+            etaMinutes = originalDurationMinutes * proportionRemaining;
+          } else {
+            // Fallback 3: assume 50 km/h average for HGV
+            etaMinutes = (remainingDistance / 13.9) / 60;
+          }
+          
+          setDynamicEtaMinutes(Math.max(1, Math.ceil(etaMinutes)));
         }
       }
 
@@ -3147,9 +3183,10 @@ function NavigationPageContent() {
         setDynamicDistanceRemaining(newRoute.distance * 1609.344);
       }
       if (newRoute.duration) {
-        // route.duration is already in MINUTES from the server
         setDynamicEtaMinutes(Math.ceil(newRoute.duration));
       }
+      // Reset live ETA tracking for new route
+      lastProjectedDistanceRef.current = 0;
       // SAFETY: Store in persistent ref for navigation resilience
       lastCalculatedRouteRef.current = newRoute;
       
@@ -3602,6 +3639,9 @@ function NavigationPageContent() {
     
     navigationStartTimeRef.current = Date.now();
     navSpeedSamplesRef.current = [];
+    speedHistoryRef.current = [];
+    distanceTravelledRef.current = 0;
+    lastProjectedDistanceRef.current = 0;
     
     navigationVoice.setEnabled(true);
     setProfessionalVoiceEnabled(true);
