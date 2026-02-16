@@ -4343,6 +4343,7 @@ function NavigationPageContent() {
                           if (currentRoute?.routePath) {
                             const lats = currentRoute.routePath.map((p: any) => p.lat);
                             const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                            console.log('[PREVIEW-STOP] Resetting map to route bounds:', { lats: lats.length, lngs: lngs.length });
                             window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
                               detail: {
                                 bounds: { north: Math.max(...lats), south: Math.min(...lats), east: Math.max(...lngs), west: Math.min(...lngs) },
@@ -5070,6 +5071,7 @@ function NavigationPageContent() {
                           if (currentRoute?.routePath) {
                             const lats = currentRoute.routePath.map((p: any) => p.lat);
                             const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                            console.log('[PREVIEW-STOP] Resetting map to route bounds:', { lats: lats.length, lngs: lngs.length });
                             window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
                               detail: {
                                 bounds: { north: Math.max(...lats), south: Math.min(...lats), east: Math.max(...lngs), west: Math.min(...lngs) },

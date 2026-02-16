@@ -2226,13 +2226,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, []);
 
+  // Route Rendering and Visibility
   useEffect(() => {
-    if (!map.current || !isLoaded) return;
-    const mode = preferencesRef.current.mapViewMode;
-    const zoom = currentZoomRef.current;
-    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', mode, 'viewState:', viewState, 'zoom:', zoom);
-    updateLayerVisibility(map.current, mode, zoom, viewState);
-  }, [preferences.mapViewMode, isLoaded, viewState, updateLayerVisibility]);
+    const mapInstance = map.current;
+    if (!mapInstance || !isLoaded) return;
+
+    const sourceId = 'route';
+    const layerId = 'route-line';
+
+    if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
+      console.log('[MAP-ROUTE] Updating route line in map component');
+      renderRouteLayers();
+    } else {
+      removeRouteLayers();
+    }
+  }, [currentRoute, isLoaded, renderRouteLayers, removeRouteLayers]);
 
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {
