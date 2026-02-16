@@ -4308,7 +4308,7 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only render NavigationLayout when navigation is active or route exists */}
               {/* This prevents the z-[99999] overlays from blocking the hamburger button in plan mode */}
-              {!showComprehensiveMenu && (isNavUIActive || currentRoute) && (
+              {!showComprehensiveMenu && (isNavUIActive || currentRoute) && !(isShowingPreview && !isLocalNavActive) && (
                 <>
                 <NavigationLayout
                   isNavigating={isNavigating}
