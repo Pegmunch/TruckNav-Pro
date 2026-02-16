@@ -1467,17 +1467,16 @@ function NavigationPageContent() {
           const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
           const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
           
-          // Cross product sign: positive = left turn (counter-clockwise), negative = right turn (clockwise)
-          const turnAngle = crossProduct > 0 ? -turnMagnitude : turnMagnitude;
+          const turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
           
           if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
             let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
-            if (turnAngle >= 115) direction = 'sharp_right';
-            else if (turnAngle >= 50) direction = 'right';
-            else if (turnAngle > 25) direction = 'slight_right';
-            else if (turnAngle <= -115) direction = 'sharp_left';
-            else if (turnAngle <= -50) direction = 'left';
-            else if (turnAngle < -25) direction = 'slight_left';
+            if (turnAngle >= 115) direction = 'sharp_left';
+            else if (turnAngle >= 50) direction = 'left';
+            else if (turnAngle > 25) direction = 'slight_left';
+            else if (turnAngle <= -115) direction = 'sharp_right';
+            else if (turnAngle <= -50) direction = 'right';
+            else if (turnAngle < -25) direction = 'slight_right';
             return { direction, turnIndex: i, turnAngle };
           }
         }
