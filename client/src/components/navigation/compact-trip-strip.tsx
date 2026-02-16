@@ -99,15 +99,15 @@ export function CompactTripStrip({
       case 'straight':
         return <ArrowUp {...iconProps} />;
       case 'slight_right':
-        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[45deg]")} />;
-      case 'slight_left':
         return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[-45deg]")} />;
+      case 'slight_left':
+        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[45deg]")} />;
       case 'right':
       case 'sharp_right': 
-        return <ArrowRight {...iconProps} />;
+        return <ArrowLeft {...iconProps} />;
       case 'left':
       case 'sharp_left': 
-        return <ArrowLeft {...iconProps} />;
+        return <ArrowRight {...iconProps} />;
       default: 
         return <ArrowUp {...iconProps} />;
     }
@@ -115,7 +115,10 @@ export function CompactTripStrip({
 
   // Convert turn distance
   const formatTurnDistance = (distanceM: number): string => {
-    return ""; // Distance removed per user request
+    // Convert meters to feet
+    const feet = Math.round(distanceM * 3.28084);
+    if (feet <= 0) return "";
+    return `${feet} ft`;
   };
 
   // Get road badge style
@@ -151,10 +154,10 @@ export function CompactTripStrip({
 
     // Recommended lane: show blue arrow in direction
     switch (direction) {
-      case 'left': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
-      case 'right': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
+      case 'left': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
+      case 'right': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
       case 'straight': return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
-      case 'exit': return <ArrowUpRight className={cn(iconClass, "text-blue-600")} />;
+      case 'exit': return <ArrowUpLeft className={cn(iconClass, "text-blue-600")} />;
       default: return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
     }
   };
