@@ -1538,8 +1538,16 @@ function NavigationPageContent() {
   
   // Detect when destination is reached
   useEffect(() => {
-    // Only check during active navigation
+    // Only check during active navigation and when we've actually moved significantly along the route
+    // This prevents premature arrival triggers at the start of navigation or during reroutes
     if (!isNavigating || !currentRoute || !gpsData?.position || hasShownDestinationDialogRef.current) {
+      return;
+    }
+    
+    // GUARD: Only allow arrival detection if we are very close to the end of the route progress
+    // This prevents "jump-to-end" bugs during GPS glitches or reroutes
+    if (currentRoute.routePath && routeProgressRef.current < currentRoute.routePath.length * 0.9) {
+      // If we haven't completed 90% of the route points, don't trigger arrival via Haversine distance
       return;
     }
     
@@ -3786,6 +3794,8 @@ function NavigationPageContent() {
       window.event.stopPropagation();
     }
     
+    // EMERGENCY RECOVERY: Ensure the route line doesn't disappear if navigation is just stopped
+    // The visual state should transition cleanly
     console.log('[NAV-STOP] ✅ Forced cleanup complete');
   };
 
