@@ -4462,6 +4462,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const currentViewState = viewStateRef.current;
             const targetPitch = currentViewState === 'tilted' ? 50 : 0;
             const targetBearing = currentViewState === 'normal' ? 0 : bearing;
+
+            // CRITICAL: Force map rotation to follow GPS heading so route line appears fixed upward
+            // We use bearing directly as targetBearing for easeTo when viewState is not 'normal'
             
             try {
               const easeToOptions: maplibregl.EaseToOptions = {
@@ -4469,7 +4472,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 pitch: targetPitch,
                 bearing: targetBearing,
                 padding: { 
-                  top: Math.round(containerHeight * 0.65),
+                  top: Math.round(containerHeight * 0.75), // Vehicle marker in lower portion
                   bottom: 0,
                   left: 0, 
                   right: 0 
