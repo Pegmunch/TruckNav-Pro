@@ -2806,18 +2806,38 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   renderRouteLayersRef.current = renderRouteLayers;
   ensureRouteLayersRef.current = ensureRouteLayers;
 
-  // Route Rendering and Visibility
+  // Route Rendering and Visibility with health check
   useEffect(() => {
     const mapInstance = map.current;
     if (!mapInstance || !isLoaded) return;
 
-    if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
-      console.log('[MAP-ROUTE] Updating route line in map component');
-      renderRouteLayers();
-    } else {
-      removeRouteLayers();
+    const performRouteCheck = () => {
+      if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
+        const hasLayer = mapInstance.getLayer('route-line');
+        const hasSource = mapInstance.getSource('route');
+        
+        if (!hasLayer || !hasSource) {
+          console.warn('[ROUTE-HEALTH] 🚨 Route line or source missing! Triggering restoration...');
+          renderRouteLayers();
+        }
+      } else {
+        removeRouteLayers();
+      }
+    };
+
+    // Immediate check
+    performRouteCheck();
+
+    // Safety critical periodic check every 3 seconds during navigation
+    let interval: NodeJS.Timeout | null = null;
+    if (isNavigating) {
+      interval = setInterval(performRouteCheck, 3000);
     }
-  }, [currentRoute, isLoaded, renderRouteLayers, removeRouteLayers]);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [currentRoute, isLoaded, renderRouteLayers, removeRouteLayers, isNavigating]);
 
   // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
