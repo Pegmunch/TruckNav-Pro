@@ -2828,10 +2828,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Immediate check
     performRouteCheck();
 
-    // Safety critical periodic check every 3 seconds during navigation
+    // Safety critical periodic check every 500ms during navigation
     let interval: NodeJS.Timeout | null = null;
     if (isNavigating) {
-      interval = setInterval(performRouteCheck, 3000);
+      interval = setInterval(performRouteCheck, 500);
     }
 
     return () => {
