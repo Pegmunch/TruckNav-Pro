@@ -361,7 +361,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             
             if (prev === 'normal') {
               newState = 'tilted';
-              mapInstance.easeTo({ pitch: 50, duration: 300 });
+              // Calculate bearing from GPS or route to ensure "heading up" orientation
+              const currentBearing = gpsPositionRef.current?.heading || 0;
+              mapInstance.easeTo({ 
+                pitch: 50, 
+                bearing: currentBearing,
+                duration: 300 
+              });
             } else if (prev === 'tilted') {
               newState = 'overhead';
               // Keep bearing, set pitch to 0 for plan view
