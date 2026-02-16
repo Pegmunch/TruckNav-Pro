@@ -95,7 +95,9 @@ export function CompactTripStrip({
   // Get turn icon - larger on tablet portrait
   const getTurnIcon = (direction: string) => {
     const iconProps = { className: "w-8 h-8 md:w-10 md:h-10 stroke-[2.5px]" };
-    switch (direction) {
+    const d = direction.toLowerCase();
+    
+    switch (d) {
       case 'straight':
         return <ArrowUp {...iconProps} />;
       case 'slight_right':
