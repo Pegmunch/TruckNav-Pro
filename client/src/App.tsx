@@ -62,10 +62,10 @@ function MobileThemeEnforcer() {
   useEffect(() => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    if (isMobile && (currentTheme === 'auto' || currentTheme === 'night')) {
-      localStorage.setItem('theme-mode', 'day');
-      setTheme('day');
-      console.log('Mobile device detected - forcing day theme for better visibility');
+    // Allow Auto and Night themes on mobile - sunrise/sunset controls Auto mode
+    if (isMobile && currentTheme !== 'auto' && currentTheme !== 'night' && currentTheme !== 'day') {
+      localStorage.setItem('theme-mode', 'auto');
+      setTheme('auto');
     }
     
     initializeAudioOnInteraction();

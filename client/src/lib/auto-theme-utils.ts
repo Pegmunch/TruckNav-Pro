@@ -5,7 +5,7 @@ export const autoThemeConfigSchema = z.object({
   // Time-based settings
   dayStartHour: z.number().min(0).max(23).default(6), // 6 AM
   nightStartHour: z.number().min(0).max(23).default(18), // 6 PM
-  useGeolocation: z.boolean().default(false),
+  useGeolocation: z.boolean().default(true),
   
   // Color temperature settings
   enableColorTemperature: z.boolean().default(true),
@@ -27,7 +27,7 @@ export type AutoThemeConfig = z.infer<typeof autoThemeConfigSchema>;
 export const defaultAutoThemeConfig: AutoThemeConfig = {
   dayStartHour: 6,
   nightStartHour: 18,
-  useGeolocation: false,
+  useGeolocation: true,
   enableColorTemperature: true,
   warmTemperatureStrength: 30,
   enableSeasonalAdjustment: false,

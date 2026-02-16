@@ -357,17 +357,21 @@ export function ThemeProvider({
     } else if (mode === "night") {
       return "night";
     } else {
-      // Auto mode - primarily follow the device's system preference
-      // This is what users expect: when their phone switches to dark mode, the app follows
+      // Auto mode - use sunrise/sunset calculation based on geolocation
+      const currentTimeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
+      if (currentTimeInfo) {
+        return currentTimeInfo.currentTheme === "night" ? "night" : "day";
+      }
+      
+      // Fallback to system preference if time info unavailable
       if (typeof window !== "undefined") {
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         return prefersDark ? "night" : "day";
       }
       
-      // Fallback to day theme if window is not available
       return "day";
     }
-  }, []);
+  }, [autoThemeConfig, coordinates]);
 
   // Legacy compatibility methods (for existing components)
   const isNightTime = useCallback((): boolean => {
@@ -592,6 +596,13 @@ ${darkCSS}
   }, [customHSLColor, effectiveTheme, applyHSLColorOverrides]);
 
   // Note: Theme initialization moved to useState initializer to prevent flicker
+
+  // Auto-request location when Auto mode is selected and geolocation is enabled
+  useEffect(() => {
+    if (currentTheme === "auto" && autoThemeConfig.useGeolocation && !coordinates && !isLocationLoading) {
+      requestLocation();
+    }
+  }, [currentTheme, autoThemeConfig.useGeolocation, coordinates, isLocationLoading, requestLocation]);
 
   // Update timeInfo separately to avoid infinite loops in calculateEffectiveTheme
   useEffect(() => {
