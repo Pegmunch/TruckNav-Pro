@@ -58,7 +58,7 @@ class CustomButtonControl implements IControl {
       e.stopPropagation();
       
       const now = Date.now();
-      if (now - lastFiredAt < 400) return;
+      if (now - lastFiredAt < 500) return;
       lastFiredAt = now;
       
       console.log(`[MAPLIBRE-CONTROL] ${this.options.testId} fired via ${e.type}`);
@@ -70,8 +70,14 @@ class CustomButtonControl implements IControl {
       this.options.onClick();
     };
     
-    this.button.addEventListener('touchend', handleInteraction, { passive: false, capture: true });
-    this.button.addEventListener('click', handleInteraction, { capture: true });
+    this.button.addEventListener('touchstart', handleInteraction, { passive: false, capture: true });
+    this.button.addEventListener('click', (e: Event) => {
+      if (Date.now() - lastFiredAt < 500) {
+        e.preventDefault();
+        return;
+      }
+      handleInteraction(e);
+    }, { capture: true });
     
     this.container.appendChild(this.button);
     
