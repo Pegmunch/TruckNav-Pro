@@ -275,13 +275,18 @@ export function CompactTripStrip({
                 Preview
               </button>
               <button
-                onClick={onPreviewStop}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isPreviewActive && onPreviewStop) onPreviewStop();
+                }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   if (isPreviewActive && onPreviewStop) onPreviewStop();
                 }}
                 disabled={!isPreviewActive}
-                className="h-11 md:h-12 px-3 md:px-5 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs md:text-base active:scale-95 active:bg-rose-700 transition-all disabled:opacity-40 rounded-r shadow-md flex items-center justify-center leading-none select-none"
+                className="h-11 md:h-12 px-3 md:px-5 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs md:text-base active:scale-95 active:bg-rose-700 transition-all disabled:opacity-40 rounded-r shadow-md flex items-center justify-center leading-none select-none touch-manipulation"
                 style={{ touchAction: 'manipulation', minWidth: '44px', WebkitTapHighlightColor: 'transparent' }}
                 data-testid="button-preview-stop"
               >

@@ -719,11 +719,15 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               if (e.pointerType !== 'mouse' && isNavigating && onStopNavigation) {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('[STOP-BTN] 🔘 Touch/Pointer down triggered');
                 onStopNavigation();
               }
             }}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (isNavigating && onStopNavigation) {
+                console.log('[STOP-BTN] 🔘 Click triggered');
                 onStopNavigation();
               }
             }}
@@ -732,7 +736,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               'absolute inset-0 w-full h-full',
               'text-white font-bold text-base sm:text-lg tracking-wide',
               'flex items-center justify-center',
-              'select-none',
+              'select-none active:scale-95 transition-transform touch-manipulation',
               !isNavigating && 'opacity-40 cursor-not-allowed'
             )}
             style={{ 

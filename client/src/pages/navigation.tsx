@@ -3781,6 +3781,11 @@ function NavigationPageContent() {
       apiRequest('POST', `/api/journeys/${currentJourney.id}/complete`, {}).catch(() => {});
     }
     
+    // STABILIZED TOUCH HANDLING: Prevent any further events from propagating
+    if (window.event) {
+      window.event.stopPropagation();
+    }
+    
     console.log('[NAV-STOP] ✅ Forced cleanup complete');
   };
 
