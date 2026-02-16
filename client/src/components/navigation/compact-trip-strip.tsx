@@ -99,17 +99,17 @@ export function CompactTripStrip({
     
     switch (d) {
       case 'straight':
-        return <ArrowUp {...iconProps} />;
       case 'slight_right':
-        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[45deg]")} />;
       case 'slight_left':
-        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[-45deg]")} />;
+        return <ArrowUp {...iconProps} />;
       case 'right':
       case 'sharp_right': 
-        return <ArrowRight {...iconProps} />;
+      case 'sharp_left':
       case 'left':
-      case 'sharp_left': 
-        return <ArrowLeft {...iconProps} />;
+        // For any significant turn (90 degrees or more), use the specific directional arrows
+        if (d.includes('left')) return <ArrowLeft {...iconProps} />;
+        if (d.includes('right')) return <ArrowRight {...iconProps} />;
+        return <ArrowUp {...iconProps} />;
       default: 
         return <ArrowUp {...iconProps} />;
     }
