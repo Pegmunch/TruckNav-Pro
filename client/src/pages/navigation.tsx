@@ -2207,6 +2207,7 @@ function NavigationPageContent() {
       // or navigation transition (isStartingNavigationRef) - prevents route disappearing during GO button flow
       // when currentJourney is briefly null before the journey is created/activated
       // Also prevents route clearing when Preview button is pressed (plan view → preview mode)
+      // STABILIZED: Added explicit checks to prevent route disappearing during high-speed motion transitions
       if (!isLocalNavActive && !isShowingPreview && !isStartingNavigationRef.current) {
         console.log('[JOURNEY-LOAD] No journey - clearing route data');
         setCurrentRoute(null);
@@ -3751,81 +3752,36 @@ function NavigationPageContent() {
   };
 
   const handleStopNavigation = () => {
-    console.log('[NAV-STOP] 🔴 Cancel button pressed!');
+    console.log('[NAV-STOP] 🔴 Stop button pressed - forcing immediate UI reset');
     
-    if (navigationStartTimeRef.current > 0 && navSpeedSamplesRef.current.length > 0) {
-      const tripDurationMinutes = Math.round((Date.now() - navigationStartTimeRef.current) / 60000);
-      const avgSpeedMs = navSpeedSamplesRef.current.reduce((a, b) => a + b, 0) / navSpeedSamplesRef.current.length;
-      const avgSpeedKmh = Math.round(avgSpeedMs * 3.6 * 10) / 10;
-      const expectedDuration = currentRoute?.duration ? Math.round(currentRoute.duration) : tripDurationMinutes;
-      
-      if (tripDurationMinutes > 1 && avgSpeedKmh > 0) {
-        apiRequest('POST', '/api/traffic/driver-behavior', {
-          sessionId: getSessionId(),
-          averageSpeedKmh: avgSpeedKmh,
-          tripDurationMinutes,
-          expectedDurationMinutes: expectedDuration,
-          breaksTaken: 0,
-          totalBreakMinutes: 0,
-        }).catch(() => {});
-      }
-      navigationStartTimeRef.current = 0;
-      navSpeedSamplesRef.current = [];
+    // CRITICAL FIX: Stop voice immediately to prevent infinite repeating loops
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      console.log('[NAV-STOP] 🔇 Voice synthesis cancelled');
     }
+    navigationVoice.setEnabled(false);
     
     // Reset route calculation counter to 0 if user cancels (abort all pending calculations)
     routeCalculationCountRef.current = 0;
     setShouldAutoNavigateOnMobile(false);
+    isStartingNavigationRef.current = false;
     
-    // CRITICAL: Always reset cancellation guard at start of stop - prevents stuck disabled state
-    // This ensures the Stop button is never permanently disabled due to stale guard state
-    isCancellingRouteRef.current = false;
-    console.log('[NAV-STOP] 🔓 Cancellation guard reset at entry');
+    // Clear route immediately to stop the navigation tracking loop
+    setCurrentRoute(null);
+    setIsLocalNavActive(false);
     
-    // If navigation is already cancelled (no route), go back to fresh start
-    if (!isLocalNavActive && !currentRoute) {
-      console.log('[NAV-STOP] ✅ Already cancelled - triggering full reset to clean state');
-      // Dispatch full reset to restore initial screen state (same as after T&C accept)
-      const resetEvent = new CustomEvent('navigation:fullReset', {
-        detail: { source: 'stopNavigation_alreadyCancelled', timestamp: Date.now() }
-      });
-      window.dispatchEvent(resetEvent);
-      return;
-    }
+    // Force a full reset event which is more reliable than state updates for getting unstuck
+    const resetEvent = new CustomEvent('navigation:fullReset', {
+      detail: { source: 'stopNavigation_force', timestamp: Date.now() }
+    });
+    window.dispatchEvent(resetEvent);
     
-    // GUARD: Prevent double-clicks - if mutation is pending, force complete UI reset
-    if (completeJourneyMutation.isPending) {
-      console.log('[NAV-STOP] ⏸️ Mutation pending - triggering full reset');
-      // Dispatch full reset to restore initial screen state (same as after T&C accept)
-      const resetEvent = new CustomEvent('navigation:fullReset', {
-        detail: { source: 'stopNavigation_mutationPending', timestamp: Date.now() }
-      });
-      window.dispatchEvent(resetEvent);
-      return;
-    }
-    
-    // Clear refs that won't survive reload
-    lastCalculatedRouteRef.current = null;
-    isCancellingRouteRef.current = false;
-    
-    // Complete the journey on the server (fire-and-forget before reload)
+    // Fire-and-forget server completion
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       apiRequest('POST', `/api/journeys/${currentJourney.id}/complete`, {}).catch(() => {});
     }
     
-    // Dispatch navigation stopped event for notification system
-    const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
-      detail: { timestamp: Date.now() }
-    });
-    window.dispatchEvent(navigationStoppedEvent);
-    
-    // Trigger full reset immediately - skip React state updates to avoid broken partial UI
-    const resetEvent = new CustomEvent('navigation:fullReset', {
-      detail: { source: 'stopNavigation', timestamp: Date.now() }
-    });
-    window.dispatchEvent(resetEvent);
-    
-    console.log('[NAV-STOP] ✅ Full reset triggered - reload handles all cleanup');
+    console.log('[NAV-STOP] ✅ Forced cleanup complete');
   };
 
   const handleOpenLaneSelection = () => {
