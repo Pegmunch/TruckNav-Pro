@@ -354,24 +354,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!tiltControlRef.current) {
         tiltControlRef.current = new TiltControl(() => {
           console.log('[MAPLIBRE-CONTROLS] Tilt control clicked');
-          setViewState(prev => {
-            let newState: ViewState;
-            
-            if (prev === 'normal') {
-              newState = 'tilted';
-              const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
-              mapInstance.easeTo({ 
-                pitch: 60, 
-                bearing: heading,
-                duration: 300 
-              });
-            } else {
-              newState = 'normal';
-              mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 300 });
-            }
-            console.log(`[3D-TOGGLE] View state: ${prev} → ${newState}`);
-            return newState;
-          });
+          const currentVS = viewStateRef.current;
+          let newState: ViewState;
+          
+          if (currentVS === 'normal') {
+            newState = 'tilted';
+            const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
+            mapInstance.easeTo({ 
+              pitch: 60, 
+              bearing: heading,
+              duration: 300 
+            });
+          } else {
+            newState = 'normal';
+            mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 300 });
+          }
+          console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
+          viewStateRef.current = newState;
+          setViewState(newState);
         }, viewStateRef.current === 'tilted');
         mapInstance.addControl(tiltControlRef.current, 'top-right');
       }
@@ -4899,9 +4899,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const toggle3DMode = () => {
     if (!map.current) return;
     
+    const currentVS = viewStateRef.current;
     let newState: ViewState;
     
-    if (viewState === 'normal') {
+    if (currentVS === 'normal') {
       newState = 'tilted';
       const heading = gpsPositionRef.current?.heading || map.current.getBearing();
       map.current.easeTo({
@@ -4918,7 +4919,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       });
     }
     
-    console.log(`[3D-TOGGLE] View state cycling: ${viewState} → ${newState} (isNavigating: ${isNavigating})`);
+    console.log(`[3D-TOGGLE] View state cycling: ${currentVS} → ${newState} (isNavigating: ${isNavigating})`);
+    viewStateRef.current = newState;
     setViewState(newState);
   };
   
