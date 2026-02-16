@@ -1384,7 +1384,8 @@ function NavigationPageContent() {
           const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
           const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
           
-          const turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
+          // Cross product sign: positive = left turn (counter-clockwise), negative = right turn (clockwise)
+          const turnAngle = crossProduct > 0 ? -turnMagnitude : turnMagnitude;
           
           if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
             let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
