@@ -4636,10 +4636,49 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     };
     
+    const handlePreviewZoom = (event: CustomEvent) => {
+      if (!map.current) return;
+      
+      const { center, zoom, pitch, bearing, duration } = event.detail;
+      
+      if (!isValidCoord(center.lat) || !isValidCoord(center.lng)) return;
+      
+      console.log('[PREVIEW-ZOOM] Zooming to preview at route start:', center);
+      
+      try {
+        map.current.easeTo({
+          center: [center.lng, center.lat],
+          zoom: zoom || 15,
+          pitch: pitch || 50,
+          bearing: bearing || 0,
+          padding: { top: 0, bottom: 0, left: 0, right: 0 },
+          duration: duration || 1200,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
+          essential: true
+        });
+        
+        const animDuration = duration || 1200;
+        setTimeout(() => {
+          if (map.current && map.current.isStyleLoaded()) {
+            renderRouteLayersRef.current();
+            try {
+              if (map.current.getLayer('route-outline')) map.current.moveLayer('route-outline');
+              if (map.current.getLayer('route-line')) map.current.moveLayer('route-line');
+              if (map.current.getLayer('route-traffic-overlay-layer')) map.current.moveLayer('route-traffic-overlay-layer');
+            } catch (_) {}
+          }
+        }, animDuration + 150);
+      } catch (e) {
+        console.warn('[PREVIEW-ZOOM] easeTo failed:', e);
+      }
+    };
+    
     window.addEventListener('zoom_to_navigation_start', handleNavigationStartZoom as EventListener);
+    window.addEventListener('zoom_to_preview', handlePreviewZoom as EventListener);
     
     return () => {
       window.removeEventListener('zoom_to_navigation_start', handleNavigationStartZoom as EventListener);
+      window.removeEventListener('zoom_to_preview', handlePreviewZoom as EventListener);
     };
   }, []);
 

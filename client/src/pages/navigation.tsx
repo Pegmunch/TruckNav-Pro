@@ -2732,7 +2732,6 @@ function NavigationPageContent() {
         setIsShowingPreview(true);
         setShowNavControls(true);
         
-        // Fly to 3D route view centered on current GPS location (or route start)
         if (route?.routePath && route.routePath.length >= 2) {
           const startPt = route.routePath[0];
           const secondPt = route.routePath[1];
@@ -2746,12 +2745,12 @@ function NavigationPageContent() {
           const centerLat = (gpsPos && gpsPos.latitude) ? gpsPos.latitude : startPt.lat;
           const centerLng = (gpsPos && gpsPos.longitude) ? gpsPos.longitude : startPt.lng;
           
-          console.log('[ROUTE-CALC] GO → 3D route view at current location:', centerLat, centerLng, 'bearing:', routeBearing);
+          console.log('[ROUTE-CALC] GO → Preview 3D view at route start:', centerLat, centerLng, 'bearing:', routeBearing);
           
-          const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
+          const zoomEvent = new CustomEvent('zoom_to_preview', {
             detail: {
               center: { lat: centerLat, lng: centerLng },
-              zoom: 16,
+              zoom: 15,
               pitch: 50,
               bearing: routeBearing,
               duration: 1200
