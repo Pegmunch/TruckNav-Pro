@@ -54,7 +54,7 @@ const safeExtendBounds = (bounds: maplibregl.LngLatBounds, coords: [number, numb
   return extended;
 };
 
-export type ViewState = 'normal' | 'tilted' | 'overhead';
+export type ViewState = 'normal' | 'tilted';
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -219,7 +219,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [viewState, setViewState] = useState<ViewState>('normal');
-  const is3DMode = viewState === 'tilted' || viewState === 'overhead';
+  const is3DMode = viewState === 'tilted';
   const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
   const [bearing, setBearing] = useState(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -354,33 +354,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!tiltControlRef.current) {
         tiltControlRef.current = new TiltControl(() => {
           console.log('[MAPLIBRE-CONTROLS] Tilt control clicked');
-          // Cycle through 3 states: normal → tilted → overhead → normal
           setViewState(prev => {
             let newState: ViewState;
-            const currentBearing = mapInstance.getBearing();
             
             if (prev === 'normal') {
               newState = 'tilted';
-              // Calculate bearing from GPS or route to ensure "heading up" orientation
-              const currentBearing = gpsPositionRef.current?.heading || 0;
+              const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
               mapInstance.easeTo({ 
-                pitch: 50, 
-                bearing: currentBearing,
+                pitch: 60, 
+                bearing: heading,
                 duration: 300 
               });
-            } else if (prev === 'tilted') {
-              newState = 'overhead';
-              // Keep bearing, set pitch to 0 for plan view
-              mapInstance.easeTo({ pitch: 0, bearing: currentBearing, duration: 300 });
             } else {
               newState = 'normal';
-              // Reset to north-up 2D
               mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 300 });
             }
             console.log(`[3D-TOGGLE] View state: ${prev} → ${newState}`);
             return newState;
           });
-        }, viewStateRef.current === 'tilted' || viewStateRef.current === 'overhead');
+        }, viewStateRef.current === 'tilted');
         mapInstance.addControl(tiltControlRef.current, 'top-right');
       }
     } else {
@@ -688,19 +680,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!map.current) return;
       const currentVS = viewStateRef.current;
       let newState: ViewState;
-      const currentBearing = map.current.getBearing();
       
       if (currentVS === 'normal') {
         newState = 'tilted';
+        const heading = gpsPositionRef.current?.heading || map.current.getBearing();
         map.current.easeTo({
-          pitch: 50,
-          duration: 400
-        });
-      } else if (currentVS === 'tilted') {
-        newState = 'overhead';
-        map.current.easeTo({
-          pitch: 0,
-          bearing: currentBearing,
+          pitch: 60,
+          bearing: heading,
           duration: 400
         });
       } else {
@@ -715,7 +701,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       setViewState(newState);
       console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
     },
-    is3DMode: () => viewStateRef.current === 'tilted' || viewStateRef.current === 'overhead',
+    is3DMode: () => viewStateRef.current === 'tilted',
     getViewState: () => viewStateRef.current,
     zoomIn: () => {
       if (map.current) {
@@ -1504,7 +1490,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const doUpdate = () => {
       if (!mapInstance || !mapInstance.getCanvas()) return;
 
-      const is3D = currentViewState === 'tilted' || currentViewState === 'overhead';
+      const is3D = currentViewState === 'tilted';
       
       const safeSetVisibility = (layerId: string, visibility: 'visible' | 'none') => {
         try {
@@ -1710,7 +1696,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         fadeDuration: 100,
         maxTileCacheSize: 500,
         touchZoomRotate: true,
-        dragRotate: !isNavigating
+        dragRotate: false,
+        pitchWithRotate: false
       });
 
       // NOTE: NavigationControl is added in the useEffect hook below (lines ~660-710)
@@ -2232,32 +2219,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, []);
 
-  // Dynamically control map rotation gestures during navigation
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     
     const mapInstance = map.current;
     
-    if (isNavigating) {
-      // CRITICAL: Disable manual rotation during navigation - bearing is controlled by GPS heading
-      // BUT keep zoom enabled for pinch-to-zoom and zoom buttons
-      mapInstance.dragRotate.disable();
-      mapInstance.touchZoomRotate.disableRotation(); // Only disables rotation, zoom still works
-      
-      // Explicitly ensure zoom is enabled (pinch-to-zoom + zoom buttons)
-      mapInstance.scrollZoom.enable();
-      mapInstance.doubleClickZoom.enable();
-      
-      console.log('[MAP-GESTURES] ✅ Navigation mode - Rotation disabled (GPS controls bearing), Zoom enabled (pinch + buttons)');
-    } else {
-      // Enable all gestures when not navigating
-      mapInstance.dragRotate.enable();
-      mapInstance.touchZoomRotate.enableRotation();
-      mapInstance.scrollZoom.enable();
-      mapInstance.doubleClickZoom.enable();
-      
-      console.log('[MAP-GESTURES] ✅ Exploration mode - All gestures enabled (rotation + zoom)');
-    }
+    mapInstance.dragRotate.disable();
+    mapInstance.touchZoomRotate.disableRotation();
+    
+    mapInstance.scrollZoom.enable();
+    mapInstance.doubleClickZoom.enable();
+    
+    console.log('[MAP-GESTURES] ✅ Rotation always disabled (prevents map twisting), Pinch zoom enabled');
   }, [isNavigating, isLoaded]);
 
   useEffect(() => {
@@ -4294,11 +4267,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[3D-NAV] 🚀 INITIAL 3D NAVIGATION VIEW ACTIVATED');
       console.log(`[3D-NAV] Center: ${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`);
       console.log(`[3D-NAV] Initial bearing: ${useBearing.toFixed(1)}°`);
-      console.log(`[3D-NAV] Pitch: 55°`);
-      console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.45)}px, Bottom: ${Math.round(containerHeight * 0.15)}px`);
+      console.log(`[3D-NAV] Pitch: 60° | Zoom: 17`);
       console.log('[3D-NAV] ==========================================');
       
-      userPreferredZoomRef.current = 16;
+      userPreferredZoomRef.current = 17;
       
       viewStateRef.current = 'tilted';
       setViewState('tilted');
@@ -4306,11 +4278,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         mapInstance.easeTo({
           center: [centerLng, centerLat],
-          zoom: 16,
-          pitch: 50,
+          zoom: 17,
+          pitch: 60,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
+            top: Math.round(containerHeight * 0.65),
             bottom: 0,
             left: 0,
             right: 0
@@ -4500,7 +4472,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             const currentViewState = viewStateRef.current;
-            const targetPitch = currentViewState === 'tilted' ? 50 : 0;
+            const targetPitch = currentViewState === 'tilted' ? 60 : 0;
             const targetBearing = currentViewState === 'normal' ? 0 : bearing;
 
             // CRITICAL: Force map rotation to follow GPS heading so route line appears fixed upward
@@ -4512,7 +4484,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 pitch: targetPitch,
                 bearing: targetBearing,
                 padding: { 
-                  top: Math.round(containerHeight * 0.75), // Vehicle marker in lower portion
+                  top: Math.round(containerHeight * 0.65),
                   bottom: 0,
                   left: 0, 
                   right: 0 
@@ -4633,11 +4605,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         map.current.easeTo({
           center: [center.lng, center.lat],
-          zoom: zoom || 16,
-          pitch: pitch || 50,
+          zoom: zoom || 17,
+          pitch: pitch || 60,
           bearing: bearing || 0,
           padding: {
-            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
+            top: Math.round(containerHeight * 0.65),
             bottom: 0,
             left: 0,
             right: 0
@@ -4693,8 +4665,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         map.current.easeTo({
           center: [center.lng, center.lat],
-          zoom: zoom || 15,
-          pitch: pitch || 50,
+          zoom: zoom || 16,
+          pitch: pitch || 60,
           bearing: bearing || 0,
           padding: { top: 0, bottom: 0, left: 0, right: 0 },
           duration: duration || 1200,
@@ -4928,34 +4900,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const toggle3DMode = () => {
     if (!map.current) return;
     
-    // Cycle through 3 states: normal → tilted → overhead → normal
-    // Works in both navigation and non-navigation modes
-    // tilted = 60° pitch (3D perspective view)
-    // overhead = 0° pitch but keeps current bearing (plan view, heading-up during nav)
-    // normal = 0° pitch, bearing reset to 0 (north-up 2D)
     let newState: ViewState;
-    const currentBearing = map.current.getBearing();
     
     if (viewState === 'normal') {
       newState = 'tilted';
+      const heading = gpsPositionRef.current?.heading || map.current.getBearing();
       map.current.easeTo({
-        pitch: 50,
-        duration: 500
-      });
-    } else if (viewState === 'tilted') {
-      newState = 'overhead';
-      // Overhead: keep bearing (heading-up during nav), set pitch to 0 for plan view
-      map.current.easeTo({
-        pitch: 0,
-        bearing: currentBearing, // Keep current heading direction
+        pitch: 60,
+        bearing: heading,
         duration: 500
       });
     } else {
       newState = 'normal';
-      // Normal: reset to north-up 2D view
       map.current.easeTo({
         pitch: 0,
-        bearing: 0, // North up
+        bearing: 0,
         duration: 500
       });
     }
