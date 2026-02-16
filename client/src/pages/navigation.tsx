@@ -756,6 +756,12 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
+  // Rolling speed history for live ETA calculation (last 30 seconds of speed samples)
+  const speedHistoryRef = useRef<Array<{ speed: number; timestamp: number }>>([]);
+  const navigationStartTimeRef = useRef<number>(0);
+  const distanceTravelledRef = useRef<number>(0);
+  const lastProjectedDistanceRef = useRef<number>(0);
+  
   const cachedCumulativeDistancesRef = useRef<{ routeId: string | null; distances: number[]; totalLength: number }>({ routeId: null, distances: [], totalLength: 0 });
   
   const lastVoiceAnnouncementRef = useRef<{ direction: string; threshold: string; turnIndex: number } | null>(null);
