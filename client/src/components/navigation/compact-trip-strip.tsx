@@ -99,9 +99,9 @@ export function CompactTripStrip({
       case 'straight':
         return <ArrowUp {...iconProps} />;
       case 'slight_right':
-        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[45deg]")} />;
+        return <ArrowUpRight {...iconProps} />;
       case 'slight_left':
-        return <ArrowUp {...iconProps} className={cn(iconProps.className, "rotate-[-45deg]")} />;
+        return <ArrowUpLeft {...iconProps} />;
       case 'right':
       case 'sharp_right': 
         return <ArrowRight {...iconProps} />;
