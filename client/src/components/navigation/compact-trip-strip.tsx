@@ -196,17 +196,17 @@ export function CompactTripStrip({
           {/* Direction Square with Turn Arrow - shows next turn direction */}
           {turnInfo && (isNavigating || isPreviewActive) && (
             <div 
-              className="flex flex-col items-center justify-center w-11 h-11 md:w-16 md:h-16 bg-blue-600 rounded-lg shadow-md flex-shrink-0 relative overflow-hidden"
+              className="flex flex-col items-center justify-center w-9 h-9 md:w-14 md:h-14 bg-blue-600 rounded-lg shadow-md flex-shrink-0 relative overflow-hidden"
               data-testid="direction-square"
               aria-label={`Next turn: ${turnInfo.direction.replace('_', ' ')}`}
             >
-              <div className="flex-grow flex items-center justify-center pt-1">
+              <div className="flex-grow flex items-center justify-center pt-0.5">
                 {getTurnIcon(turnInfo.direction)}
               </div>
-              <div className="w-full bg-black/30 py-0.5 text-center leading-none mb-0.5">
-                <span className="text-[10px] md:text-sm font-black text-white tabular-nums">
+              <div className="w-full bg-black/30 py-0 text-center leading-none mb-0">
+                <span className="text-[8px] md:text-[11px] font-black text-white tabular-nums">
                   {Math.round(turnInfo.distance * 3.28084)}
-                  <span className="text-[7px] md:text-[10px] ml-0.5 uppercase font-bold">ft</span>
+                  <span className="text-[6px] md:text-[8px] ml-0.5 uppercase font-bold">ft</span>
                 </span>
               </div>
             </div>
