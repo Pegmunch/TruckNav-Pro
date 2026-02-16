@@ -780,7 +780,17 @@ export class NavigationVoice {
     const directionKey = `voice.directions.${direction}`;
     const translated = this.t(directionKey);
     // Fallback to direction string if translation key not found
-    return translated !== directionKey ? translated : direction;
+    let formatted = translated !== directionKey ? translated : direction;
+    formatted = formatted.toLowerCase().replace(/_/g, ' ');
+
+    // Fix inverted left/right in voice announcements
+    if (formatted.includes('right')) {
+      formatted = formatted.replace(/right/g, 'TEMP_RIGHT').replace(/left/g, 'right').replace(/TEMP_RIGHT/g, 'left');
+    } else if (formatted.includes('left')) {
+      formatted = formatted.replace(/left/g, 'TEMP_LEFT').replace(/right/g, 'left').replace(/TEMP_LEFT/g, 'right');
+    }
+
+    return formatted;
   }
   
   /**
