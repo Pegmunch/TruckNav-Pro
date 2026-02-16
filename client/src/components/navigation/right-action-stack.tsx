@@ -619,7 +619,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 6. Tilt (3D Toggle) - Green = default tilted, Red = deviated to flat */}
+      {/* 6. Tilt (3D Toggle) */}
       {onToggle3D && !hide3D && (
         <Button
           ref={toggle3DRef}
@@ -631,14 +631,14 @@ export function RightActionStack({
           className={cn(
             buttonSize, 
             baseButtonClass,
-            is3DMode ? "border-green-500" : "border-red-500",
+            is3DMode ? "border-blue-500" : "border-gray-400",
             toggle3DVisible ? visibleClass : hiddenClass
           )}
           style={buttonStyle}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box className={cn(iconSize, is3DMode ? "text-green-500" : "text-red-500")} />
+          <Box className={iconSize} />
         </Button>
       )}
 

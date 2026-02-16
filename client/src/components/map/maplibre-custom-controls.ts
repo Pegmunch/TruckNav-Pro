@@ -144,7 +144,7 @@ export class TiltControl extends CustomButtonControl {
     super({
       onClick,
       icon: ICON_BOX,
-      borderColor: isActive ? '#22c55e' : '#ef4444',
+      borderColor: isActive ? '#3b82f6' : '#9ca3af',
       title: 'Toggle 3D View',
       testId: 'maplibre-tilt-control'
     });
@@ -153,7 +153,7 @@ export class TiltControl extends CustomButtonControl {
 
   setActive(active: boolean): void {
     this.isActive = active;
-    this.updateBorderColor(active ? '#22c55e' : '#ef4444');
+    this.updateBorderColor(active ? '#3b82f6' : '#9ca3af');
   }
 }
 

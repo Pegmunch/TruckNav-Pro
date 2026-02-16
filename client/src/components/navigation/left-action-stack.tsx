@@ -314,14 +314,14 @@ export function LeftActionStack({
   
   return (
     <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* North-up indicator & camera reset - green when facing north, red when rotated */}
+      {/* Camera default indicator - green when at default 3D nav view, red when deviated */}
       {isNavigating && (
         <Button
           ref={navButtonRef}
           variant="ghost"
           size="icon"
           className={`h-10 w-10 rounded-xl active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            Math.abs(bearing) < 5
+            isCameraAtNavDefault
               ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
               : 'bg-red-500 hover:bg-red-600 active:bg-red-700'
           } ${

@@ -1078,7 +1078,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       viewStateRef.current = 'tilted';
       setViewState('tilted');
-      userPreferredZoomRef.current = 16;
+      userPreferredZoomRef.current = 17;
       
       const gps = gpsPosition;
       const containerHeight = map.current.getContainer().clientHeight || 800;
@@ -1124,8 +1124,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         useBearing = calcRouteBearing(path[0].lat, path[0].lng, path[1].lat, path[1].lng);
       } else {
         map.current.easeTo({
-          zoom: 16,
-          pitch: 50,
+          zoom: 17,
+          pitch: 60,
           duration: 1200,
           easing: (t: number) => 1 - Math.pow(1 - t, 3)
         });
@@ -1135,11 +1135,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       try {
         map.current.easeTo({
           center: [centerLng, centerLat],
-          zoom: 16,
-          pitch: 50,
+          zoom: 17,
+          pitch: 60,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
+            top: Math.round(containerHeight * 0.65),
             bottom: 0,
             left: 0,
             right: 0
@@ -1174,11 +1174,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     },
     isAtNavigationCamera: () => {
       if (!map.current) return true;
-      const currentZoom = map.current.getZoom();
       const currentPitch = map.current.getPitch();
-      const zoomDiff = Math.abs(currentZoom - 16);
-      const pitchDiff = Math.abs(currentPitch - 50);
-      return zoomDiff < 1.5 && pitchDiff < 10;
+      const isTilted = viewStateRef.current === 'tilted';
+      const pitchOk = isTilted ? currentPitch > 40 : currentPitch < 10;
+      return isTilted && pitchOk;
     },
     resetToSavedNavigationCamera: () => {
       if (!map.current || !savedNavigationCameraRef.current) {

@@ -890,13 +890,12 @@ function NavigationPageContent() {
   const handleResetCamera = useCallback(() => {
     if (mapRef.current) {
       const currentVS = mapRef.current.getViewState();
-      if (currentVS === 'normal') {
-        setIsCameraAtNavDefault(true);
-        cameraResetSuppressUntilRef.current = Date.now() + 2000;
-        mapRef.current.resetNavigationCamera();
-      } else {
-        mapRef.current.setNorthUp();
+      if (currentVS !== 'tilted') {
+        mapRef.current.toggle3DMode();
       }
+      setIsCameraAtNavDefault(true);
+      cameraResetSuppressUntilRef.current = Date.now() + 2000;
+      mapRef.current.resetNavigationCamera();
     }
   }, []);
   
