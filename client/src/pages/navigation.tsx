@@ -2778,7 +2778,6 @@ function NavigationPageContent() {
           localStorage.setItem('navigationSidebarState', 'collapsed');
         }
         
-        // Desktop: also fly to 3D route view at current location
         if (route.routePath && route.routePath.length >= 2) {
           const startPt = route.routePath[0];
           const secondPt = route.routePath[1];
@@ -2792,10 +2791,10 @@ function NavigationPageContent() {
           const centerLat = (gpsPos && gpsPos.latitude) ? gpsPos.latitude : startPt.lat;
           const centerLng = (gpsPos && gpsPos.longitude) ? gpsPos.longitude : startPt.lng;
           
-          const zoomEvent = new CustomEvent('zoom_to_navigation_start', {
+          const zoomEvent = new CustomEvent('zoom_to_preview', {
             detail: {
               center: { lat: centerLat, lng: centerLng },
-              zoom: 16,
+              zoom: 15,
               pitch: 50,
               bearing: routeBearing,
               duration: 1200
@@ -4021,6 +4020,7 @@ function NavigationPageContent() {
                       setShowNavControls(prev => !prev);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
+                    isShowingPreview={isShowingPreview}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}
                     predictiveSegments={predictiveSegments}
@@ -4941,6 +4941,7 @@ function NavigationPageContent() {
                       setShowNavControls(prev => !prev);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
+                    isShowingPreview={isShowingPreview}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}
                     predictiveSegments={predictiveSegments}

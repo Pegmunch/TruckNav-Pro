@@ -113,6 +113,7 @@ interface MapLibreMapProps {
   hideControls?: boolean;
   hideCompass?: boolean;
   isNavigating?: boolean;
+  isShowingPreview?: boolean;
   showUserMarker?: boolean;
   useStaticRoute?: boolean;
   onToggleTraffic?: () => void;
@@ -204,6 +205,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   hideControls = false,
   hideCompass = false,
   isNavigating = false,
+  isShowingPreview = false,
   showUserMarker = false,
   useStaticRoute = false,
   onToggleTraffic,
@@ -5107,7 +5109,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       {/* Traffic Legend - Shows when traffic overlay is active with data, hidden during navigation */}
       {showTraffic && hasValidRoute && routeTrafficData.segments.length > 0 && !isNavigating && (
         <div 
-          className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto"
+          className={`absolute left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto ${isShowingPreview ? 'top-16' : 'bottom-24'}`}
           data-testid="traffic-legend"
         >
           <TrafficLegend />
