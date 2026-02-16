@@ -177,8 +177,8 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
       case 'sharp_right': 
       case 'sharp_left':
       case 'left':
-        if (d.includes('left')) return <ArrowRight {...iconProps} />;
-        if (d.includes('right')) return <ArrowLeft {...iconProps} />;
+        if (d.includes('left')) return <ArrowLeft {...iconProps} />;
+        if (d.includes('right')) return <ArrowRight {...iconProps} />;
         return <ArrowUp {...iconProps} />;
       default: 
         return <ArrowUp {...iconProps} />;
