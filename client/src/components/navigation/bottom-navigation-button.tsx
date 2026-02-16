@@ -98,6 +98,13 @@ export function BottomNavigationButton({
 
           {canStopNavigation && (
             <Button
+              onTouchStart={(e) => {
+                if (onStopNavigation) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onStopNavigation();
+                }
+              }}
               onClick={onStopNavigation}
               disabled={isCompletingJourney}
               variant="destructive"

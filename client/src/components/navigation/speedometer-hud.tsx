@@ -715,11 +715,19 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             />
           </svg>
           <button
-            onPointerDown={(e) => {
-              if (e.pointerType !== 'mouse' && isNavigating && onStopNavigation) {
+            onTouchStart={(e) => {
+              if (isNavigating && onStopNavigation) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('[STOP-BTN] 🔘 Touch/Pointer down triggered');
+                console.log('[STOP-BTN] 🔘 TouchStart triggered');
+                onStopNavigation();
+              }
+            }}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'mouse' && isNavigating && onStopNavigation) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[STOP-BTN] 🔘 PointerDown (mouse) triggered');
                 onStopNavigation();
               }
             }}
