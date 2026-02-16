@@ -94,6 +94,8 @@ import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel
 import { RegionSelector } from "@/components/measurement/region-selector";
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import LanguageSelector from "@/components/language/language-selector";
+import IncidentAlertPopup, { type IncidentAlertData } from "@/components/navigation/incident-alert-popup";
+import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
 
 
 // Extended Route type with API-only fields for route calculation responses
@@ -359,6 +361,11 @@ function NavigationPageContent() {
   const setShowTrafficLayer = (_v: boolean | ((prev: boolean) => boolean)) => {};
   const [showIncidents, setShowIncidents] = useState(true);
   
+  // Proactive incident alert system
+  const [activeIncidentAlert, setActiveIncidentAlert] = useState<IncidentAlertData | null>(null);
+  const seenIncidentIdsRef = useRef<Set<string>>(new Set());
+  const lastAlertTimeRef = useRef<number>(0);
+  
   // Map control state for RightActionStack (rendered outside map container)
   // Initialize from localStorage to stay in sync with MapLibreMap preferences
   const [mapControlState, setMapControlState] = useState(() => {
@@ -604,6 +611,82 @@ function NavigationPageContent() {
       offRouteDelaySeconds: 5,
     }
   );
+  
+  // Proactive incident detection - fetches live incidents along the route
+  const routePathForIncidents = useMemo(() => {
+    if (!currentRoute?.routePath || !Array.isArray(currentRoute.routePath)) return null;
+    return currentRoute.routePath as Array<{ lat: number; lng: number }>;
+  }, [currentRoute?.routePath]);
+  
+  const { incidents: liveRouteIncidents } = useRouteIncidents(
+    routePathForIncidents,
+    isNavigating && !!currentRoute,
+    120000
+  );
+  
+  // Detect new incidents ahead and trigger proactive alerts
+  useEffect(() => {
+    if (!isNavigating || !currentRoute?.routePath || !gpsData?.position || liveRouteIncidents.length === 0) {
+      return;
+    }
+    
+    const now = Date.now();
+    if (now - lastAlertTimeRef.current < 30000) return;
+    
+    const { latitude, longitude } = gpsData.position;
+    
+    const newIncidents = liveRouteIncidents.filter(incident => {
+      if (seenIncidentIdsRef.current.has(incident.id)) return false;
+      
+      const dlat = incident.coordinates.lat - latitude;
+      const dlng = incident.coordinates.lng - longitude;
+      const roughDistKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
+      
+      if (roughDistKm > 10 || roughDistKm < 0.05) return false;
+      
+      return true;
+    });
+    
+    if (newIncidents.length === 0) return;
+    
+    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    newIncidents.sort((a, b) => (priorityOrder[a.severity] ?? 3) - (priorityOrder[b.severity] ?? 3));
+    
+    const topIncident = newIncidents[0];
+    
+    const dlat = topIncident.coordinates.lat - latitude;
+    const dlng = topIncident.coordinates.lng - longitude;
+    const distanceAheadMeters = Math.sqrt(dlat * dlat + dlng * dlng) * 111000;
+    
+    const alertData: IncidentAlertData = {
+      id: topIncident.id,
+      type: topIncident.type,
+      description: topIncident.description,
+      severity: topIncident.severity,
+      distanceAhead: distanceAheadMeters,
+      roadName: topIncident.roadName,
+      delay: topIncident.delay,
+      source: topIncident.source,
+    };
+    
+    setActiveIncidentAlert(alertData);
+    lastAlertTimeRef.current = now;
+    
+    newIncidents.forEach(inc => seenIncidentIdsRef.current.add(inc.id));
+    
+    if (navigationVoice.isEnabled()) {
+      const incidentLabel = topIncident.type.replace(/_/g, ' ');
+      navigationVoice.announceIncident(incidentLabel, distanceAheadMeters);
+    }
+    
+    console.log(`[INCIDENT-ALERT] Proactive alert: ${topIncident.type} (${topIncident.severity}) ${distanceAheadMeters.toFixed(0)}m ahead`);
+  }, [isNavigating, liveRouteIncidents, gpsData?.position, currentRoute?.routePath]);
+  
+  // Clear seen incidents when route changes
+  useEffect(() => {
+    seenIncidentIdsRef.current.clear();
+    setActiveIncidentAlert(null);
+  }, [currentRoute?.id]);
   
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
@@ -5686,6 +5769,27 @@ function NavigationPageContent() {
       )}
 
       {/* Incident Feed Popup - Shows nearby incidents */}
+      {/* Proactive Incident Alert Popup - auto-appears when new incidents detected ahead */}
+      <IncidentAlertPopup
+        alert={activeIncidentAlert}
+        onDismiss={() => setActiveIncidentAlert(null)}
+        onReroute={() => {
+          setActiveIncidentAlert(null);
+          if (currentRoute && toCoordinates && gpsData?.position) {
+            const currentPos = { lat: gpsData.position.latitude, lng: gpsData.position.longitude };
+            setFromCoordinates(currentPos);
+            calculateRouteMutation.mutate({
+              startLocation: `${currentPos.lat},${currentPos.lng}`,
+              endLocation: toLocation,
+              startCoordinates: currentPos,
+              endCoordinates: toCoordinates,
+              vehicleProfileId: selectedProfile?.id?.toString(),
+              routePreference: 'fastest'
+            });
+          }
+        }}
+      />
+
       <IncidentFeedPopup
         currentLocation={currentGPSLocation}
         showIncidents={showIncidentFeed && showIncidents}
