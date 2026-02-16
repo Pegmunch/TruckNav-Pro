@@ -54,7 +54,7 @@ const safeExtendBounds = (bounds: maplibregl.LngLatBounds, coords: [number, numb
   return extended;
 };
 
-export type ViewState = 'normal' | 'tilted';
+export type ViewState = 'tilted' | 'plan' | 'normal';
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -357,17 +357,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           const currentVS = viewStateRef.current;
           let newState: ViewState;
           
-          if (currentVS === 'normal') {
+          if (currentVS === 'tilted') {
+            newState = 'plan';
+            mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+          } else {
             newState = 'tilted';
             const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
-            mapInstance.easeTo({ 
-              pitch: 60, 
-              bearing: heading,
-              duration: 300 
-            });
-          } else {
-            newState = 'normal';
-            mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 300 });
+            mapInstance.easeTo({ pitch: 60, bearing: heading, duration: 400 });
           }
           console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
           viewStateRef.current = newState;
@@ -681,21 +677,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const currentVS = viewStateRef.current;
       let newState: ViewState;
       
-      if (currentVS === 'normal') {
+      if (currentVS === 'tilted') {
+        newState = 'plan';
+        map.current.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+      } else {
         newState = 'tilted';
         const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-        map.current.easeTo({
-          pitch: 60,
-          bearing: heading,
-          duration: 400
-        });
-      } else {
-        newState = 'normal';
-        map.current.easeTo({
-          pitch: 0,
-          bearing: 0,
-          duration: 400
-        });
+        map.current.easeTo({ pitch: 60, bearing: heading, duration: 400 });
       }
       viewStateRef.current = newState;
       setViewState(newState);
@@ -1154,8 +1142,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     },
     setNorthUp: () => {
       if (!map.current) return;
-      viewStateRef.current = 'normal';
-      setViewState('normal');
+      viewStateRef.current = 'plan';
+      setViewState('plan');
       map.current.easeTo({
         pitch: 0,
         bearing: 0,
@@ -1352,7 +1340,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       // Reset view state based on previous pitch
       const was3D = previousPitchRef.current > 30;
-      setViewState(was3D ? 'tilted' : 'normal');
+      setViewState(was3D ? 'tilted' : 'plan');
       
       // CRITICAL: Force map resize after navigation ends to fix container sizing
       setTimeout(() => {
@@ -4472,22 +4460,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             
             const currentViewState = viewStateRef.current;
             const targetPitch = currentViewState === 'tilted' ? 60 : 0;
-            const targetBearing = currentViewState === 'normal' ? 0 : bearing;
+            const targetBearing = currentViewState === 'plan' ? 0 : bearing;
 
-            // CRITICAL: Force map rotation to follow GPS heading so route line appears fixed upward
-            // We use bearing directly as targetBearing for easeTo when viewState is not 'normal'
+            // In tilted/normal mode: rotate map with GPS heading so route appears vertical
+            // In plan mode: north-up flat view, vehicle centered
             
             try {
               const easeToOptions: maplibregl.EaseToOptions = {
                 center: [longitude, latitude],
                 pitch: targetPitch,
                 bearing: targetBearing,
-                padding: { 
-                  top: Math.round(containerHeight * 0.65),
-                  bottom: 0,
-                  left: 0, 
-                  right: 0 
-                },
+                padding: currentViewState === 'plan' 
+                  ? { top: 0, bottom: 0, left: 0, right: 0 }
+                  : { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 },
                 duration: 200, // Short duration for responsive feel
                 easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
                 essential: true // Ensure animation isn't interrupted by user gestures
@@ -4902,21 +4887,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const currentVS = viewStateRef.current;
     let newState: ViewState;
     
-    if (currentVS === 'normal') {
+    if (currentVS === 'tilted') {
+      newState = 'plan';
+      map.current.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+    } else {
       newState = 'tilted';
       const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-      map.current.easeTo({
-        pitch: 60,
-        bearing: heading,
-        duration: 500
-      });
-    } else {
-      newState = 'normal';
-      map.current.easeTo({
-        pitch: 0,
-        bearing: 0,
-        duration: 500
-      });
+      map.current.easeTo({ pitch: 60, bearing: heading, duration: 400 });
     }
     
     console.log(`[3D-TOGGLE] View state cycling: ${currentVS} → ${newState} (isNavigating: ${isNavigating})`);
@@ -4929,14 +4906,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const userManuallyToggled3DRef = useRef(false);
   useEffect(() => {
     if (isNavigating && !previousNavigationStateRef.current) {
-      // Navigation just started - auto-enable 3D only on initial start
       userManuallyToggled3DRef.current = false;
-      if (viewState === 'normal') {
+      if (viewState !== 'tilted') {
         console.log('[3D-AUTO] Automatically enabling tilted view for navigation start');
         setViewState('tilted');
+        viewStateRef.current = 'tilted';
       }
     } else if (!isNavigating && previousNavigationStateRef.current) {
-      // Navigation ended - reset manual toggle tracking
       userManuallyToggled3DRef.current = false;
     }
     previousNavigationStateRef.current = isNavigating;
