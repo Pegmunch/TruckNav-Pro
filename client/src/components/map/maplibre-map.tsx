@@ -1147,7 +1147,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           pitch: 50,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.65),
+            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
             bottom: 0,
             left: 0,
             right: 0
@@ -4270,7 +4270,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           pitch: 50,
           bearing: useBearing,
           padding: {
-            top: Math.round(containerHeight * 0.65),
+            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
             bottom: 0,
             left: 0,
             right: 0
@@ -4594,7 +4594,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           pitch: pitch || 50,
           bearing: bearing || 0,
           padding: {
-            top: Math.round(containerHeight * 0.65),
+            top: Math.round(containerHeight * 0.70), // Increased to push vehicle marker lower
             bottom: 0,
             left: 0,
             right: 0

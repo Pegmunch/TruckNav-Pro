@@ -3649,9 +3649,12 @@ function NavigationPageContent() {
 
       console.log('[NAV-ACTIVATION] Step 5: Dispatch secondary events');
       
-      // CRITICAL: Zoom to route start when navigation begins
-      // This ensures the map centers on the route origin with proper zoom
+      // CRITICAL: Center on CURRENT GPS POSITION if available, otherwise route start
       if (route.routePath && route.routePath.length >= 2) {
+        const gpsPos = gpsData?.position;
+        const centerLat = (gpsPos && typeof gpsPos.latitude === 'number') ? gpsPos.latitude : route.routePath[0].lat;
+        const centerLng = (gpsPos && typeof gpsPos.longitude === 'number') ? gpsPos.longitude : route.routePath[0].lng;
+        
         const startPoint = route.routePath[0];
         const secondPoint = route.routePath[1];
         
@@ -3662,12 +3665,12 @@ function NavigationPageContent() {
                   Math.sin(startPoint.lat * Math.PI / 180) * Math.cos(secondPoint.lat * Math.PI / 180) * Math.cos(dLon);
         const initialBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
         
-        console.log('[NAV-ACTIVATION] 🎯 Zooming to route start:', startPoint, 'bearing:', initialBearing);
+        console.log('[NAV-ACTIVATION] 🎯 Zooming to navigation start (GPS centered):', { lat: centerLat, lng: centerLng }, 'bearing:', initialBearing);
         
         // Dispatch zoom event to map
         const zoomToStartEvent = new CustomEvent('zoom_to_navigation_start', {
           detail: {
-            center: { lat: startPoint.lat, lng: startPoint.lng },
+            center: { lat: centerLat, lng: centerLng },
             zoom: 16,
             pitch: 50,
             bearing: initialBearing,
@@ -3676,7 +3679,7 @@ function NavigationPageContent() {
         });
         window.dispatchEvent(zoomToStartEvent);
         
-        // Reset camera tracking state - camera is at default since we just set it
+        // Reset camera tracking state
         setIsCameraAtNavDefault(true);
       }
       
