@@ -85,7 +85,7 @@ export class NavigationVoice {
   
   // Female voice name patterns for voice selection
   private readonly FEMALE_VOICE_PATTERNS = [
-    'female', 'samantha', 'kate', 'karen', 'moira', 'tessa', 'fiona', 'victoria',
+    'karen', 'female', 'samantha', 'kate', 'moira', 'tessa', 'fiona', 'victoria',
     'zira', 'susan', 'hazel', 'helena', 'linda', 'alice', 'amelie', 'anna',
     'ava', 'catarina', 'ioana', 'joana', 'kanya', 'kyoko', 'laura', 'lekha',
     'luciana', 'mariska', 'mei-jia', 'melina', 'milena', 'monica', 'nora',
