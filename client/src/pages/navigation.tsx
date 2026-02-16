@@ -1675,13 +1675,6 @@ function NavigationPageContent() {
       return;
     }
     
-    // GUARD: Only allow arrival detection if we are very close to the end of the route progress
-    // This prevents "jump-to-end" bugs during GPS glitches or reroutes
-    if (currentRoute.routePath && routeProgressRef.current < currentRoute.routePath.length * 0.9) {
-      // If we haven't completed 90% of the route points, don't trigger arrival via Haversine distance
-      return;
-    }
-    
     // Get destination coordinates (last point in route)
     const destination = currentRoute.routePath?.[currentRoute.routePath.length - 1];
     if (!destination) return;
@@ -1703,8 +1696,16 @@ function NavigationPageContent() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in meters
     
-    // If within 50 meters of destination, show dialog
-    if (distance <= 50) {
+    // 500 feet = 152.4 meters - trigger arrival when within 500 feet of destination
+    const ARRIVAL_THRESHOLD_METERS = 152.4;
+    
+    // GUARD: Only allow arrival if we've completed at least 70% of route OR are very close
+    // Relaxed from 90% to prevent missed arrivals on short routes or GPS drift
+    if (currentRoute.routePath && routeProgressRef.current < currentRoute.routePath.length * 0.7 && distance > ARRIVAL_THRESHOLD_METERS) {
+      return;
+    }
+    
+    if (distance <= ARRIVAL_THRESHOLD_METERS) {
       console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m`);
       setShowDestinationReached(true);
       hasShownDestinationDialogRef.current = true;
