@@ -770,7 +770,7 @@ function NavigationPageContent() {
   // even before route calculation completes
   // Navigation UI is active when: local nav flag, mobile nav mode, route calculation in progress (GO button flow),
   // OR showing preview mode with a valid route (route-ready state)
-  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile || (isShowingPreview && currentRoute !== null);
+  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile;
   
   // Camera reset button state - tracks whether camera is at the saved navigation angles
   const [isCameraAtNavDefault, setIsCameraAtNavDefault] = useState(true);
