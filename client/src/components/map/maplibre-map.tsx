@@ -2226,22 +2226,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, []);
 
-  // Route Rendering and Visibility
-  useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || !isLoaded) return;
-
-    const sourceId = 'route';
-    const layerId = 'route-line';
-
-    if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
-      console.log('[MAP-ROUTE] Updating route line in map component');
-      renderRouteLayers();
-    } else {
-      removeRouteLayers();
-    }
-  }, [currentRoute, isLoaded, renderRouteLayers, removeRouteLayers]);
-
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {
     if (!map.current || !isLoaded) return;
@@ -2269,6 +2253,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[MAP-GESTURES] ✅ Exploration mode - All gestures enabled (rotation + zoom)');
     }
   }, [isNavigating, isLoaded]);
+
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    const mode = preferencesRef.current.mapViewMode;
+    const zoom = currentZoomRef.current;
+    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', mode, 'viewState:', viewState, 'zoom:', zoom);
+    updateLayerVisibility(map.current, mode, zoom, viewState);
+  }, [preferences.mapViewMode, isLoaded, viewState, updateLayerVisibility]);
+
 
   // Helper: Remove route layers
   const removeRouteLayers = useCallback(() => {
@@ -2812,6 +2805,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   renderRouteLayersRef.current = renderRouteLayers;
   ensureRouteLayersRef.current = ensureRouteLayers;
+
+  // Route Rendering and Visibility
+  useEffect(() => {
+    const mapInstance = map.current;
+    if (!mapInstance || !isLoaded) return;
+
+    if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
+      console.log('[MAP-ROUTE] Updating route line in map component');
+      renderRouteLayers();
+    } else {
+      removeRouteLayers();
+    }
+  }, [currentRoute, isLoaded, renderRouteLayers, removeRouteLayers]);
 
   // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
