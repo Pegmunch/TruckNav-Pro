@@ -106,9 +106,9 @@ export function CompactTripStrip({
       case 'sharp_right': 
       case 'sharp_left':
       case 'left':
-        // For any significant turn (90 degrees or more), use the specific directional arrows
-        if (d.includes('left')) return <ArrowLeft {...iconProps} />;
-        if (d.includes('right')) return <ArrowRight {...iconProps} />;
+        // Correcting inverted logic as requested: left is Right and Right is left
+        if (d.includes('left')) return <ArrowRight {...iconProps} />;
+        if (d.includes('right')) return <ArrowLeft {...iconProps} />;
         return <ArrowUp {...iconProps} />;
       default: 
         return <ArrowUp {...iconProps} />;
