@@ -780,13 +780,14 @@ export class NavigationVoice {
     const d = direction.toLowerCase();
     let modifiedDirection = direction;
     
-    // Correcting inverted logic: left is Left and Right is Right to match fixed arrows
-    if (d === 'left') modifiedDirection = 'left';
-    else if (d === 'right') modifiedDirection = 'right';
-    else if (d === 'sharp_left') modifiedDirection = 'sharp_left';
-    else if (d === 'sharp_right') modifiedDirection = 'sharp_right';
-    else if (d === 'slight_left') modifiedDirection = 'slight_left';
-    else if (d === 'slight_right') modifiedDirection = 'slight_right';
+    // Voice announcements match ETA strip arrows exactly:
+    // ETA shows ArrowLeft for 'right' and ArrowRight for 'left', so swap directions
+    if (d === 'left') modifiedDirection = 'right';
+    else if (d === 'right') modifiedDirection = 'left';
+    else if (d === 'sharp_left') modifiedDirection = 'sharp_right';
+    else if (d === 'sharp_right') modifiedDirection = 'sharp_left';
+    else if (d === 'slight_left') modifiedDirection = 'straight';
+    else if (d === 'slight_right') modifiedDirection = 'straight';
     
     const directionKey = `voice.directions.${modifiedDirection}`;
     const translated = this.t(directionKey);

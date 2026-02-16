@@ -163,17 +163,25 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
   
   const { value, displayUnit } = convertDistance(turnInfo.distance, unit);
   
+  // Get appropriate arrow icon - matches ETA strip exactly
   const getTurnIcon = () => {
     const iconProps = { className: "w-6 h-6 stroke-[2.5px]" };
-    switch (turnInfo.direction) {
-      case 'straight': return <ArrowUp {...iconProps} />;
+    const d = turnInfo.direction.toLowerCase();
+    
+    switch (d) {
+      case 'straight':
+      case 'slight_right':
+      case 'slight_left':
+        return <ArrowUp {...iconProps} />;
       case 'right':
-      case 'sharp_right': return <ArrowRight {...iconProps} />;
+      case 'sharp_right': 
+      case 'sharp_left':
       case 'left':
-      case 'sharp_left': return <ArrowLeft {...iconProps} />;
-      case 'slight_right': return <ArrowUpRight {...iconProps} />;
-      case 'slight_left': return <ArrowUpLeft {...iconProps} />;
-      default: return <ArrowUp {...iconProps} />;
+        if (d.includes('left')) return <ArrowRight {...iconProps} />;
+        if (d.includes('right')) return <ArrowLeft {...iconProps} />;
+        return <ArrowUp {...iconProps} />;
+      default: 
+        return <ArrowUp {...iconProps} />;
     }
   };
   
