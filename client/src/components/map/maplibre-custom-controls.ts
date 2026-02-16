@@ -52,10 +52,16 @@ class CustomButtonControl implements IControl {
       -webkit-user-select: none;
     `;
     
+    let lastFiredAt = 0;
     const handleInteraction = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[MAPLIBRE-CONTROL] ${this.options.testId} clicked`);
+      
+      const now = Date.now();
+      if (now - lastFiredAt < 400) return;
+      lastFiredAt = now;
+      
+      console.log(`[MAPLIBRE-CONTROL] ${this.options.testId} fired via ${e.type}`);
       
       if (navigator.vibrate) {
         navigator.vibrate(10);
@@ -64,13 +70,8 @@ class CustomButtonControl implements IControl {
       this.options.onClick();
     };
     
-    this.button.addEventListener('click', handleInteraction, { capture: true });
     this.button.addEventListener('touchend', handleInteraction, { passive: false, capture: true });
-    this.button.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'touch') {
-        handleInteraction(e);
-      }
-    }, { capture: true });
+    this.button.addEventListener('click', handleInteraction, { capture: true });
     
     this.container.appendChild(this.button);
     
