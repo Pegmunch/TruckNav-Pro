@@ -96,32 +96,21 @@ export function CompactTripStrip({
   const getTurnIcon = (direction: string) => {
     const iconProps = { className: "w-8 h-8 md:w-10 md:h-10 stroke-[2.5px]" };
     switch (direction) {
-      case 'straight': return <ArrowUp {...iconProps} />;
+      case 'straight':
+      case 'slight_right':
+      case 'slight_left':
+        return <ArrowUp {...iconProps} />;
       case 'right':
       case 'sharp_right': return <ArrowRight {...iconProps} />;
       case 'left':
       case 'sharp_left': return <ArrowLeft {...iconProps} />;
-      case 'slight_right': return <ArrowUpRight {...iconProps} />;
-      case 'slight_left': return <ArrowUpLeft {...iconProps} />;
       default: return <ArrowUp {...iconProps} />;
     }
   };
 
   // Convert turn distance
   const formatTurnDistance = (distanceM: number): string => {
-    if (unit === 'mi') {
-      const miles = distanceM / 1609.34;
-      if (miles < 0.1) {
-        return `${Math.round(distanceM * 3.28084)} ft`;
-      }
-      return `${miles.toFixed(1)} mi`;
-    } else {
-      const km = distanceM / 1000;
-      if (km < 0.1) {
-        return `${Math.round(distanceM)} m`;
-      }
-      return `${km.toFixed(1)} km`;
-    }
+    return ""; // Distance removed per user request
   };
 
   // Get road badge style
@@ -139,15 +128,22 @@ export function CompactTripStrip({
 
   // Get lane arrow for multi-lane direction box
   // Recommended lanes: blue arrow in direction, Non-recommended: gray dash
-  const getLaneArrow = (direction: string, isRecommended: boolean) => {
+  const getLaneArrow = (direction: string, isRecommended: boolean, index: number, totalLanes: number, roadInfo?: RoadInfo | null) => {
     // Mobile: w-4 h-4, Tablet portrait: w-5 h-5
     const iconClass = "w-4 h-4 md:w-5 md:h-5 stroke-[2.5px]";
-    
-    if (!isRecommended) {
+
+    // Sync highlight with roadInfo destination text
+    const destination = roadInfo?.destination?.toLowerCase() || '';
+    const isActuallyRecommended = isRecommended ||
+      (destination.includes('left lane') && index === 0) ||
+      (destination.includes('right lane') && index === totalLanes - 1) ||
+      (destination.includes('middle lane') && index > 0 && index < totalLanes - 1);
+
+    if (!isActuallyRecommended) {
       // Non-recommended lane: show gray dash
       return <Minus className={cn(iconClass, "text-gray-400")} />;
     }
-    
+
     // Recommended lane: show blue arrow in direction
     switch (direction) {
       case 'left': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
@@ -356,7 +352,7 @@ export function CompactTripStrip({
                 {laneInfo && laneInfo.lanes.length > 0 ? (
                   laneInfo.lanes.map((lane, index) => (
                     <div key={index} className="flex items-center justify-center">
-                      {getLaneArrow(lane.direction, lane.isRecommended)}
+                      {getLaneArrow(lane.direction, lane.isRecommended, index, laneInfo.lanes.length, roadInfo)}
                     </div>
                   ))
                 ) : (
@@ -364,7 +360,7 @@ export function CompactTripStrip({
                 )}
               </div>
               {/* Distance to turn - theme responsive */}
-              {turnInfo && (
+              {turnInfo && turnInfo.distance > 0 && (
                 <span className="text-xs md:text-lg font-bold text-gray-900 dark:text-white ml-0.5">
                   {formatTurnDistance(turnInfo.distance)}
                 </span>
