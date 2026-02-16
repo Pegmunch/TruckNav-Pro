@@ -783,7 +783,7 @@ export class NavigationVoice {
     let formatted = translated !== directionKey ? translated : direction;
     formatted = formatted.toLowerCase().replace(/_/g, ' ');
 
-    // Fix inverted left/right in voice announcements
+    // INVERTED: Mirroring arrow inversion for voice consistency
     if (formatted.includes('right')) {
       formatted = formatted.replace(/right/g, 'TEMP_RIGHT').replace(/left/g, 'right').replace(/TEMP_RIGHT/g, 'left');
     } else if (formatted.includes('left')) {

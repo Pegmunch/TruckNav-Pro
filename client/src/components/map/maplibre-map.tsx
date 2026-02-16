@@ -4411,7 +4411,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           latitude = gpsPosition.latitude;
           longitude = gpsPosition.longitude;
           // Use smoothed heading for fluid rotation, fallback to raw heading
-          bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
+          // INVERTED: User requested opposite map orientation
+          const rawBearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
+          bearing = (rawBearing + 180) % 360;
           shouldUpdate = true;
           
           // Skip update if bearing change is minimal (< 0.5 degrees)
@@ -4434,10 +4436,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           const currentPoint = path[segmentIndex];
           const nextPoint = path[segmentIndex + 1];
           
-          bearing = calculateBearing(
+          // INVERTED: User requested opposite map orientation
+          const rawBearing = calculateBearing(
             currentPoint.lat, currentPoint.lng,
             nextPoint.lat, nextPoint.lng
           );
+          bearing = (rawBearing + 180) % 360;
           
           latitude = currentPoint.lat;
           longitude = currentPoint.lng;
