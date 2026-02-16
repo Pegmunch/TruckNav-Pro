@@ -770,7 +770,7 @@ function NavigationPageContent() {
   // even before route calculation completes
   // Navigation UI is active when: local nav flag, mobile nav mode, route calculation in progress (GO button flow),
   // OR showing preview mode with a valid route (route-ready state)
-  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile;
+  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile || (isShowingPreview && currentRoute !== null);
   
   // Camera reset button state - tracks whether camera is at the saved navigation angles
   const [isCameraAtNavDefault, setIsCameraAtNavDefault] = useState(true);
@@ -4308,7 +4308,7 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only render NavigationLayout when navigation is active or route exists */}
               {/* This prevents the z-[99999] overlays from blocking the hamburger button in plan mode */}
-              {!showComprehensiveMenu && (isNavUIActive || currentRoute) && !(isShowingPreview && !isLocalNavActive) && (
+              {!showComprehensiveMenu && (isNavUIActive || currentRoute) && (
                 <>
                 <NavigationLayout
                   isNavigating={isNavigating}
