@@ -625,22 +625,34 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 6. Tilt (3D Toggle) */}
+      {/* 6. Tilt (3D Toggle) - Fresh reinstall */}
       {onToggle3D && !hide3D && (
         <Button
           ref={toggle3DRef}
           variant="ghost"
           size="icon"
-          onTouchStart={toggle3DHandlers.onTouchStart}
-          onClick={toggle3DHandlers.onClick}
-          onPointerDown={toggle3DHandlers.onPointerDown}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            console.log('[TILT-BTN] touchStart fired');
+            toggle3DHandlers.onTouchStart(e);
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('[TILT-BTN] click fired');
+            toggle3DHandlers.onClick(e);
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            console.log('[TILT-BTN] pointerDown fired');
+            toggle3DHandlers.onPointerDown(e);
+          }}
           className={cn(
             buttonSize, 
             baseButtonClass,
-            is3DMode ? "border-blue-500" : "border-gray-400",
+            is3DMode ? "border-blue-500 bg-blue-500/20" : "border-gray-400",
             toggle3DVisible ? visibleClass : hiddenClass
           )}
-          style={buttonStyle}
+          style={{...buttonStyle, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', zIndex: 9999}}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
