@@ -591,7 +591,7 @@ export const intrusionDetection = (req: express.Request, res: express.Response, 
     const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
     ipActivity.count++;
     
-    const limit = isLocalhost ? 5000 : 3000;
+    const limit = isLocalhost ? 2000 : 1500;
     const timeWindow = isLocalhost ? 60000 : 60000;
     
     if (now - ipActivity.firstRequest < timeWindow && ipActivity.count > limit) {
