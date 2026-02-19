@@ -105,7 +105,7 @@ export function NavigationHeader({
         className={cn(
           "fixed left-0 right-0",
           "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700",
-          isLandscapeMode ? "h-7 px-2" : "h-10 px-2",
+          isLandscapeMode ? "h-8 px-2" : "h-11 px-2",
           "flex items-center justify-between",
           "shadow-sm",
           "pointer-events-auto",
@@ -124,12 +124,12 @@ export function NavigationHeader({
             alt="TruckNav Pro" 
             className={cn(
               "object-contain rounded border-t-2 border-b-2 border-blue-500",
-              isLandscapeMode ? "w-5 h-5" : "w-6 h-6"
+              isLandscapeMode ? "w-5 h-5" : "w-7 h-7"
             )}
           />
           <h1 className={cn(
             "font-bold text-gray-900 dark:text-white",
-            isLandscapeMode ? "text-[10px]" : "text-sm"
+            isLandscapeMode ? "text-[11px]" : "text-sm"
           )}>TruckNav Pro</h1>
         </div>
 
@@ -138,7 +138,7 @@ export function NavigationHeader({
           size="icon"
           className={cn(
             "rounded-lg bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md",
-            isLandscapeMode ? "h-5 w-5" : "h-8 w-8"
+            isLandscapeMode ? "h-6 w-6" : "h-8 w-8"
           )}
           data-testid="button-header-settings"
           data-tour-id="header-settings"

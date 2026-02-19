@@ -171,9 +171,9 @@ export function CompactTripStrip({
           className
         )}
         style={{
-          top: 'calc(28px + max(env(safe-area-inset-top, 0px), 0px))',
+          top: 'calc(32px + max(env(safe-area-inset-top, 0px), 0px))',
           zIndex: 6000,
-          height: '22px',
+          height: '24px',
         }}
         data-testid="compact-trip-strip"
       >
@@ -185,19 +185,19 @@ export function CompactTripStrip({
         )}
 
         {/* ETA */}
-        <div className="flex items-center gap-px bg-blue-600 text-white px-1 rounded flex-shrink-0" style={{ height: '16px' }}>
-          <Clock className="w-2.5 h-2.5" />
-          <span className="text-[8px] font-bold whitespace-nowrap leading-none">{eta}m</span>
+        <div className="flex items-center gap-px bg-blue-600 text-white px-1 rounded flex-shrink-0" style={{ height: '18px' }}>
+          <Clock className="w-3 h-3" />
+          <span className="text-[9px] font-bold whitespace-nowrap leading-none">{eta}m</span>
         </div>
 
         {/* Arrival */}
         <div className={cn(
           "flex items-center gap-px text-white px-1 rounded flex-shrink-0",
           hasTrafficDelay ? "bg-orange-600" : "bg-purple-600"
-        )} style={{ height: '16px' }}>
-          <Timer className="w-2.5 h-2.5" />
-          <span className="text-[8px] font-bold whitespace-nowrap leading-none">{arrivalTimeStr}</span>
-          {hasTrafficDelay && <span className="text-[6px] opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
+        )} style={{ height: '18px' }}>
+          <Timer className="w-3 h-3" />
+          <span className="text-[9px] font-bold whitespace-nowrap leading-none">{arrivalTimeStr}</span>
+          {hasTrafficDelay && <span className="text-[7px] opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
         </div>
 
         {/* Speed limit circle */}
@@ -348,7 +348,7 @@ export function CompactTripStrip({
         className
       )}
       style={{ 
-        top: 'calc(40px + max(env(safe-area-inset-top, 0px), 0px))',
+        top: 'calc(44px + max(env(safe-area-inset-top, 0px), 0px))',
         zIndex: 6000,
       }}
       data-testid="compact-trip-strip"
@@ -377,17 +377,17 @@ export function CompactTripStrip({
           )}
           {/* ETA badge */}
           <div className="flex items-center gap-px md:gap-1.5 bg-blue-600 text-white px-1 md:px-4 py-0.5 md:py-2.5 rounded shadow-sm flex-shrink-0">
-            <Clock className="w-2.5 h-2.5 md:w-5 md:h-5" />
-            <span className="text-[9px] md:text-lg font-bold whitespace-nowrap">{eta}m</span>
+            <Clock className="w-3 h-3 md:w-5 md:h-5" />
+            <span className="text-[10px] md:text-lg font-bold whitespace-nowrap">{eta}m</span>
           </div>
           {/* Arrival time */}
           <div className={cn(
             "flex items-center gap-px md:gap-1.5 text-white px-1 md:px-4 py-0.5 md:py-2.5 rounded shadow-sm flex-shrink-0",
             hasTrafficDelay ? "bg-orange-600" : "bg-purple-600"
           )}>
-            <Timer className="w-2.5 h-2.5 md:w-5 md:h-5" />
-            <span className="text-[9px] md:text-lg font-bold whitespace-nowrap">{arrivalTimeStr}</span>
-            {hasTrafficDelay && <span className="text-[7px] md:text-sm opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
+            <Timer className="w-3 h-3 md:w-5 md:h-5" />
+            <span className="text-[10px] md:text-lg font-bold whitespace-nowrap">{arrivalTimeStr}</span>
+            {hasTrafficDelay && <span className="text-[8px] md:text-sm opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
           </div>
           {/* Distance remaining - tablet only */}
           <div className="hidden md:flex items-center gap-1.5 bg-teal-600 text-white px-4 py-2.5 rounded shadow-sm flex-shrink-0">
