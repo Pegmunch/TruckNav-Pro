@@ -4327,8 +4327,8 @@ function NavigationPageContent() {
               {/* Desktop clean map: preview overlay buttons only show when showNavControls is true */}
               {isShowingPreview && currentRoute && !isNavigating && (isMobile || showNavControls) && (
                 <>
-                  {/* Clean Header with Title and Settings - Hidden on desktop (desktop header already visible) */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm lg:hidden" 
+                  {/* Clean Header with Title and Settings - Hidden on desktop and landscape (navigation header already visible) */}
+                  <div className={cn("absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm lg:hidden", isLandscapeMode && "hidden")}
                        style={{ paddingTop: 'calc(12px + var(--safe-area-top))' }}>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-semibold text-gray-900">TruckNav Pro</span>
@@ -4344,7 +4344,8 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* BOTTOM STACK CONTAINER - Preview Mode Actions */}
+                  {/* BOTTOM STACK CONTAINER - Preview Mode Actions - Hidden in landscape (SpeedometerHUD has GO/STOP) */}
+                  {!isLandscapeMode && (
                   <div 
                     className="fixed left-0 right-0 flex flex-col items-center gap-3 pointer-events-none px-4 z-[200]"
                     style={{ 
@@ -4426,6 +4427,7 @@ function NavigationPageContent() {
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
                   </div>
+                  )}
 
                   {/* Restriction Warnings Panel - Mobile Preview Mode */}
                   {currentRoute?.violations && currentRoute.violations.length > 0 && selectedProfile && (
