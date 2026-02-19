@@ -299,7 +299,7 @@ export function NavigationLayout({
             data-nav-controls="right-stack"
             style={{ 
               bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
-              zIndex: 999999,
+              zIndex: 2147483646,
               pointerEvents: 'auto',
               touchAction: 'manipulation',
               WebkitTapHighlightColor: 'transparent',

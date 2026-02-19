@@ -4246,10 +4246,11 @@ function NavigationPageContent() {
                   </div>
                   
                   {/* PLAN MODE CONTROLS - Right Stack - Map control buttons (controlled by showNavControls toggle) */}
-                  <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                  <div className="fixed flex flex-col gap-1 pointer-events-auto"
                     style={{
                       bottom: 'calc(56px + var(--safe-area-bottom))',
-                      right: '16px'
+                      right: '16px',
+                      zIndex: 2147483647
                     }}>
                     <RightActionStack
                       stackId="plan"
@@ -4735,7 +4736,7 @@ function NavigationPageContent() {
                           "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 shadow-lg",
                           mapControlState.is3DMode ? "border-blue-500 bg-blue-500/20" : "border-gray-400"
                         )}
-                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', zIndex: 9999 }}
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 2147483647 }}
                         data-testid="button-3d-mobile"
                         aria-label="Toggle 3D mode"
                       >

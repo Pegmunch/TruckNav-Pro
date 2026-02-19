@@ -652,7 +652,7 @@ export function RightActionStack({
             is3DMode ? "border-blue-500 bg-blue-500/20" : "border-gray-400",
             toggle3DVisible ? visibleClass : hiddenClass
           )}
-          style={{...buttonStyle, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', zIndex: 9999}}
+          style={{...buttonStyle, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 2147483647}}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
