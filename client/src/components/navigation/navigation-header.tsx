@@ -112,7 +112,7 @@ export function NavigationHeader({
         )}
         style={{
           top: "max(env(safe-area-inset-top, 0px), 0px)",
-          zIndex: 500002,
+          zIndex: 900002,
         }}
         data-testid="navigation-header"
       >
@@ -157,7 +157,7 @@ export function NavigationHeader({
         <>
           <div
             className="fixed inset-0 bg-black/30"
-            style={{ zIndex: 500003 }}
+            style={{ zIndex: 900003 }}
             onClick={() => setIsOpen(false)}
             data-settings-overlay="true"
           />
@@ -165,7 +165,7 @@ export function NavigationHeader({
             ref={panelRef}
             className="fixed right-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-2xl rounded-l-2xl overflow-hidden"
             style={{
-              zIndex: 500004,
+              zIndex: 900004,
               top: "calc(max(env(safe-area-inset-top, 0px), 0px) + 64px)",
               width: "min(320px, 85vw)",
               maxHeight: "calc(100vh - max(env(safe-area-inset-top, 0px), 0px) - 80px)",
@@ -196,7 +196,7 @@ export function NavigationHeader({
                 <Separator className="my-1" />
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onRegionSettingsClick)}
                   onTouchStart={(e) => handleItemTouch(e, onRegionSettingsClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -208,7 +208,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onLanguageClick)}
                   onTouchStart={(e) => handleItemTouch(e, onLanguageClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -220,7 +220,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onMapSettingsClick)}
                   onTouchStart={(e) => handleItemTouch(e, onMapSettingsClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -233,12 +233,12 @@ export function NavigationHeader({
 
                 <Separator className="my-1" />
 
-                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <div className="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
                   Tools & Widgets
                 </div>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onWeatherClick)}
                   onTouchStart={(e) => handleItemTouch(e, onWeatherClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -249,7 +249,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onEntertainmentClick)}
                   onTouchStart={(e) => handleItemTouch(e, onEntertainmentClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -260,7 +260,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onVoiceNavClick)}
                   onTouchStart={(e) => handleItemTouch(e, onVoiceNavClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -271,7 +271,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onFuelPricesClick)}
                   onTouchStart={(e) => handleItemTouch(e, onFuelPricesClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -282,7 +282,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onFatigueMonitorClick)}
                   onTouchStart={(e) => handleItemTouch(e, onFatigueMonitorClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -293,7 +293,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 transition-colors"
                   onClick={() => handleItemClick(onSettingsClick)}
                   onTouchStart={(e) => handleItemTouch(e, onSettingsClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -305,12 +305,12 @@ export function NavigationHeader({
 
                 <Separator className="my-1" />
 
-                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <div className="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
                   Utilities
                 </div>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg text-orange-600 hover:bg-orange-50 active:bg-orange-100 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium rounded-lg text-orange-600 hover:bg-orange-50 active:bg-orange-100 transition-colors"
                   onClick={() => handleItemClick(onClearRouteClick)}
                   onTouchStart={(e) => handleItemTouch(e, onClearRouteClick)}
                   style={{ touchAction: 'manipulation' }}
@@ -321,7 +321,7 @@ export function NavigationHeader({
                 </button>
 
                 <button
-                  className="w-full flex items-center h-12 px-3 text-sm font-normal rounded-lg text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
+                  className="w-full flex items-center h-12 px-3 text-sm font-medium rounded-lg text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
                   onClick={() => handleItemClick(onReplayTourClick)}
                   onTouchStart={(e) => handleItemTouch(e, onReplayTourClick)}
                   style={{ touchAction: 'manipulation' }}
