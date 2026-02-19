@@ -2916,3 +2916,17 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 /* Dialog positioning handled by component-level styles */
 /* All conflicting touch/PWA dialog positioning CSS has been removed */
 /* to prevent duplicate panel rendering on iOS Safari */
+
+/* ============================================ */
+/* LANDSCAPE MODE - CSS rotation for mobile nav */
+/* Forces landscape view when phone is in portrait */
+/* ============================================ */
+.landscape-mode-inner {
+  position: fixed !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  overflow: hidden !important;
+}

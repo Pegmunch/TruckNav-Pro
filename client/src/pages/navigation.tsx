@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map, Speaker, VolumeX, Clock, Eye, Route as RouteIcon } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map, Speaker, VolumeX, Clock, Eye, Route as RouteIcon, Smartphone } from "lucide-react";
 import { usePWAEnvironment } from "@/contexts/pwa-environment";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeviceType } from "@/hooks/use-device-type";
@@ -341,6 +341,67 @@ function NavigationPageContent() {
   const [showRegionSettingsTool, setShowRegionSettingsTool] = useState(false);
   const [showLanguageTool, setShowLanguageTool] = useState(false);
   const [showMapSettingsTool, setShowMapSettingsTool] = useState(false);
+  
+  // Landscape mode toggle for mobile navigation (wider map view)
+  const [isLandscapeMode, setIsLandscapeMode] = useState(false);
+  const landscapeApiUsed = useRef(false);
+  
+  // Handle landscape mode toggle - try Screen Orientation API first, CSS fallback
+  const toggleLandscapeMode = useCallback(async () => {
+    const newState = !isLandscapeMode;
+    
+    if (newState) {
+      // Try Screen Orientation API (works on Android Chrome PWA)
+      try {
+        if (screen.orientation && typeof (screen.orientation as any).lock === 'function') {
+          await (screen.orientation as any).lock('landscape-primary');
+          landscapeApiUsed.current = true;
+          setIsLandscapeMode(true);
+          console.log('[LANDSCAPE] Screen Orientation API locked to landscape');
+          return;
+        }
+      } catch (err) {
+        console.log('[LANDSCAPE] Screen Orientation API not available, using CSS fallback');
+      }
+      
+      // CSS fallback (iOS Safari and non-fullscreen browsers)
+      landscapeApiUsed.current = false;
+      setIsLandscapeMode(true);
+      
+      // Trigger map resize after rotation
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        mapRef.current?.invalidateSize?.();
+      }, 100);
+    } else {
+      // Restore portrait
+      if (landscapeApiUsed.current) {
+        try {
+          screen.orientation.unlock();
+        } catch (err) {
+          console.log('[LANDSCAPE] Could not unlock orientation');
+        }
+      }
+      landscapeApiUsed.current = false;
+      setIsLandscapeMode(false);
+      
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        mapRef.current?.invalidateSize?.();
+      }, 100);
+    }
+  }, [isLandscapeMode]);
+  
+  // Auto-disable landscape mode when navigation ends
+  useEffect(() => {
+    if (!isLocalNavActive && isLandscapeMode) {
+      setIsLandscapeMode(false);
+      if (landscapeApiUsed.current) {
+        try { screen.orientation.unlock(); } catch (e) {}
+        landscapeApiUsed.current = false;
+      }
+    }
+  }, [isLocalNavActive, isLandscapeMode]);
   
   // Get onboarding context for replay tour
   const { resetTour } = useOnboarding();
@@ -4066,8 +4127,10 @@ function NavigationPageContent() {
   // Don't block the entire interface for profile loading - show interface with loading states instead
   // NOTE: Legal consent is now checked in the parent NavigationPage wrapper BEFORE GPS starts
 
+  const useCSSLandscape = isLandscapeMode && !landscapeApiUsed.current;
+  
   return (
-    <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
+    <div className={cn("min-h-[100svh] flex flex-col", useCSSLandscape && "landscape-mode-inner")} style={{background: "transparent"}}>
       {/* Fleet Broadcast Notifications - Shows critical/important messages from fleet managers */}
       <BroadcastNotificationPopup />
       
@@ -4746,7 +4809,34 @@ function NavigationPageContent() {
                     </>
                     ) : null
                   }
-                  topRightStack={null}
+                  topRightStack={
+                    isMobile && isNavigating ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-9 w-9 min-h-[36px] min-w-[36px] rounded-xl shadow-lg select-none touch-manipulation transition-all duration-150",
+                          isLandscapeMode
+                            ? "bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-600"
+                            : "bg-white hover:bg-gray-50 text-black border-2 border-gray-400"
+                        )}
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleLandscapeMode();
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleLandscapeMode();
+                        }}
+                        data-testid="button-landscape-toggle"
+                        aria-label={isLandscapeMode ? "Switch to portrait view" : "Switch to landscape view"}
+                      >
+                        <Smartphone className={cn("h-4 w-4 transition-transform", isLandscapeMode ? "rotate-90" : "")} />
+                      </Button>
+                    ) : null
+                  }
                   rightStack={
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-1 mr-2">
