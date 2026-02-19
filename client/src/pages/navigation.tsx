@@ -4494,7 +4494,7 @@ function NavigationPageContent() {
                     </>
                   }
                   topStrip={
-                    currentRoute && (isMobile || showNavControls) ? (
+                    currentRoute && (isMobile || showNavControls) && !isLandscapeMode ? (
                       <CompactTripStrip
                         eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
