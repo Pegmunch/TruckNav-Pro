@@ -357,7 +357,12 @@ function NavigationPageContent() {
           await (screen.orientation as any).lock('landscape-primary');
           landscapeApiUsed.current = true;
           setIsLandscapeMode(true);
+          document.body.classList.add('landscape-compact');
           console.log('[LANDSCAPE] Screen Orientation API locked to landscape');
+          setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+            mapRef.current?.invalidateSize?.();
+          }, 100);
           return;
         }
       } catch (err) {
@@ -368,6 +373,7 @@ function NavigationPageContent() {
       landscapeApiUsed.current = false;
       setIsLandscapeMode(true);
       document.body.classList.add('landscape-mode-active');
+      document.body.classList.add('landscape-compact');
       
       // Trigger map resize after rotation
       setTimeout(() => {
@@ -386,6 +392,7 @@ function NavigationPageContent() {
       landscapeApiUsed.current = false;
       setIsLandscapeMode(false);
       document.body.classList.remove('landscape-mode-active');
+      document.body.classList.remove('landscape-compact');
       
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
@@ -399,6 +406,7 @@ function NavigationPageContent() {
     if (!isLocalNavActive && isLandscapeMode) {
       setIsLandscapeMode(false);
       document.body.classList.remove('landscape-mode-active');
+      document.body.classList.remove('landscape-compact');
       if (landscapeApiUsed.current) {
         try { screen.orientation.unlock(); } catch (e) {}
         landscapeApiUsed.current = false;
@@ -4130,10 +4138,10 @@ function NavigationPageContent() {
   // Don't block the entire interface for profile loading - show interface with loading states instead
   // NOTE: Legal consent is now checked in the parent NavigationPage wrapper BEFORE GPS starts
 
-  const useCSSLandscape = isLandscapeMode && !landscapeApiUsed.current;
+  const useCSSRotation = isLandscapeMode && !landscapeApiUsed.current;
   
   return (
-    <div className={cn("min-h-[100svh] flex flex-col", useCSSLandscape && "landscape-mode-inner")} style={{background: "transparent"}}>
+    <div className={cn("min-h-[100svh] flex flex-col", useCSSRotation && "landscape-mode-inner", isLandscapeMode && "landscape-compact")} style={{background: "transparent"}}>
       {/* Fleet Broadcast Notifications - Shows critical/important messages from fleet managers */}
       <BroadcastNotificationPopup />
       
