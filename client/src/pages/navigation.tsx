@@ -367,6 +367,7 @@ function NavigationPageContent() {
       // CSS fallback (iOS Safari and non-fullscreen browsers)
       landscapeApiUsed.current = false;
       setIsLandscapeMode(true);
+      document.body.classList.add('landscape-mode-active');
       
       // Trigger map resize after rotation
       setTimeout(() => {
@@ -384,6 +385,7 @@ function NavigationPageContent() {
       }
       landscapeApiUsed.current = false;
       setIsLandscapeMode(false);
+      document.body.classList.remove('landscape-mode-active');
       
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
@@ -396,6 +398,7 @@ function NavigationPageContent() {
   useEffect(() => {
     if (!isLocalNavActive && isLandscapeMode) {
       setIsLandscapeMode(false);
+      document.body.classList.remove('landscape-mode-active');
       if (landscapeApiUsed.current) {
         try { screen.orientation.unlock(); } catch (e) {}
         landscapeApiUsed.current = false;

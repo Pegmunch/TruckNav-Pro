@@ -2930,3 +2930,224 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
   transform: translate(-50%, -50%) rotate(90deg) !important;
   overflow: hidden !important;
 }
+
+/* --- Landscape: Navigation Header (top bar) shrink to ~28px --- */
+.landscape-mode-inner [data-testid="navigation-header"] {
+  height: 28px !important;
+  min-height: 28px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+.landscape-mode-inner [data-testid="navigation-header"] img {
+  width: 18px !important;
+  height: 18px !important;
+}
+.landscape-mode-inner [data-testid="navigation-header"] span,
+.landscape-mode-inner [data-testid="navigation-header"] h1 {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+.landscape-mode-inner [data-testid="navigation-header"] button {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  padding: 2px !important;
+}
+.landscape-mode-inner [data-testid="navigation-header"] button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* --- Landscape: CompactTripStrip (ETA bar) shrink to ~25% height --- */
+.landscape-mode-inner [data-testid="compact-trip-strip"] {
+  top: calc(28px + max(env(safe-area-inset-top, 0px), 0px)) !important;
+  padding: 1px 4px !important;
+  gap: 0px !important;
+}
+.landscape-mode-inner [data-testid="compact-trip-strip"] > div {
+  gap: 2px !important;
+}
+.landscape-mode-inner [data-testid="compact-trip-strip"] span {
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+.landscape-mode-inner [data-testid="compact-trip-strip"] svg {
+  width: 10px !important;
+  height: 10px !important;
+}
+.landscape-mode-inner [data-testid="compact-trip-strip"] button {
+  min-height: 20px !important;
+  min-width: 32px !important;
+  height: 20px !important;
+  padding: 1px 4px !important;
+  font-size: 8px !important;
+}
+
+/* ETA/Arrival/Status pills */
+.landscape-mode-inner [data-testid="compact-trip-strip"] .flex.items-center.gap-0\.5 {
+  padding: 1px 4px !important;
+  gap: 1px !important;
+}
+
+/* Direction square */
+.landscape-mode-inner [data-testid="direction-square"] {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+}
+.landscape-mode-inner [data-testid="direction-square"] svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+.landscape-mode-inner [data-testid="direction-square"] span {
+  font-size: 6px !important;
+}
+
+/* Speed limit circle */
+.landscape-mode-inner [data-testid="compact-trip-strip"] .rounded-full {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  border-width: 1.5px !important;
+}
+
+/* Speed display */
+.landscape-mode-inner [data-testid="compact-trip-strip"] .rounded-lg {
+  min-width: 40px !important;
+  padding: 1px 4px !important;
+}
+
+/* Preview/Stop buttons */
+.landscape-mode-inner [data-testid="button-preview-start"],
+.landscape-mode-inner [data-testid="button-preview-stop"] {
+  height: 22px !important;
+  min-width: 36px !important;
+  padding: 1px 6px !important;
+  font-size: 8px !important;
+}
+
+/* Voice toggle */
+.landscape-mode-inner [data-testid="voice-toggle-button"] {
+  min-height: 22px !important;
+  min-width: 40px !important;
+  padding: 1px 6px !important;
+  font-size: 8px !important;
+}
+
+/* NAV/PRV badge */
+.landscape-mode-inner [data-testid="compact-trip-strip"] .rounded-full.font-bold {
+  padding: 0px 6px !important;
+  font-size: 7px !important;
+}
+
+/* Road badge */
+.landscape-mode-inner [data-testid="compact-trip-strip"] .rounded.font-bold {
+  padding: 0px 4px !important;
+  font-size: 8px !important;
+}
+
+/* Row 2 of ETA strip */
+.landscape-mode-inner [data-testid="compact-trip-strip"] > div:last-child {
+  gap: 2px !important;
+  margin-top: -1px !important;
+}
+
+/* --- Landscape: Control stacks repositioned for smaller header+ETA --- */
+/* topLeftStack (compass/3D) */
+.landscape-mode-inner [data-nav-controls="top-left-stack"] {
+  top: calc(72px + var(--safe-area-top, 0px)) !important;
+  left: 8px !important;
+  gap: 4px !important;
+}
+/* topRightStack (landscape toggle) */
+.landscape-mode-inner [data-nav-controls="top-right-stack"] {
+  top: calc(72px + var(--safe-area-top, 0px)) !important;
+  right: 8px !important;
+  gap: 4px !important;
+}
+
+/* --- Landscape: All nav control buttons smaller --- */
+.landscape-mode-inner [data-nav-controls] button {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border-radius: 8px !important;
+}
+.landscape-mode-inner [data-nav-controls] button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Left stack (menu, etc.) */
+.landscape-mode-inner [data-nav-controls="left-stack"],
+.landscape-mode-inner #ios-left-stack-portal {
+  bottom: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 8px !important;
+  gap: 4px !important;
+}
+
+/* Right stack (zoom, layers, etc.) */
+.landscape-mode-inner [data-nav-controls="right-stack"],
+.landscape-mode-inner #ios-right-stack-portal {
+  bottom: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+  right: 8px !important;
+  gap: 4px !important;
+}
+
+/* --- Landscape: Bottom instrumentation bar thinner --- */
+.landscape-mode-inner [data-testid="instrumentation-bar"],
+.landscape-mode-inner [data-testid="bottom-bar"] {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 2px 8px !important;
+}
+.landscape-mode-inner [data-testid="instrumentation-bar"] span,
+.landscape-mode-inner [data-testid="bottom-bar"] span {
+  font-size: 9px !important;
+}
+.landscape-mode-inner [data-testid="instrumentation-bar"] svg,
+.landscape-mode-inner [data-testid="bottom-bar"] svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* --- Landscape: Quick settings dropdown compact --- */
+.landscape-mode-inner [data-testid="quick-settings-panel"] {
+  max-height: 50vh !important;
+  font-size: 10px !important;
+}
+.landscape-mode-inner [data-testid="quick-settings-panel"] button {
+  min-height: 28px !important;
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+}
+
+/* --- Landscape: iOS portal elements (rendered on body) --- */
+body.landscape-mode-active #ios-left-stack-portal,
+body.landscape-mode-active #ios-right-stack-portal {
+  bottom: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+  gap: 4px !important;
+}
+body.landscape-mode-active #ios-left-stack-portal {
+  left: 8px !important;
+}
+body.landscape-mode-active #ios-right-stack-portal {
+  right: 8px !important;
+}
+body.landscape-mode-active #ios-left-stack-portal button,
+body.landscape-mode-active #ios-right-stack-portal button {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border-radius: 8px !important;
+}
+body.landscape-mode-active #ios-left-stack-portal button svg,
+body.landscape-mode-active #ios-right-stack-portal button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
