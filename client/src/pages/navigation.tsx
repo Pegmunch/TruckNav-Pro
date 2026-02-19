@@ -4169,6 +4169,7 @@ function NavigationPageContent() {
               toast({ title: "Route cleared", description: "The map has been reset." });
             }}
             onReplayTourClick={() => resetTour()}
+            isLandscapeMode={isLandscapeMode}
           />
         )}
         
@@ -4594,6 +4595,7 @@ function NavigationPageContent() {
                         onCancelNavigation={handleStopNavigation}
                         isCancellingNavigation={completeJourneyMutation.isPending}
                         trafficDelayMinutes={predictedTrafficDelay}
+                        isLandscapeMode={isLandscapeMode}
                       />
                     ) : null
                   }
@@ -5357,6 +5359,7 @@ function NavigationPageContent() {
                         onCancelNavigation={handleStopNavigation}
                         isCancellingNavigation={completeJourneyMutation.isPending}
                         trafficDelayMinutes={predictedTrafficDelay}
+                        isLandscapeMode={isLandscapeMode}
                       />
                     </div>
 
@@ -5663,6 +5666,7 @@ function NavigationPageContent() {
                         onCancelNavigation={handleStopNavigation}
                         isCancellingNavigation={completeJourneyMutation.isPending}
                         trafficDelayMinutes={predictedTrafficDelay}
+                        isLandscapeMode={isLandscapeMode}
                       />
                     </div>
 

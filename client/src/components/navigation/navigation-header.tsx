@@ -39,6 +39,7 @@ interface NavigationHeaderProps {
   onClearRouteClick?: () => void;
   onReplayTourClick?: () => void;
   className?: string;
+  isLandscapeMode?: boolean;
 }
 
 export function NavigationHeader({
@@ -54,6 +55,7 @@ export function NavigationHeader({
   onClearRouteClick,
   onReplayTourClick,
   className,
+  isLandscapeMode = false,
 }: NavigationHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const touchHandledRef = useRef(false);
@@ -103,7 +105,7 @@ export function NavigationHeader({
         className={cn(
           "fixed left-0 right-0",
           "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700",
-          "h-16 px-4",
+          isLandscapeMode ? "h-7 px-2" : "h-16 px-4",
           "flex items-center justify-between",
           "shadow-sm",
           "pointer-events-auto",
@@ -116,19 +118,28 @@ export function NavigationHeader({
         }}
         data-testid="navigation-header"
       >
-        <div className="flex items-center gap-2">
+        <div className={cn("flex items-center", isLandscapeMode ? "gap-1" : "gap-2")}>
           <img 
             src="/truck-marker-icon.png" 
             alt="TruckNav Pro" 
-            className="w-8 h-8 object-contain rounded border-t-2 border-b-2 border-blue-500"
+            className={cn(
+              "object-contain rounded border-t-2 border-b-2 border-blue-500",
+              isLandscapeMode ? "w-5 h-5" : "w-8 h-8"
+            )}
           />
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">TruckNav Pro</h1>
+          <h1 className={cn(
+            "font-bold text-gray-900 dark:text-white",
+            isLandscapeMode ? "text-[10px]" : "text-lg"
+          )}>TruckNav Pro</h1>
         </div>
 
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-lg bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md"
+          className={cn(
+            "rounded-lg bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md",
+            isLandscapeMode ? "h-5 w-5" : "h-10 w-10"
+          )}
           data-testid="button-header-settings"
           data-tour-id="header-settings"
           onClick={(e) => {
@@ -149,7 +160,7 @@ export function NavigationHeader({
           }}
           style={{ touchAction: 'manipulation' }}
         >
-          <Settings className="h-5 w-5" />
+          <Settings className={isLandscapeMode ? "h-3 w-3" : "h-5 w-5"} />
         </Button>
       </div>
 
