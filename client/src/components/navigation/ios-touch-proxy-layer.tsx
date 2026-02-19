@@ -1,7 +1,24 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { buttonRegistry } from './right-action-stack';
+import { buttonRegistry, globalDebounce } from './right-action-stack';
 
 const PROXY_CONTAINER_ID = 'ios-touch-proxy-container';
+const PROXY_DEBOUNCE = 400;
+const proxyLastFired = new Map<string, number>();
+
+function canProxyFire(id: string): boolean {
+  const last = proxyLastFired.get(id) || 0;
+  return Date.now() - last > PROXY_DEBOUNCE;
+}
+
+function markProxyFiredEverywhere(id: string): void {
+  const now = Date.now();
+  proxyLastFired.set(id, now);
+  globalDebounce.set(id, now);
+  const reg = buttonRegistry.get(id);
+  if (reg) {
+    reg.lastFired = now;
+  }
+}
 
 export function IOSTouchProxyLayer() {
   const isIOS = useRef(false);
@@ -72,10 +89,17 @@ export function IOSTouchProxyLayer() {
         }
       }
       
-      console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} captured - hit proxy: ${id}, closest button: ${closestId}`);
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
+      
+      if (!canProxyFire(closestId)) {
+        console.log(`[IOS-TOUCH-PROXY] ⏳ Debounced ${closestId} (${eventType})`);
+        return;
+      }
+      
+      console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} firing: ${closestId}`);
+      markProxyFiredEverywhere(closestId);
       
       if (navigator.vibrate) navigator.vibrate(10);
       
@@ -87,8 +111,8 @@ export function IOSTouchProxyLayer() {
     
     proxy.ontouchstart = (e) => handleAction(e, 'ontouchstart');
     proxy.ontouchend = (e) => { e.preventDefault(); e.stopPropagation(); };
-    proxy.onpointerdown = (e) => handleAction(e, 'onpointerdown');
-    proxy.onclick = (e) => handleAction(e, 'onclick');
+    proxy.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); };
+    proxy.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
     
     return proxy;
   }, []);

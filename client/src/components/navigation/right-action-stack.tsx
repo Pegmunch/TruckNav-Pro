@@ -28,11 +28,11 @@ interface ButtonRegistration {
 export const buttonRegistry = new Map<string, ButtonRegistration>();
 export type { ButtonRegistration };
 
-// Debounce threshold - reduced to 100ms for faster response
-const FIRE_DEBOUNCE = 100;
+// Debounce threshold - 400ms prevents double-fire from iOS proxy + window handler
+const FIRE_DEBOUNCE = 400;
 
-// Global debounce tracker (backup for handlers outside registry)
-const globalDebounce = new Map<string, number>();
+// Global debounce tracker (backup for handlers outside registry) - exported for iOS proxy sync
+export const globalDebounce = new Map<string, number>();
 
 // Check if a button can fire (not debounced)
 function canButtonFire(id: string): boolean {
@@ -625,27 +625,15 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 6. Tilt (3D Toggle) - Fresh reinstall */}
+      {/* 6. Tilt (3D Toggle) */}
       {onToggle3D && !hide3D && (
         <Button
           ref={toggle3DRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            e.stopPropagation();
-            console.log('[TILT-BTN] touchStart fired');
-            toggle3DHandlers.onTouchStart(e);
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('[TILT-BTN] click fired');
-            toggle3DHandlers.onClick(e);
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            console.log('[TILT-BTN] pointerDown fired');
-            toggle3DHandlers.onPointerDown(e);
-          }}
+          onTouchStart={toggle3DHandlers.onTouchStart}
+          onClick={toggle3DHandlers.onClick}
+          onPointerDown={toggle3DHandlers.onPointerDown}
           className={cn(
             buttonSize, 
             baseButtonClass,
