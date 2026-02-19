@@ -348,7 +348,7 @@ export function CompactTripStrip({
         className
       )}
       style={{ 
-        top: 'calc(64px + max(env(safe-area-inset-top, 0px), 0px))',
+        top: 'calc(40px + max(env(safe-area-inset-top, 0px), 0px))',
         zIndex: 6000,
       }}
       data-testid="compact-trip-strip"
@@ -508,7 +508,7 @@ export function CompactTripStrip({
               'flex items-center gap-0.5 md:gap-1.5 px-2 md:px-4 py-1 md:py-1.5 rounded-full transition-colors shadow-sm text-[8px] md:text-base font-bold select-none active:scale-95',
               voiceEnabled ? 'bg-green-500 text-white active:bg-green-600' : 'bg-slate-400 text-white active:bg-slate-500'
             )}
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minHeight: '28px', minWidth: '48px', WebkitUserSelect: 'none', userSelect: 'none' }}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minHeight: '22px', minWidth: '40px', WebkitUserSelect: 'none', userSelect: 'none' }}
             data-testid="voice-toggle-button"
           >
             {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-5 md:h-5" /> : <VolumeX className="w-3 h-3 md:w-5 md:h-5" />}
