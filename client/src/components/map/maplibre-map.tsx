@@ -314,115 +314,30 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, [onDoubleTap]);
   
   // ============================================================================
-  // MAPLIBRE CUSTOM CONTROLS - iOS Safari WebGL touch fix
-  // These controls are rendered through MapLibre's IControl interface which
-  // bypasses the WebGL touch blocking issue that affects regular DOM buttons.
-  // Controls are only added during navigation mode for incident, traffic, and 3D toggle.
+  // MAPLIBRE CUSTOM CONTROLS - REMOVED
+  // Native MapLibre controls (top-right) have been removed because they
+  // cannot receive touch events on iOS Safari over WebGL canvas.
+  // All controls are now handled by the React RightActionStack which uses
+  // the iOS touch proxy system and buttonRegistry for reliable touch handling.
   // ============================================================================
   useEffect(() => {
-    console.log('[MAPLIBRE-CONTROLS] useEffect triggered - isNavigating:', isNavigating, 'isLoaded:', isLoaded, 'hasMap:', !!map.current);
-    
-    if (!map.current || !isLoaded) {
-      console.log('[MAPLIBRE-CONTROLS] Skipping - map not ready. map.current:', !!map.current, 'isLoaded:', isLoaded);
-      return;
-    }
-    
+    if (!map.current || !isLoaded) return;
     const mapInstance = map.current;
     
-    // Create and add controls when navigating
-    if (isNavigating) {
-      console.log('[MAPLIBRE-CONTROLS] ✅ Adding custom controls for navigation mode');
-      
-      // Incident control (red border) - uses ref for fresh callback
-      if (!incidentControlRef.current) {
-        incidentControlRef.current = new IncidentControl(() => {
-          console.log('[MAPLIBRE-CONTROLS] Incident control clicked');
-          onViewIncidentsRef.current?.();
-        });
-        mapInstance.addControl(incidentControlRef.current, 'top-right');
-      }
-      
-      // Traffic control (orange border when active) - uses ref for fresh callback
-      if (!trafficControlRef.current) {
-        trafficControlRef.current = new TrafficControl(() => {
-          console.log('[MAPLIBRE-CONTROLS] Traffic control clicked');
-          onToggleTrafficRef.current?.();
-        }, showTrafficRef.current);
-        mapInstance.addControl(trafficControlRef.current, 'top-right');
-      }
-      
-      // 3D/Tilt control (blue border when active)
-      if (!tiltControlRef.current) {
-        tiltControlRef.current = new TiltControl(() => {
-          console.log('[MAPLIBRE-CONTROLS] Tilt control clicked');
-          const currentVS = viewStateRef.current;
-          let newState: ViewState;
-          
-          tiltTransitionUntilRef.current = Date.now() + 600;
-          
-          if (currentVS === 'tilted') {
-            newState = 'plan';
-            mapInstance.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
-          } else {
-            newState = 'tilted';
-            const heading = gpsPositionRef.current?.heading || mapInstance.getBearing();
-            const containerHeight = mapInstance.getContainer().clientHeight || 800;
-            mapInstance.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
-          }
-          console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
-          viewStateRef.current = newState;
-          setViewState(newState);
-        }, viewStateRef.current === 'tilted');
-        mapInstance.addControl(tiltControlRef.current, 'top-right');
-      }
-    } else {
-      // Remove controls when not navigating
-      console.log('[MAPLIBRE-CONTROLS] Removing custom controls (not navigating)');
-      
-      if (incidentControlRef.current) {
-        try { mapInstance.removeControl(incidentControlRef.current); } catch (e) {}
-        incidentControlRef.current = null;
-      }
-      if (trafficControlRef.current) {
-        try { mapInstance.removeControl(trafficControlRef.current); } catch (e) {}
-        trafficControlRef.current = null;
-      }
-      if (tiltControlRef.current) {
-        try { mapInstance.removeControl(tiltControlRef.current); } catch (e) {}
-        tiltControlRef.current = null;
-      }
+    // Clean up any leftover native controls
+    if (incidentControlRef.current) {
+      try { mapInstance.removeControl(incidentControlRef.current); } catch (e) {}
+      incidentControlRef.current = null;
     }
-    
-    // Cleanup on unmount
-    return () => {
-      if (incidentControlRef.current) {
-        try { mapInstance.removeControl(incidentControlRef.current); } catch (e) {}
-        incidentControlRef.current = null;
-      }
-      if (trafficControlRef.current) {
-        try { mapInstance.removeControl(trafficControlRef.current); } catch (e) {}
-        trafficControlRef.current = null;
-      }
-      if (tiltControlRef.current) {
-        try { mapInstance.removeControl(tiltControlRef.current); } catch (e) {}
-        tiltControlRef.current = null;
-      }
-    };
-  }, [isNavigating, isLoaded]);
-  
-  // Update traffic control active state when showTraffic changes
-  useEffect(() => {
     if (trafficControlRef.current) {
-      trafficControlRef.current.setActive(showTraffic);
+      try { mapInstance.removeControl(trafficControlRef.current); } catch (e) {}
+      trafficControlRef.current = null;
     }
-  }, [showTraffic]);
-  
-  // Update tilt control active state when is3DMode changes
-  useEffect(() => {
     if (tiltControlRef.current) {
-      tiltControlRef.current.setActive(is3DMode);
+      try { mapInstance.removeControl(tiltControlRef.current); } catch (e) {}
+      tiltControlRef.current = null;
     }
-  }, [is3DMode]);
+  }, [isNavigating, isLoaded]);
   
   // CRITICAL: Delete MapLibre's transparent button color rule from its stylesheet
   // This is the ONLY reliable fix - MapLibre's CSS keeps re-inserting after overrides
@@ -679,22 +594,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     toggle3DMode: () => {
       if (!map.current) return;
       const currentVS = viewStateRef.current;
-      let newState: ViewState;
+      const newState: ViewState = currentVS === 'tilted' ? 'plan' : 'tilted';
       
-      tiltTransitionUntilRef.current = Date.now() + 600;
+      console.log(`[3D-TOGGLE] ===== TILT BUTTON PRESSED =====`);
+      console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
       
-      if (currentVS === 'tilted') {
-        newState = 'plan';
-        map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
-      } else {
-        newState = 'tilted';
-        const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-        const containerHeight = map.current.getContainer().clientHeight || 800;
-        map.current.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
-      }
       viewStateRef.current = newState;
       setViewState(newState);
-      console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState}`);
+      
+      if (isNavigating && gpsPositionRef.current) {
+        console.log(`[3D-TOGGLE] GPS active - GPS loop will apply camera on next frame`);
+      } else {
+        console.log(`[3D-TOGGLE] No GPS/not navigating - applying camera directly`);
+        if (newState === 'plan') {
+          map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
+        } else {
+          const heading = map.current.getBearing();
+          map.current.easeTo({ pitch: 60, bearing: heading, duration: 300 });
+        }
+      }
     },
     is3DMode: () => viewStateRef.current === 'tilted',
     getViewState: () => viewStateRef.current,
@@ -4453,12 +4371,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               return;
             }
             
-            // CRITICAL: Skip GPS loop during active zoom or tilt transition
+            // CRITICAL: Skip GPS loop during active zoom animation
             // MapLibre's easeTo calls cancel previous animations
             if (zoomAnimationInProgressRef.current) {
-              return;
-            }
-            if (Date.now() < tiltTransitionUntilRef.current) {
               return;
             }
             
@@ -4895,23 +4810,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current) return;
     
     const currentVS = viewStateRef.current;
-    let newState: ViewState;
+    const newState: ViewState = currentVS === 'tilted' ? 'plan' : 'tilted';
     
-    tiltTransitionUntilRef.current = Date.now() + 600;
+    console.log(`[3D-TOGGLE] ===== TILT BUTTON PRESSED (standalone) =====`);
+    console.log(`[3D-TOGGLE] View state: ${currentVS} → ${newState} (isNavigating: ${isNavigating})`);
     
-    if (currentVS === 'tilted') {
-      newState = 'plan';
-      map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400 });
-    } else {
-      newState = 'tilted';
-      const heading = gpsPositionRef.current?.heading || map.current.getBearing();
-      const containerHeight = map.current.getContainer().clientHeight || 800;
-      map.current.easeTo({ pitch: 60, bearing: heading, padding: { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 }, duration: 400 });
-    }
-    
-    console.log(`[3D-TOGGLE] View state cycling: ${currentVS} → ${newState} (isNavigating: ${isNavigating})`);
     viewStateRef.current = newState;
     setViewState(newState);
+    
+    if (isNavigating && gpsPositionRef.current) {
+      console.log(`[3D-TOGGLE] GPS active - GPS loop will apply camera on next frame`);
+    } else {
+      console.log(`[3D-TOGGLE] No GPS/not navigating - applying camera directly`);
+      if (newState === 'plan') {
+        map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
+      } else {
+        const heading = map.current.getBearing();
+        map.current.easeTo({ pitch: 60, bearing: heading, duration: 300 });
+      }
+    }
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts (only on initial transition)
