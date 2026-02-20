@@ -2983,12 +2983,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     const handleRerouteComplete = () => {
-      console.log('[ROUTE-HEALTH] Reroute complete event received - forcing route re-render');
+      console.log('[ROUTE-HEALTH] Reroute complete event received - clearing cache and forcing full re-render');
+      processedRouteSourceRef.current = null;
+      processedRouteCoordsRef.current = null;
+      cachedRouteGeoJsonRef.current = null;
       setTimeout(() => {
         if (!map.current || !map.current.isStyleLoaded()) return;
-        ensureRouteLayers();
-        renderRouteLayers();
-        console.log('[ROUTE-HEALTH] Route layers rebuilt after reroute');
+        removeRouteLayers();
+        setTimeout(() => {
+          if (!map.current || !map.current.isStyleLoaded()) return;
+          ensureRouteLayers();
+          renderRouteLayers();
+          console.log('[ROUTE-HEALTH] Route layers fully rebuilt after reroute');
+        }, 100);
       }, 150);
     };
     
@@ -3010,7 +3017,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       }
     };
-  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
+  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers, removeRouteLayers]);
 
   const pendingRouteRafRef = useRef<number | null>(null);
   useEffect(() => {

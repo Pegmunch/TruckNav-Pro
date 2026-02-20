@@ -541,9 +541,10 @@ function NavigationPageContent() {
   }, []);
   
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
-    console.log('[AUTO-REROUTE] === Applying rerouted route (mirrors GO button flow) ===');
+    console.log('[AUTO-REROUTE] === STAGE 1: Applying rerouted route ===');
     console.log('[AUTO-REROUTE] routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
     
+    // STAGE 1: Ensure geometry exists for map rendering
     if (newRoute.routePath && Array.isArray(newRoute.routePath) && newRoute.routePath.length >= 2 && !newRoute.geometry) {
       (newRoute as any).geometry = {
         type: 'LineString',
@@ -553,33 +554,48 @@ function NavigationPageContent() {
       };
     }
     
-    setCurrentRoute(newRoute);
-    routeProgressRef.current = 0;
-    lastVoiceAnnouncementRef.current = null;
+    // STAGE 2: Apply new route to state - triggers map re-render
+    // Clear old route first to force React state change detection
+    setCurrentRoute(null);
     
-    if (newRoute.distance) {
-      setDynamicDistanceRemaining(newRoute.distance * 1609.344);
-    }
-    if (newRoute.duration) {
-      setDynamicEtaMinutes(Math.ceil(newRoute.duration));
-    }
-    
-    // Reset live ETA tracking for new route
-    lastProjectedDistanceRef.current = 0;
-    
-    lastCalculatedRouteRef.current = newRoute;
-    currentRouteIdRef.current = newRoute.id || null;
-    
-    hasShownDestinationDialogRef.current = false;
-    setShowDestinationReached(false);
-    
+    // Use microtask to ensure null is processed before setting new route
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
-        detail: { routePathLength: newRoute.routePath?.length || 0 }
-      }));
-    }, 100);
+      setCurrentRoute(newRoute);
+      
+      // Reset route progress tracking for new route
+      routeProgressRef.current = 0;
+      lastVoiceAnnouncementRef.current = null;
+      
+      if (newRoute.distance) {
+        setDynamicDistanceRemaining(newRoute.distance * 1609.344);
+      }
+      if (newRoute.duration) {
+        setDynamicEtaMinutes(Math.ceil(newRoute.duration));
+      }
+      
+      // Reset live ETA tracking for new route
+      lastProjectedDistanceRef.current = 0;
+      
+      lastCalculatedRouteRef.current = newRoute;
+      currentRouteIdRef.current = newRoute.id || null;
+      
+      hasShownDestinationDialogRef.current = false;
+      setShowDestinationReached(false);
+      
+      // Force map to re-render route line with new coordinates
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
+          detail: { routePathLength: newRoute.routePath?.length || 0 }
+        }));
+        console.log('[AUTO-REROUTE] === STAGE 2: Route line update dispatched ===');
+      }, 200);
+    }, 50);
     
-    console.log('[AUTO-REROUTE] === Route applied - map will re-render ===');
+    // STAGE 3: Voice navigation - announce reroute and reset for new instructions
+    if (navigationVoice.isEnabled()) {
+      navigationVoice.announceReroute();
+      console.log('[AUTO-REROUTE] === STAGE 3: Voice announced reroute, instructions will update from new route ===');
+    }
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
