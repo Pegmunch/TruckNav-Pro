@@ -282,7 +282,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "day",
+  defaultTheme = "auto",
   storageKey = "theme-mode",
   grayStorageKey = "theme-grayL",
   hslColorStorageKey = "theme-hslColor",
