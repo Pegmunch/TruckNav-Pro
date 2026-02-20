@@ -97,7 +97,7 @@ function StopButtonCrescent({ isNavigating, onStopNavigation }: { isNavigating: 
   return (
     <div 
       className="relative h-[48px] sm:h-[52px] md:h-[56px] w-[70px] sm:w-[75px] ml-0.5"
-      style={{ marginLeft: '-2px', zIndex: 9999, position: 'relative' }}
+      style={{ marginLeft: '-2px', zIndex: 99999, position: 'relative' }}
     >
       <svg 
         viewBox="0 0 70 48" 

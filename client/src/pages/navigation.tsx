@@ -4753,10 +4753,9 @@ function NavigationPageContent() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onTouchEnd={(e) => {
-                          e.preventDefault();
+                        onTouchStart={(e) => {
                           e.stopPropagation();
-                          console.log('[TILT-STANDALONE] touchEnd fired');
+                          console.log('[TILT-STANDALONE] touchStart fired');
                           mapRef.current?.toggle3DMode();
                           setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                         }}
@@ -4767,10 +4766,10 @@ function NavigationPageContent() {
                           setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                         }}
                         className={cn(
-                          "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 shadow-lg",
+                          "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150",
                           mapControlState.is3DMode ? "border-blue-500 bg-blue-500/20" : "border-gray-400"
                         )}
-                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 2147483647 }}
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', position: 'relative', zIndex: 500 }}
                         data-testid="button-3d-mobile"
                         aria-label="Toggle 3D mode"
                       >
