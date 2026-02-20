@@ -602,16 +602,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       viewStateRef.current = newState;
       setViewState(newState);
       
-      if (isNavigating && gpsPositionRef.current) {
-        console.log(`[3D-TOGGLE] GPS active - GPS loop will apply camera on next frame`);
+      const containerHeight = map.current.getContainer().clientHeight || 800;
+      const heading = map.current.getBearing();
+      
+      if (newState === 'plan') {
+        console.log(`[3D-TOGGLE] Applying FLAT view directly`);
+        map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
       } else {
-        console.log(`[3D-TOGGLE] No GPS/not navigating - applying camera directly`);
-        if (newState === 'plan') {
-          map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
-        } else {
-          const heading = map.current.getBearing();
-          map.current.easeTo({ pitch: 60, bearing: heading, duration: 300 });
-        }
+        console.log(`[3D-TOGGLE] Applying TILTED view directly`);
+        const padding = isNavigating ? { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 0 };
+        map.current.easeTo({ pitch: 60, bearing: heading, padding, duration: 300 });
       }
     },
     is3DMode: () => viewStateRef.current === 'tilted',
@@ -4818,16 +4818,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     viewStateRef.current = newState;
     setViewState(newState);
     
-    if (isNavigating && gpsPositionRef.current) {
-      console.log(`[3D-TOGGLE] GPS active - GPS loop will apply camera on next frame`);
+    const containerHeight = map.current.getContainer().clientHeight || 800;
+    const heading = map.current.getBearing();
+    
+    if (newState === 'plan') {
+      console.log(`[3D-TOGGLE] Applying FLAT view directly`);
+      map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
     } else {
-      console.log(`[3D-TOGGLE] No GPS/not navigating - applying camera directly`);
-      if (newState === 'plan') {
-        map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
-      } else {
-        const heading = map.current.getBearing();
-        map.current.easeTo({ pitch: 60, bearing: heading, duration: 300 });
-      }
+      console.log(`[3D-TOGGLE] Applying TILTED view directly`);
+      const padding = isNavigating ? { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 0 };
+      map.current.easeTo({ pitch: 60, bearing: heading, padding, duration: 300 });
     }
   };
   
