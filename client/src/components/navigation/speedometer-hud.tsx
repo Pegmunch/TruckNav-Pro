@@ -63,7 +63,7 @@ function StopButtonCrescent({ isNavigating, onStopNavigation }: { isNavigating: 
       },
       lastFired: lastFiredRef.current,
       isVisible: true,
-      touchPadding: 30
+      touchPadding: 15
     });
     
     const button = stopBtnRef.current;

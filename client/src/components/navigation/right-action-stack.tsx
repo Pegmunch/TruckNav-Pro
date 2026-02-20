@@ -631,16 +631,9 @@ export function RightActionStack({
           ref={toggle3DRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            e.stopPropagation();
-            console.log('[TILT-BTN] touchStart fired');
-            toggle3DCallbackRef.current?.();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('[TILT-BTN] click fired');
-            toggle3DCallbackRef.current?.();
-          }}
+          onTouchStart={toggle3DHandlers.onTouchStart}
+          onClick={toggle3DHandlers.onClick}
+          onPointerDown={toggle3DHandlers.onPointerDown}
           className={cn(
             buttonSize, 
             baseButtonClass,
