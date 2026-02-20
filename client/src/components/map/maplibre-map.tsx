@@ -1568,6 +1568,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'osm-tiles': {
               type: 'raster',
               tiles: [
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -1615,6 +1616,35 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // NOTE: NavigationControl is added in the useEffect hook below (lines ~660-710)
       // to handle dynamic hideControls/hideCompass changes properly.
       // DO NOT add NavigationControl here to avoid duplicates.
+
+      // Base map tile error recovery - retry failed tiles automatically
+      const tileRetryTrackerMap: Record<string, number> = {};
+      const MAX_TILE_RETRIES = 3;
+      map.current.on('error', (e: any) => {
+        if (e?.error?.message?.includes('tile') || e?.error?.status === 0 || e?.error?.status === 408 || e?.error?.status === 429 || e?.error?.status >= 500) {
+          const tileUrl = e?.error?.url || e?.source?.url || '';
+          const retryCount = tileRetryTrackerMap[tileUrl] || 0;
+          if (retryCount < MAX_TILE_RETRIES && tileUrl) {
+            tileRetryTrackerMap[tileUrl] = retryCount + 1;
+            const delay = (retryCount + 1) * 1500;
+            console.log(`[MAP-TILES] Tile load error, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_TILE_RETRIES})`);
+            setTimeout(() => {
+              if (map.current) {
+                const source = map.current.getSource('osm-tiles');
+                if (source && 'reload' in source) {
+                  (source as any).reload();
+                } else {
+                  const center = map.current.getCenter();
+                  map.current.panBy([1, 0], { duration: 0 });
+                  setTimeout(() => {
+                    if (map.current) map.current.panBy([-1, 0], { duration: 0 });
+                  }, 50);
+                }
+              }
+            }, delay);
+          }
+        }
+      });
 
       // Single-finger double-tap detection for UI toggle (mobile-optimized)
       let lastSingleTap = 0;
