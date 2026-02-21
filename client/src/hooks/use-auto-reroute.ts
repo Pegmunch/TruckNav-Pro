@@ -321,6 +321,15 @@ export function useAutoReroute(
       onRerouteSuccessRef.current(newRoute);
       
       lastRerouteAtRef.current = Date.now();
+      
+      if (offRouteTimerRef.current) {
+        clearTimeout(offRouteTimerRef.current);
+        offRouteTimerRef.current = null;
+      }
+      offRouteStartTimeRef.current = null;
+      
+      routeLineRef.current = null;
+      
       setState(prev => ({
         ...prev,
         isOffRoute: false,
@@ -331,7 +340,7 @@ export function useAutoReroute(
       }));
       consecutiveOffRouteFixesRef.current = 0;
       
-      console.log('[AUTO-REROUTE] === REROUTE COMPLETE - Route updated ===');
+      console.log('[AUTO-REROUTE] === REROUTE COMPLETE - Route updated, awaiting new reference line ===');
       
     } catch (error) {
       console.error('[AUTO-REROUTE] Reroute failed:', error);

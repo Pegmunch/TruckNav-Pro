@@ -592,19 +592,18 @@ function NavigationPageContent() {
     hasShownDestinationDialogRef.current = false;
     setShowDestinationReached(false);
     
-    // Force map to re-render route line with new coordinates after React has processed
-    requestAnimationFrame(() => {
+    // Dispatch reroute event to clear map caches (rendering handled by React useEffect)
+    // Use setTimeout to ensure React has processed the state update first
+    setTimeout(() => {
       window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
         detail: { routePathLength: newRoute.routePath?.length || 0 }
       }));
-      console.log('[AUTO-REROUTE] === STAGE 2: Route line update dispatched ===');
-    });
+      console.log('[AUTO-REROUTE] === STAGE 2: Cache clear event dispatched ===');
+    }, 50);
     
-    // STAGE 3: Voice navigation - announce reroute and reset for new instructions
-    if (navigationVoice.isEnabled()) {
-      navigationVoice.announceReroute();
-      console.log('[AUTO-REROUTE] === STAGE 3: Voice announced reroute, instructions will update from new route ===');
-    }
+    // STAGE 3: Voice navigation - announce reroute (ALWAYS, even if voice disabled - safety critical)
+    navigationVoice.announceReroute();
+    console.log('[AUTO-REROUTE] === STAGE 3: Voice announced reroute, instructions will update from new route ===');
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
@@ -5749,8 +5748,22 @@ function NavigationPageContent() {
                       </div>
                     </div>
 
+                    {/* Rerouting Indicator - shows when driver is off-route or rerouting */}
+                    {(isOffRoute || isRerouting) && (
+                      <div 
+                        className="fixed left-1/2 -translate-x-1/2 pointer-events-none"
+                        style={{ top: 'calc(120px + var(--safe-area-top, 0px))', zIndex: 500001 }}
+                      >
+                        <div className={`px-6 py-3 rounded-full shadow-lg font-bold text-white text-lg ${
+                          isRerouting ? 'bg-blue-600 animate-pulse' : 'bg-orange-500'
+                        }`}>
+                          {isRerouting ? 'Recalculating...' : 'Off Route'}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Map Turn + Lane Indicator */}
-                    {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
+                    {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && !isRerouting && (
                       <MapTurnLaneIndicator
                         turnInfo={nextTurn}
                         unit={measurementSystem === 'imperial' ? 'mi' : 'km'}

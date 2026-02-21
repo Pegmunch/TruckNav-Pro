@@ -801,20 +801,49 @@ export class NavigationVoice {
   }
   
   /**
-   * Announce rerouting - treated as traffic emergency to always announce
+   * Announce rerouting - ALWAYS announces regardless of voice enabled state
+   * This is a critical safety announcement that must be heard
    */
   public announceReroute(reason?: string): void {
-    if (!this.isEnabled()) {
-      return;
-    }
-    
     let message = this.t('voice.announcements.recalculating');
+    if (!message || message === 'voice.announcements.recalculating') {
+      message = 'Recalculating route';
+    }
     if (reason) {
       message += `. ${reason}`;
     }
     
-    // Rerouting is important enough to announce
-    this.speak(message, 'urgent', true, 'traffic_emergency');
+    if (!this.isEnabled()) {
+      this.forceSpeak(message);
+      return;
+    }
+    
+    this.speak(message, 'urgent', true, 'reroute');
+  }
+  
+  /**
+   * Force speak a safety-critical message even when voice is disabled
+   */
+  private forceSpeak(text: string): void {
+    if (!this.synthesis || typeof this.synthesis.speak !== 'function') return;
+    
+    try {
+      this.synthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.volume = 1.0;
+      utterance.rate = 0.9;
+      
+      if (this.selectedVoice) {
+        utterance.voice = this.selectedVoice;
+      } else if (this.voices.length > 0) {
+        utterance.voice = this.voices[0];
+      }
+      
+      this.synthesis.speak(utterance);
+      console.log('[NavigationVoice] Force-spoke safety message:', text);
+    } catch (e) {
+      console.warn('[NavigationVoice] Force speak failed:', e);
+    }
   }
   
   /**

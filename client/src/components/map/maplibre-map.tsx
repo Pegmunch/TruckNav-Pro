@@ -2774,6 +2774,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     console.log('[ROUTE-RENDER] Route manager - currentRoute:', !!currentRoute, 'isNavigating:', isNavigating, 'styleLoaded:', mapInstance.isStyleLoaded());
 
+    // Detect reroute: clear all caches to force fresh rendering of new route
+    if (currentRoute && (currentRoute as any)._rerouteTimestamp) {
+      console.log('[ROUTE-RENDER] 🔄 Reroute detected - clearing all rendering caches for clean re-render');
+      processedRouteSourceRef.current = null;
+      processedRouteCoordsRef.current = null;
+      cachedRouteGeoJsonRef.current = null;
+      lastNearestIndexRef.current = 0;
+    }
+
     // HEALTH & SAFETY: Cache route coordinates when available for navigation
     // This ensures we NEVER lose the route during reroutes or state transitions
     if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
@@ -3013,20 +3022,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     const handleRerouteComplete = () => {
-      console.log('[ROUTE-HEALTH] Reroute complete event received - clearing cache and forcing full re-render');
+      console.log('[ROUTE-HEALTH] Reroute complete event received - clearing caches only (React useEffect handles re-render)');
       processedRouteSourceRef.current = null;
       processedRouteCoordsRef.current = null;
       cachedRouteGeoJsonRef.current = null;
-      setTimeout(() => {
-        if (!map.current || !map.current.isStyleLoaded()) return;
-        removeRouteLayers();
-        setTimeout(() => {
-          if (!map.current || !map.current.isStyleLoaded()) return;
-          ensureRouteLayers();
-          renderRouteLayers();
-          console.log('[ROUTE-HEALTH] Route layers fully rebuilt after reroute');
-        }, 100);
-      }, 150);
+      lastNearestIndexRef.current = 0;
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
