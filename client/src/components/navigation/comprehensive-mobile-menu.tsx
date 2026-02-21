@@ -1343,7 +1343,7 @@ function ComprehensiveMobileMenu({
                                 type: 'previous',
                                 address: dest.formattedAddress
                               });
-                              onOpenChange(false);
+                              setActiveTab("plan");
                             }
                           }}
                         >

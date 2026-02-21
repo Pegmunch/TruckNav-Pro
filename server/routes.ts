@@ -235,7 +235,7 @@ async function callTomTomRoutingAPI(
   startCoords: { lat: number; lng: number },
   endCoords: { lat: number; lng: number },
   vehicleProfile: VehicleProfile,
-  options?: { avoidTolls?: boolean; avoidFerries?: boolean }
+  options?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string }
 ): Promise<{
   distance: number;
   duration: number;
@@ -330,7 +330,8 @@ async function callTomTomRoutingAPI(
     
     // Request detailed instructions
     tomtomUrl.searchParams.set('instructionsType', 'text');
-    tomtomUrl.searchParams.set('routeType', 'fastest'); // Optimize for time
+    const routeType = options?.routeType === 'eco' ? 'eco' : options?.routeType === 'shortest' ? 'shortest' : 'fastest';
+    tomtomUrl.searchParams.set('routeType', routeType);
     
     // Add language preference
     tomtomUrl.searchParams.set('language', 'en-GB');
@@ -484,7 +485,8 @@ async function callTomTomRoutingAPI(
 async function callHERERoutingAPI(
   startCoords: { lat: number; lng: number },
   endCoords: { lat: number; lng: number },
-  vehicleProfile: VehicleProfile
+  vehicleProfile: VehicleProfile,
+  options?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string }
 ): Promise<{
   distance: number;
   duration: number;
@@ -548,10 +550,23 @@ async function callHERERoutingAPI(
       }
     }
 
-    hereUrl.searchParams.set('routingMode', 'fast');
+    const hereRoutingMode = options?.routeType === 'shortest' ? 'short' : 'fast';
+    hereUrl.searchParams.set('routingMode', hereRoutingMode);
+    
+    const hereAvoidFeatures: string[] = [];
+    if (options?.avoidTolls) {
+      hereAvoidFeatures.push('tollRoad');
+    }
+    if (options?.avoidFerries) {
+      hereAvoidFeatures.push('ferry');
+    }
+    if (hereAvoidFeatures.length > 0) {
+      hereUrl.searchParams.set('avoid[features]', hereAvoidFeatures.join(','));
+    }
+    
     hereUrl.searchParams.set('lang', 'en-GB');
 
-    console.log('[HERE-ROUTING] Request URL:', hereUrl.toString().replace(HERE_API_KEY, '***'));
+    console.log('[HERE-ROUTING] Request URL:', hereUrl.toString().replace(HERE_API_KEY!, '***'));
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -709,7 +724,8 @@ async function calculateStrictVehicleClassRoute(
   startCoords: { lat: number; lng: number },
   endCoords: { lat: number; lng: number },
   vehicleProfile: VehicleProfile,
-  restrictions: Restriction[]
+  restrictions: Restriction[],
+  routingOptions?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string }
 ): Promise<{
   distance: number;
   duration: number;
@@ -722,11 +738,11 @@ async function calculateStrictVehicleClassRoute(
 } | null> {
   try {
     // Get route from TomTom Truck Routing API (primary) with HERE and GraphHopper as fallbacks
-    let routeResult = await callTomTomRoutingAPI(startCoords, endCoords, vehicleProfile);
+    let routeResult = await callTomTomRoutingAPI(startCoords, endCoords, vehicleProfile, routingOptions);
     
     if (!routeResult) {
       console.log('[ROUTING] TomTom routing failed, falling back to HERE Routing API');
-      routeResult = await callHERERoutingAPI(startCoords, endCoords, vehicleProfile);
+      routeResult = await callHERERoutingAPI(startCoords, endCoords, vehicleProfile, routingOptions);
       
       if (!routeResult) {
         console.log('[ROUTING] HERE routing failed, falling back to GraphHopper');
@@ -2545,12 +2561,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
+        // Build routing options from route preference
+        const routingOptions: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string } = {};
+        if (preference === 'eco') {
+          routingOptions.routeType = 'eco';
+        } else if (preference === 'avoid_tolls') {
+          routingOptions.avoidTolls = true;
+          routingOptions.routeType = 'fastest';
+        } else {
+          routingOptions.routeType = 'fastest';
+        }
+        console.log(`[ROUTE] Routing options for TomTom:`, routingOptions);
+        
         // Calculate strict vehicle class route with absolute restriction enforcement
         const strictRouteResult = await calculateStrictVehicleClassRoute(
           startCoords,
           endCoords,
           vehicleProfile,
-          restrictions
+          restrictions,
+          routingOptions
         );
         
         // Check if route is completely blocked by absolute restrictions

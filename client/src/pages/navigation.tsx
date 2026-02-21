@@ -4077,11 +4077,12 @@ function NavigationPageContent() {
 
   // Handle facility selection from search sidebar
   const handleSelectFacility = (facility: any) => {
-    // Navigate to selected facility
     setToLocation(facility.address || facility.name);
-    // Hide toast in mobile view - user requested no popups
-    if (window.innerWidth >= 768) {
-      // REMOVED TOAST: No popups per user request
+    if (facility.coordinates) {
+      setToCoordinates({
+        lat: facility.coordinates.lat,
+        lng: facility.coordinates.lng,
+      });
     }
   };
 
