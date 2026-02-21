@@ -285,6 +285,16 @@ function NavigationPageContent() {
   // Fixed: Only open mobile drawer when sidebarState is explicitly 'open'
   const isMobileDrawerOpen = isMobile && sidebarState === 'open';
   
+  // Tablet rotation fix: When device switches from desktop to mobile layout
+  // (e.g., tablet rotated to portrait), don't keep full-screen drawer open
+  const prevIsMobileRef = useRef(isMobile);
+  useEffect(() => {
+    if (isMobile && !prevIsMobileRef.current && sidebarState === 'open') {
+      console.log('[TABLET-ROTATE] Switched to mobile layout - collapsing full-screen drawer');
+      setSidebarState('collapsed');
+    }
+    prevIsMobileRef.current = isMobile;
+  }, [isMobile, sidebarState]);
   
   // Map expansion state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -4925,29 +4935,35 @@ function NavigationPageContent() {
             </>
           )}
 
-          {/* Full-Screen Route Planning Panel - Mobile Only - NEVER show during active navigation */}
+          {/* Route Planning Panel - Mobile/Tablet - NEVER show during active navigation */}
+          {/* On phones: full-screen panel. On tablets (portrait): side panel so map stays visible */}
           {isMobileDrawerOpen && !isNavigating && (
             <>
               {/* Backdrop - tap anywhere to close */}
               <div 
                 className="fixed inset-0 z-40 bg-black/20"
-                onClick={() => setSidebarState('collapsed')}
+                onPointerDown={() => setSidebarState('collapsed')}
                 data-testid="panel-backdrop"
               />
               
-              {/* Panel */}
-              <div className="fixed inset-0 z-50 bg-white flex flex-col">
+              {/* Panel - side panel on tablet portrait, full-screen on phone */}
+              <div className={`fixed z-50 bg-white dark:bg-slate-900 flex flex-col shadow-2xl ${
+                deviceType === 'tablet' 
+                  ? 'top-0 left-0 bottom-0 w-[380px] border-r border-gray-200 dark:border-gray-700' 
+                  : 'inset-0'
+              }`}>
                 {/* Header with close button */}
-                <div className="flex items-center justify-between p-4 border-b" style={{ paddingTop: 'calc(16px + var(--safe-area-top))' }}>
+                <div className="flex items-center justify-between p-4 border-b" style={{ paddingTop: deviceType === 'tablet' ? '16px' : 'calc(16px + var(--safe-area-top))' }}>
                   <h2 className="text-xl font-semibold">Plan Route</h2>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setSidebarState('collapsed')}
-                    className="h-10 w-10"
+                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setSidebarState('collapsed'); }}
+                    onClick={(e) => { e.preventDefault(); setSidebarState('collapsed'); }}
+                    className="h-12 w-12 min-h-[48px] min-w-[48px]"
                     data-testid="button-close-panel"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-7 h-7" />
                   </Button>
                 </div>
                 

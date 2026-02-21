@@ -761,6 +761,7 @@ export function AddressAutocomplete({
                       <div
                         role="option"
                         tabIndex={0}
+                        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); isInteractingRef.current = true; handleSelectGPSCandidate(); }}
                         onClick={() => handleSelectGPSCandidate()}
                         style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-200 dark:active:bg-blue-800 border-2 border-blue-500 rounded-lg"
@@ -797,6 +798,7 @@ export function AddressAutocomplete({
                         key={`fav-${loc.id}`}
                         role="option"
                         tabIndex={0}
+                        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); isInteractingRef.current = true; handleSelectSavedLocation(loc); }}
                         onClick={() => handleSelectSavedLocation(loc)}
                         style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
@@ -813,6 +815,7 @@ export function AddressAutocomplete({
                         key={`recent-${loc.id}`}
                         role="option"
                         tabIndex={0}
+                        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); isInteractingRef.current = true; handleSelectSavedLocation(loc); }}
                         onClick={() => handleSelectSavedLocation(loc)}
                         style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
@@ -833,6 +836,7 @@ export function AddressAutocomplete({
                     <div
                       role="option"
                       tabIndex={0}
+                      onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); isInteractingRef.current = true; handleSelectUKPostcode(ukPostcodeResult); }}
                       onClick={() => handleSelectUKPostcode(ukPostcodeResult)}
                       style={{ touchAction: 'manipulation' }}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
@@ -856,6 +860,7 @@ export function AddressAutocomplete({
                           key={result.id || `tomtom-${index}`}
                           role="option"
                           tabIndex={0}
+                          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); isInteractingRef.current = true; handleSelectTomTom(result); }}
                           onClick={() => handleSelectTomTom(result)}
                           style={{ touchAction: 'manipulation' }}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80 border-b border-border/50 last:border-0"
