@@ -263,14 +263,15 @@ function NavigationPageContent() {
   // Uses Wake Lock API with iOS Safari fallback (video element method)
   const { acquire: acquireWakeLock, release: releaseWakeLock } = useWakeLock();
   
-  // Auto-acquire wake lock when navigation starts, release when it stops
+  // Auto-acquire wake lock and Bluetooth keep-alive when navigation starts
   useEffect(() => {
     if (isNavigating) {
       console.log('[WAKE-LOCK] Navigation started - acquiring screen wake lock');
       acquireWakeLock();
+      audioBluetoothInit.startNavigationKeepAlive();
     } else {
-      // Only release if we were previously navigating (avoid release on initial mount)
       releaseWakeLock();
+      audioBluetoothInit.stopNavigationKeepAlive();
     }
   }, [isNavigating, acquireWakeLock, releaseWakeLock]);
   

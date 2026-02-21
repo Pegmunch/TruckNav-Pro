@@ -618,6 +618,7 @@ export class NavigationVoice {
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.emitVoiceAnnouncement(instruction.text, false);
+      audioBluetoothInit.stopBluetoothBridge();
       audioBluetoothInit.stopAudioDucking();
       this.processQueue();
     };
@@ -635,6 +636,7 @@ export class NavigationVoice {
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.emitVoiceAnnouncement(instruction.text, false);
+      audioBluetoothInit.stopBluetoothBridge();
       audioBluetoothInit.stopAudioDucking();
       this.processQueue();
     };
