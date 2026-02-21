@@ -53,6 +53,8 @@ export class NavigationVoice {
   private isSpeaking: boolean = false;
   private lastAnnouncedTurn: string | null = null;
   private lastAnnouncedDistance: number | null = null;
+  private lastAnnouncedTimestamp: number = 0;
+  private readonly MIN_ANNOUNCEMENT_INTERVAL_MS = 3000;
   private voiceLoadRetries: number = 0;
   private maxVoiceLoadRetries: number = 10;
   private currentRoadType: RoadType = 'unknown'; // Track current road type
@@ -754,12 +756,19 @@ export class NavigationVoice {
       announcement += ' ' + this.t('voice.onto_road', { roadName });
     }
     
-    // Prevent duplicate announcements for the same turn at similar distances
+    // Prevent duplicate and conflicting announcements
     const turnKey = `${direction}-${Math.floor(distance / 50)}`;
+    const now = Date.now();
+    const timeSinceLastAnnouncement = now - this.lastAnnouncedTimestamp;
+    
     if (announcement && turnKey !== this.lastAnnouncedTurn) {
+      if (timeSinceLastAnnouncement < this.MIN_ANNOUNCEMENT_INTERVAL_MS && level !== 'critical') {
+        console.log(`[NavigationVoice] Cooldown active (${timeSinceLastAnnouncement}ms < ${this.MIN_ANNOUNCEMENT_INTERVAL_MS}ms) - skipping "${announcement}"`);
+        return;
+      }
       this.lastAnnouncedTurn = turnKey;
+      this.lastAnnouncedTimestamp = now;
       console.log(`[NavigationVoice] Announcing: "${announcement}" (level: ${level}, enabled: ${this.isEnabled()})`);
-      // Use 'junction' type for motorway junction exits
       this.speak(announcement, level, level === 'critical', 'junction');
     } else if (!announcement) {
       console.log(`[NavigationVoice] No announcement for distance ${distance.toFixed(0)}m (${unit})`);

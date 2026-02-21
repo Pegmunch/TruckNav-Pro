@@ -565,41 +565,39 @@ function NavigationPageContent() {
     }
     
     // STAGE 2: Apply new route to state - triggers map re-render
-    // Clear old route first to force React state change detection
-    setCurrentRoute(null);
+    // Reset route progress tracking BEFORE setting new route
+    routeProgressRef.current = 0;
+    lastVoiceAnnouncementRef.current = null;
+    lastProjectedDistanceRef.current = 0;
+    distanceTravelledRef.current = 0;
     
-    // Use microtask to ensure null is processed before setting new route
-    setTimeout(() => {
-      setCurrentRoute(newRoute);
-      
-      // Reset route progress tracking for new route
-      routeProgressRef.current = 0;
-      lastVoiceAnnouncementRef.current = null;
-      
-      if (newRoute.distance) {
-        setDynamicDistanceRemaining(newRoute.distance * 1609.344);
-      }
-      if (newRoute.duration) {
-        setDynamicEtaMinutes(Math.ceil(newRoute.duration));
-      }
-      
-      // Reset live ETA tracking for new route
-      lastProjectedDistanceRef.current = 0;
-      
-      lastCalculatedRouteRef.current = newRoute;
-      currentRouteIdRef.current = newRoute.id || null;
-      
-      hasShownDestinationDialogRef.current = false;
-      setShowDestinationReached(false);
-      
-      // Force map to re-render route line with new coordinates
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
-          detail: { routePathLength: newRoute.routePath?.length || 0 }
-        }));
-        console.log('[AUTO-REROUTE] === STAGE 2: Route line update dispatched ===');
-      }, 200);
-    }, 50);
+    // Clear cached cumulative distances to force recalculation for new route
+    cachedCumulativeDistancesRef.current = { routeId: '', distances: [], totalLength: 0 };
+    
+    // Set new route with a unique timestamp to force React to detect the change
+    const routeWithTimestamp = { ...newRoute, _rerouteTimestamp: Date.now() };
+    setCurrentRoute(routeWithTimestamp);
+    
+    if (newRoute.distance) {
+      setDynamicDistanceRemaining(newRoute.distance * 1609.344);
+    }
+    if (newRoute.duration) {
+      setDynamicEtaMinutes(Math.ceil(newRoute.duration));
+    }
+    
+    lastCalculatedRouteRef.current = routeWithTimestamp;
+    currentRouteIdRef.current = newRoute.id || null;
+    
+    hasShownDestinationDialogRef.current = false;
+    setShowDestinationReached(false);
+    
+    // Force map to re-render route line with new coordinates after React has processed
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
+        detail: { routePathLength: newRoute.routePath?.length || 0 }
+      }));
+      console.log('[AUTO-REROUTE] === STAGE 2: Route line update dispatched ===');
+    });
     
     // STAGE 3: Voice navigation - announce reroute and reset for new instructions
     if (navigationVoice.isEnabled()) {
@@ -1477,7 +1475,12 @@ function NavigationPageContent() {
       const segmentLength = cumulativeDistances[bestSegmentIndex + 1] - cumulativeDistances[bestSegmentIndex];
       const projectedDistanceAlongRoute = cumulativeDistances[bestSegmentIndex] + segmentLength * bestProjectionT;
 
-      const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
+      const apiTotalDistanceMeters = (currentRoute.distance || 0) * 1609.344;
+      const distanceScaleFactor = (apiTotalDistanceMeters > 0 && totalRouteLength > 0)
+        ? apiTotalDistanceMeters / totalRouteLength
+        : 1;
+
+      const remainingDistance = (totalRouteLength - projectedDistanceAlongRoute) * distanceScaleFactor;
       if (remainingDistance >= 0) {
         setDynamicDistanceRemaining(remainingDistance);
         
@@ -1532,7 +1535,8 @@ function NavigationPageContent() {
             etaMinutes = (remainingDistance / journeyAvgSpeed) / 60;
           } else if (originalDurationMinutes > 0) {
             // Fallback 2: proportional from original route duration (no speed data yet)
-            const proportionRemaining = remainingDistance / totalRouteLength;
+            const scaledTotalDistance = apiTotalDistanceMeters > 0 ? apiTotalDistanceMeters : totalRouteLength;
+            const proportionRemaining = remainingDistance / scaledTotalDistance;
             etaMinutes = originalDurationMinutes * proportionRemaining;
           } else {
             // Fallback 3: assume 50 km/h average for HGV
@@ -1584,6 +1588,18 @@ function NavigationPageContent() {
       
       let foundInstructionTurn = false;
       
+      const signToDirection = (sign: number): 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' => {
+        switch (sign) {
+          case -3: return 'sharp_left';
+          case -2: return 'left';
+          case -1: return 'slight_left';
+          case 1: return 'slight_right';
+          case 2: return 'right';
+          case 3: return 'sharp_right';
+          default: return 'straight';
+        }
+      };
+      
       if (instructions && instructions.length > 0) {
         let instructionCumulativeOffset = 0;
         
@@ -1599,25 +1615,24 @@ function NavigationPageContent() {
           const distanceToInstruction = offsetMeters - projectedDistanceAlongRoute;
           
           if (distanceToInstruction > 10 && distanceToInstruction < 10000) {
-            let turnPointIndex = -1;
-            let minOffsetDiff = Infinity;
-            for (let j = bestSegmentIndex; j < Math.min(routePath.length, bestSegmentIndex + 200); j++) {
-              const diff = Math.abs(cumulativeDistances[j] - offsetMeters);
-              if (diff < minOffsetDiff) {
-                minOffsetDiff = diff;
-                turnPointIndex = j;
+            const apiDirection = signToDirection(inst.sign);
+            
+            if (apiDirection !== 'straight') {
+              let turnPointIndex = -1;
+              let minOffsetDiff = Infinity;
+              for (let j = bestSegmentIndex; j < Math.min(routePath.length, bestSegmentIndex + 200); j++) {
+                const diff = Math.abs(cumulativeDistances[j] - offsetMeters);
+                if (diff < minOffsetDiff) {
+                  minOffsetDiff = diff;
+                  turnPointIndex = j;
+                }
               }
-            }
 
-            const geomResult = computeGeometryDirection(Math.max(1, turnPointIndex > 0 ? turnPointIndex - 3 : bestSegmentIndex + 1));
-            const geoDir = geomResult.direction;
-
-            if (geoDir !== 'straight') {
               setNextTurn({
-                direction: geoDir,
+                direction: apiDirection,
                 distance: distanceToInstruction,
                 roadName: inst.roadName || undefined,
-                vertexIndex: geomResult.turnIndex
+                vertexIndex: turnPointIndex > 0 ? turnPointIndex : bestSegmentIndex
               });
               foundInstructionTurn = true;
               break;
