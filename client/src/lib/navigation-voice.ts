@@ -788,16 +788,13 @@ export class NavigationVoice {
    * Format direction for natural speech using translations
    */
   private formatDirection(direction: string): string {
-    const d = direction.toLowerCase();
-    let modifiedDirection = direction;
-    
-    // Voice matches arrows: direction labels pass through directly (no swap)
-    if (d === 'slight_left' || d === 'slight_right') modifiedDirection = 'straight';
-    
-    const directionKey = `voice.directions.${modifiedDirection}`;
+    const directionKey = `voice.directions.${direction}`;
     const translated = this.t(directionKey);
-    // Fallback to direction string if translation key not found
-    return translated !== directionKey ? translated : modifiedDirection;
+    if (translated !== directionKey) {
+      return translated;
+    }
+    const readable = direction.replace(/_/g, ' ');
+    return `turn ${readable}`;
   }
   
   /**

@@ -1568,7 +1568,7 @@ function NavigationPageContent() {
           const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
           const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
           
-          const turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
+          const turnAngle = crossProduct > 0 ? -turnMagnitude : turnMagnitude;
           
           if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
             let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
@@ -1675,9 +1675,6 @@ function NavigationPageContent() {
     }
     if (!nextTurn) return;
     if (nextTurn.direction === 'straight') return;
-    const isMajorAlert = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
-                         nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
-    if (!isMajorAlert) return;
     const vertexIdx = nextTurn.vertexIndex ?? -1;
     if (vertexIdx < 0) return;
     if (vertexIdx === lastAlertedTurnVertexRef.current) return;
@@ -1696,9 +1693,7 @@ function NavigationPageContent() {
     
     navigationVoice.setEnabled(true);
     
-    const isMajorTurn = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
-                        nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
-    if (!isMajorTurn) return;
+    if (nextTurn.direction === 'straight') return;
     
     const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
     const distFeet = nextTurn.distance * 3.28084;
@@ -1707,13 +1702,17 @@ function NavigationPageContent() {
     let threshold = '';
     if (unit === 'mi') {
       if (distFeet <= 50) threshold = 'now';
+      else if (distFeet <= 200) threshold = '200ft';
       else if (distFeet <= 500) threshold = '500ft';
       else if (distFeet <= 1000) threshold = '1000ft';
+      else if (distFeet <= 2000) threshold = '2000ft';
       else threshold = 'far';
     } else {
       if (distMeters <= 15) threshold = 'now';
+      else if (distMeters <= 60) threshold = '60m';
       else if (distMeters <= 150) threshold = '150m';
       else if (distMeters <= 300) threshold = '300m';
+      else if (distMeters <= 600) threshold = '600m';
       else threshold = 'far';
     }
     
@@ -1728,7 +1727,7 @@ function NavigationPageContent() {
     
     lastVoiceAnnouncementRef.current = { direction: nextTurn.direction, threshold, turnIndex };
     
-    console.log(`[VOICE-NAV] Announcing major turn: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
+    console.log(`[VOICE-NAV] Announcing turn: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
     
     navigationVoice.announceTurn(
       nextTurn.direction,
@@ -1736,6 +1735,15 @@ function NavigationPageContent() {
       nextTurn.roadName,
       unit
     );
+    
+    const laneInfo = getFallbackLaneInfo(nextTurn.direction, nextTurn.distance);
+    const recommendedLanes = laneInfo.lanes
+      .map((l, i) => l.isRecommended ? `lane ${i + 1}` : null)
+      .filter(Boolean);
+    if (recommendedLanes.length > 0 && nextTurn.distance <= 500) {
+      const laneText = `Use ${recommendedLanes.join(' and ')}`;
+      navigationVoice.announceLaneGuidance(laneText, nextTurn.distance, unit);
+    }
   }, [nextTurn?.direction, nextTurn?.distance, isNavigating, professionalVoiceEnabled, measurementSystem]);
   
   // Detect when destination is reached
@@ -3716,12 +3724,14 @@ function NavigationPageContent() {
     lastProjectedDistanceRef.current = 0;
     
     navigationVoice.setEnabled(true);
+    navigationVoice.setMotorwayOnlyMode(false);
+    navigationVoice.forceMaxVolume();
     setProfessionalVoiceEnabled(true);
     localStorage.removeItem('trucknav_mute_all_alerts');
     navigationVoice.primeForUserGesture();
     audioBluetoothInit.primeSpeechFromGesture();
     audioBluetoothInit.activateBluetoothForSpeech().catch(() => {});
-    console.log('[NAV-ACTIVATION] Voice enabled, unmuted, and primed for navigation');
+    console.log('[NAV-ACTIVATION] Voice enabled, unmuted, motorway-only off, and primed for navigation');
     
     // Enable Smart Traffic Lights Panel during navigation
     setShowSmartTrafficLights(true);

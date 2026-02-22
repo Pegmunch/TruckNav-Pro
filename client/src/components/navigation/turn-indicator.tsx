@@ -59,20 +59,21 @@ const TurnIndicator = memo(function TurnIndicator({
   // Get appropriate arrow icon - matches ETA strip exactly
   const getTurnIcon = () => {
     const iconProps = { className: "w-12 h-12 stroke-[3px]" };
-    const d = direction.toLowerCase();
     
-    switch (d) {
-      case 'straight':
+    switch (direction) {
       case 'slight_right':
+        return <ArrowUpRight {...iconProps} />;
       case 'slight_left':
-        return <ArrowUp {...iconProps} />;
+        return <ArrowUpLeft {...iconProps} />;
       case 'right':
-      case 'sharp_right': 
-      case 'sharp_left':
+        return <ArrowRight {...iconProps} />;
       case 'left':
-        if (d.includes('left')) return <ArrowLeft {...iconProps} />;
-        if (d.includes('right')) return <ArrowRight {...iconProps} />;
-        return <ArrowUp {...iconProps} />;
+        return <ArrowLeft {...iconProps} />;
+      case 'sharp_right':
+        return <ArrowRight {...iconProps} />;
+      case 'sharp_left':
+        return <ArrowLeft {...iconProps} />;
+      case 'straight':
       default: 
         return <ArrowUp {...iconProps} />;
     }
