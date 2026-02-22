@@ -1674,7 +1674,9 @@ function NavigationPageContent() {
       return;
     }
     if (!nextTurn) return;
-    if (nextTurn.direction === 'straight') return;
+    const isMajorTurn = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
+                        nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
+    if (!isMajorTurn) return;
     const vertexIdx = nextTurn.vertexIndex ?? -1;
     if (vertexIdx < 0) return;
     if (vertexIdx === lastAlertedTurnVertexRef.current) return;
@@ -1693,7 +1695,16 @@ function NavigationPageContent() {
     
     navigationVoice.setEnabled(true);
     
-    if (nextTurn.direction === 'straight') return;
+    const isMajorTurn = nextTurn.direction === 'left' || nextTurn.direction === 'right' ||
+                        nextTurn.direction === 'sharp_left' || nextTurn.direction === 'sharp_right';
+    const isMotorwayJunction = nextTurn.roadName && (
+      nextTurn.roadName.startsWith('M') || nextTurn.roadName.startsWith('A') ||
+      nextTurn.roadName.toLowerCase().includes('junction') ||
+      nextTurn.roadName.toLowerCase().includes('motorway') ||
+      nextTurn.roadName.toLowerCase().includes('exit')
+    );
+    
+    if (!isMajorTurn && !isMotorwayJunction) return;
     
     const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
     const distFeet = nextTurn.distance * 3.28084;
@@ -1702,17 +1713,13 @@ function NavigationPageContent() {
     let threshold = '';
     if (unit === 'mi') {
       if (distFeet <= 50) threshold = 'now';
-      else if (distFeet <= 200) threshold = '200ft';
       else if (distFeet <= 500) threshold = '500ft';
       else if (distFeet <= 1000) threshold = '1000ft';
-      else if (distFeet <= 2000) threshold = '2000ft';
       else threshold = 'far';
     } else {
       if (distMeters <= 15) threshold = 'now';
-      else if (distMeters <= 60) threshold = '60m';
       else if (distMeters <= 150) threshold = '150m';
       else if (distMeters <= 300) threshold = '300m';
-      else if (distMeters <= 600) threshold = '600m';
       else threshold = 'far';
     }
     
@@ -1735,15 +1742,6 @@ function NavigationPageContent() {
       nextTurn.roadName,
       unit
     );
-    
-    const laneInfo = getFallbackLaneInfo(nextTurn.direction, nextTurn.distance);
-    const recommendedLanes = laneInfo.lanes
-      .map((l, i) => l.isRecommended ? `lane ${i + 1}` : null)
-      .filter(Boolean);
-    if (recommendedLanes.length > 0 && nextTurn.distance <= 500) {
-      const laneText = `Use ${recommendedLanes.join(' and ')}`;
-      navigationVoice.announceLaneGuidance(laneText, nextTurn.distance, unit);
-    }
   }, [nextTurn?.direction, nextTurn?.distance, isNavigating, professionalVoiceEnabled, measurementSystem]);
   
   // Detect when destination is reached
