@@ -459,19 +459,10 @@ export function useMobileNotificationSystem({
     // NavigationVoice handles its own queue - no action needed here
   }, []);
 
-  // Cancel all TTS when voice is disabled
   useEffect(() => {
     if (!voiceEnabled) {
-      try {
-        navigationVoice.cancelCurrent();
-        navigationVoice.clearQueue();
-        if (import.meta.env.DEV) {
-          console.log('[MobileNotifications] Unified voice cancelled - voice disabled');
-        }
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('[MobileNotifications] Failed to cancel unified voice:', error);
-        }
+      if (import.meta.env.DEV) {
+        console.log('[MobileNotifications] Notification voice disabled - navigation voice unaffected');
       }
     }
   }, [voiceEnabled]);

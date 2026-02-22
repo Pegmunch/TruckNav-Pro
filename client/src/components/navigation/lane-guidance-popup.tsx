@@ -430,38 +430,11 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   // Track last announced maneuver to avoid repeating
   const lastAnnouncedManeuverRef = useRef<number | null>(null);
 
-  // Voice announcement when lane guidance becomes visible
   useEffect(() => {
     if (!isVisible || !nextManeuver || forceVisible) return;
-    
-    // Don't repeat announcement for same maneuver
     if (lastAnnouncedManeuverRef.current === nextManeuver.stepIndex) return;
-    
-    // Find recommended lanes
-    const recommendedLanes = nextManeuver.laneOptions
-      .filter((lane: LaneOption) => lane.recommended)
-      .map((lane: LaneOption) => lane.index + 1);
-    
-    if (recommendedLanes.length > 0) {
-      const laneText = recommendedLanes.length === 1 
-        ? `lane ${recommendedLanes[0]}`
-        : `lanes ${recommendedLanes.join(' and ')}`;
-      
-      const direction = nextManeuver.maneuverType === 'turn-right' ? 'right' :
-                        nextManeuver.maneuverType === 'turn-left' ? 'left' :
-                        nextManeuver.maneuverType === 'exit' ? 'exit' : '';
-      
-      const roadInfo = nextManeuver.roadName ? ` for ${nextManeuver.roadName}` : '';
-      
-      // Announce lane guidance with distance
-      navigationVoice.announceLaneGuidance(
-        `Use ${laneText}${direction ? ` to turn ${direction}` : ''}${roadInfo}`,
-        nextManeuver.distance
-      );
-      
-      lastAnnouncedManeuverRef.current = nextManeuver.stepIndex;
-      console.log('[LANE-VOICE] Announced lane guidance:', laneText, 'at distance:', nextManeuver.distance);
-    }
+    lastAnnouncedManeuverRef.current = nextManeuver.stepIndex;
+    console.log('[LANE-GUIDANCE] Lane guidance visible for step:', nextManeuver.stepIndex);
   }, [isVisible, nextManeuver, forceVisible]);
 
   // Handle lane selection

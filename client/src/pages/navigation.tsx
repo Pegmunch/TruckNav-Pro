@@ -822,19 +822,32 @@ function NavigationPageContent() {
   
   const lastVoiceAnnouncementRef = useRef<{ direction: string; threshold: string; turnIndex: number } | null>(null);
   
-  // Helper: Generate fallback lane guidance based on turn direction and distance
-  // UK HGV rules: Default travelling lane is LEFT. Move to RIGHT lane before right turns.
-  // Return to LEFT lane after completing any turn.
-  const LANE_CHANGE_DISTANCE = 1500; // Start recommending lane change 1500m (1.5km) before turn - well ahead of turn arrows (600m)
+  // Helper: Generate fallback lane guidance based on turn direction, distance, and road type
+  // UK driving rules: Drive on the LEFT. On single-lane roads, keep left.
+  // On multi-lane roads (motorways, dual carriageways): keep left unless overtaking or turning right.
+  const LANE_CHANGE_DISTANCE = 1500;
   
-  const getFallbackLaneInfo = (direction: string, distanceMeters: number = 9999) => {
+  const getFallbackLaneInfo = (direction: string, distanceMeters: number = 9999, roadName?: string) => {
     const isRightTurn = direction === 'right' || direction === 'sharp_right' || direction === 'slight_right';
     const isLeftTurn = direction === 'left' || direction === 'sharp_left' || direction === 'slight_left';
+    
+    const isMultiLane = roadName ? (
+      /^M\d/.test(roadName) || /^A\d/.test(roadName) ||
+      roadName.toLowerCase().includes('motorway') ||
+      roadName.toLowerCase().includes('dual carriageway')
+    ) : false;
+    
+    if (!isMultiLane) {
+      return {
+        lanes: [
+          { direction: (isLeftTurn ? 'left' : isRightTurn ? 'right' : 'straight') as 'left' | 'right' | 'straight', isRecommended: true }
+        ]
+      };
+    }
     
     if (isRightTurn && distanceMeters <= LANE_CHANGE_DISTANCE) {
       return {
         lanes: [
-          { direction: 'straight' as const, isRecommended: false },
           { direction: 'straight' as const, isRecommended: false },
           { direction: 'right' as const, isRecommended: true }
         ]
@@ -843,7 +856,6 @@ function NavigationPageContent() {
       return {
         lanes: [
           { direction: 'left' as const, isRecommended: true },
-          { direction: 'straight' as const, isRecommended: false },
           { direction: 'straight' as const, isRecommended: false }
         ]
       };
@@ -851,7 +863,6 @@ function NavigationPageContent() {
       return {
         lanes: [
           { direction: 'straight' as const, isRecommended: true },
-          { direction: 'straight' as const, isRecommended: false },
           { direction: 'straight' as const, isRecommended: false }
         ]
       };
@@ -4519,7 +4530,7 @@ function NavigationPageContent() {
                         <MapTurnLaneIndicator
                           turnInfo={nextTurn}
                           unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          laneInfo={getFallbackLaneInfo(nextTurn.direction, nextTurn.distance)}
+                          laneInfo={getFallbackLaneInfo(nextTurn.direction, nextTurn.distance, nextTurn.roadName)}
                           isVisible={true}
                         />
                       )}
