@@ -30,8 +30,8 @@ export interface RouteTrafficData {
 
 const TRAFFIC_COLORS = {
   free: '#0067FF', // Bold bright blue for free-flowing traffic (per design guidelines)
-  light: '#10B981', // Emerald green for light traffic
-  moderate: '#EAB308', // Golden yellow for moderate
+  light: '#0067FF', // Blue for light traffic (same as free flow)
+  moderate: '#EAB308', // Golden yellow for moderate traffic
   heavy: '#F97316', // Orange for heavy traffic
   standstill: '#EF4444', // Red for standstill
   unknown: 'transparent', // Transparent so blue route shows through

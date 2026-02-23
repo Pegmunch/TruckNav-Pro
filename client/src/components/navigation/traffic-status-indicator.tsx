@@ -122,11 +122,10 @@ export function TrafficLegend({ className }: { className?: string }) {
   const { t } = useTranslation();
   
   const legendItems = [
-    { color: '#2563EB', label: t('traffic.legend.free', 'Normal Flow') },
-    { color: '#22C55E', label: t('traffic.legend.light', 'Light') },
-    { color: '#EAB308', label: t('traffic.legend.moderate', 'Moderate') },
-    { color: '#EA580C', label: t('traffic.legend.heavy', 'Heavy') },
-    { color: '#DC2626', label: t('traffic.legend.standstill', 'Standstill') },
+    { color: '#0067FF', label: t('traffic.legend.free', 'Normal Flow') },
+    { color: '#EAB308', label: t('traffic.legend.moderate', 'Moderate'), striped: true },
+    { color: '#F97316', label: t('traffic.legend.heavy', 'Heavy'), striped: true },
+    { color: '#EF4444', label: t('traffic.legend.standstill', 'Standstill') },
   ];
   
   return (
@@ -137,11 +136,13 @@ export function TrafficLegend({ className }: { className?: string }) {
       <span className="font-medium text-gray-700 dark:text-gray-300 mr-1">
         {t('traffic.legend.title', 'Traffic:')}
       </span>
-      {legendItems.map((item) => (
+      {legendItems.map((item: any) => (
         <div key={item.color} className="flex items-center gap-1">
           <div 
             className="w-3 h-3 rounded-full border border-black/10"
-            style={{ backgroundColor: item.color }}
+            style={item.striped ? {
+              background: `repeating-linear-gradient(90deg, ${item.color} 0px, ${item.color} 2px, #EF4444 2px, #EF4444 4px)`
+            } : { backgroundColor: item.color }}
           />
           <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
         </div>

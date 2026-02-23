@@ -1547,6 +1547,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (mapInstance.getLayer('route-traffic-overlay-layer')) {
       mapInstance.setLayoutProperty('route-traffic-overlay-layer', 'visibility', 'visible');
     }
+    if (mapInstance.getLayer('route-traffic-stripe-layer')) {
+      mapInstance.setLayoutProperty('route-traffic-stripe-layer', 'visibility', 'visible');
+    }
   }, [showTraffic, isNavigating, isLoaded]);
 
   useEffect(() => {
@@ -2368,8 +2371,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     let minDistance = Infinity;
     let nearestIndex = 0;
     const lastIdx = lastNearestIndexRef.current;
-    const searchStart = Math.max(0, lastIdx - 5);
-    const searchEnd = Math.min(fullCoords.length, lastIdx + 80);
+    const searchStart = Math.max(0, lastIdx - 10);
+    const searchEnd = Math.min(fullCoords.length, lastIdx + 150);
 
     for (let i = searchStart; i < searchEnd; i++) {
       const dx = fullCoords[i][0] - gpLng;
@@ -2498,8 +2501,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         let nearestIndex = 0;
         
         const lastIdx = lastNearestIndexRef.current;
-        const searchStart = Math.max(0, lastIdx - 5);
-        const searchEnd = Math.min(routeCoordinates.length, lastIdx + 80);
+        const searchStart = Math.max(0, lastIdx - 10);
+        const searchEnd = Math.min(routeCoordinates.length, lastIdx + 150);
         
         for (let i = searchStart; i < searchEnd; i++) {
           const dx = routeCoordinates[i][0] - gpLng;
@@ -2625,6 +2628,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           } catch (setDataError) {
             console.warn('[ROUTE-RENDER] setData failed - rebuilding source:', setDataError);
             try {
+              if (map.current.getLayer('route-traffic-stripe-layer')) map.current.removeLayer('route-traffic-stripe-layer');
               if (map.current.getLayer('route-traffic-overlay-layer')) map.current.removeLayer('route-traffic-overlay-layer');
               if (map.current.getLayer('route-line')) map.current.removeLayer('route-line');
               if (map.current.getLayer('route-outline')) map.current.removeLayer('route-outline');
@@ -3344,8 +3348,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, [isLoaded]); // Layer creation only - visibility handled by dedicated toggle effect
 
   // LAYER 2: Route Traffic Overlay - Colored segments on top of blue route line
-  // IMPORTANT: This effect ONLY handles data updates. Visibility is controlled by the
-  // dedicated toggle effect above (showTraffic). This prevents conflicts between effects.
+  // Uses two layers: base color + dashed red stripe overlay for moderate/heavy traffic
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
@@ -3353,21 +3356,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const mapInstance = map.current;
     const trafficSourceId = 'route-traffic-overlay-source';
     const trafficLayerId = 'route-traffic-overlay-layer';
+    const trafficStripeLayerId = 'route-traffic-stripe-layer';
     
-    // If no traffic data, hide traffic overlay (but preserve source for fast re-toggle)
-    // CRITICAL: NEVER touch the base route layers (route-line, route-outline) - only traffic overlays
     if (!routeTrafficData.segments || routeTrafficData.segments.length === 0) {
       if (mapInstance.getLayer(trafficLayerId)) {
         mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
-        console.log('[ROUTE-TRAFFIC-OVERLAY] No traffic data - overlay hidden (base route preserved)');
+      }
+      if (mapInstance.getLayer(trafficStripeLayerId)) {
+        mapInstance.setLayoutProperty(trafficStripeLayerId, 'visibility', 'none');
       }
       return;
     }
     
-    // Build GeoJSON features for each traffic segment
-    // Filter out 'unknown' segments - they should be transparent to show blue route underneath
     const features: GeoJSON.Feature<GeoJSON.LineString>[] = routeTrafficData.segments
-      .filter((segment) => segment.flowLevel !== 'unknown')
+      .filter((segment) => segment.flowLevel !== 'unknown' && segment.flowLevel !== 'free' && segment.flowLevel !== 'light')
       .map((segment, index) => ({
         type: 'Feature' as const,
         properties: {
@@ -3387,7 +3389,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       features,
     };
     
-    // Add or update source
     if (mapInstance.getSource(trafficSourceId)) {
       (mapInstance.getSource(trafficSourceId) as maplibregl.GeoJSONSource).setData(geojsonData);
     } else {
@@ -3397,8 +3398,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       });
     }
     
-    // Add layer if it doesn't exist
     if (!mapInstance.getLayer(trafficLayerId)) {
+      // Base layer: yellow for moderate, orange for heavy, red for standstill
       mapInstance.addLayer({
         id: trafficLayerId,
         type: 'line',
@@ -3423,22 +3424,52 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
       });
       
-      // Move route traffic overlay above the route line
       mapInstance.moveLayer(trafficLayerId);
+    }
+    
+    if (!mapInstance.getLayer(trafficStripeLayerId)) {
+      // Red dashed stripe overlay for moderate and heavy traffic
+      mapInstance.addLayer({
+        id: trafficStripeLayerId,
+        type: 'line',
+        source: trafficSourceId,
+        filter: ['in', ['get', 'flowLevel'], ['literal', ['moderate', 'heavy']]],
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'butt',
+          'visibility': 'visible',
+        },
+        paint: {
+          'line-color': '#EF4444',
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 4,
+            12, 8,
+            16, 12,
+            20, 16
+          ],
+          'line-opacity': 0.7,
+          'line-dasharray': [2, 3],
+        },
+      });
+      
+      mapInstance.moveLayer(trafficStripeLayerId);
 
-      // Enforce layer ordering for 10 seconds during initialization
       const enforceOrder = () => {
         if (mapInstance.getLayer(trafficLayerId) && mapInstance.getLayer('route-line')) {
           mapInstance.moveLayer(trafficLayerId);
+        }
+        if (mapInstance.getLayer(trafficStripeLayerId)) {
+          mapInstance.moveLayer(trafficStripeLayerId);
         }
       };
       const orderInterval = setInterval(enforceOrder, 1000);
       setTimeout(() => clearInterval(orderInterval), 10000);
     }
-    // NOTE: No else branch - visibility is managed solely by the toggle effect
-    // This prevents this effect from overriding the user's toggle state
     
-    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
+    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments (moderate/heavy/standstill only)`);
   }, [isLoaded, routeTrafficData.segments, routeTrafficData.lastUpdated]);
 
   // LAYER 3: Route Incident Markers - Icons along the route line

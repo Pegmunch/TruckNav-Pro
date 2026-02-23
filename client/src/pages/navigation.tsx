@@ -1424,8 +1424,8 @@ function NavigationPageContent() {
 
       const vehicleHeading = gpsData?.position?.smoothedHeading ?? gpsData?.position?.heading;
       
-      const searchStartIndex = Math.max(0, routeProgressRef.current - 2);
-      const searchEndIndex = Math.min(routeProgressRef.current + 20, routePath.length - 1);
+      const searchStartIndex = Math.max(0, routeProgressRef.current - 5);
+      const searchEndIndex = Math.min(routeProgressRef.current + 60, routePath.length - 1);
       
       let bestSegmentIndex = searchStartIndex;
       let bestProjectionT = 0;
@@ -1579,17 +1579,20 @@ function NavigationPageContent() {
           const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
           const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
           
-          const turnAngle = crossProduct > 0 ? -turnMagnitude : turnMagnitude;
-          
-          if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
+          if (turnMagnitude >= TURN_THRESHOLD) {
             let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
-            if (turnAngle >= 115) direction = 'sharp_left';
-            else if (turnAngle >= 50) direction = 'left';
-            else if (turnAngle > 25) direction = 'slight_left';
-            else if (turnAngle <= -115) direction = 'sharp_right';
-            else if (turnAngle <= -50) direction = 'right';
-            else if (turnAngle < -25) direction = 'slight_right';
-            return { direction, turnIndex: i, turnAngle };
+            // Cross product > 0 means left turn in standard map coords (lng=x, lat=y)
+            // Cross product < 0 means right turn
+            if (crossProduct > 0) {
+              if (turnMagnitude >= 115) direction = 'sharp_left';
+              else if (turnMagnitude >= 50) direction = 'left';
+              else direction = 'slight_left';
+            } else {
+              if (turnMagnitude >= 115) direction = 'sharp_right';
+              else if (turnMagnitude >= 50) direction = 'right';
+              else direction = 'slight_right';
+            }
+            return { direction, turnIndex: i, turnAngle: crossProduct > 0 ? turnMagnitude : -turnMagnitude };
           }
         }
         return { direction: 'straight', turnIndex: -1, turnAngle: 0 };
@@ -1724,13 +1727,17 @@ function NavigationPageContent() {
     let threshold = '';
     if (unit === 'mi') {
       if (distFeet <= 50) threshold = 'now';
+      else if (distFeet <= 200) threshold = '200ft';
       else if (distFeet <= 500) threshold = '500ft';
       else if (distFeet <= 1000) threshold = '1000ft';
+      else if (distFeet <= 2000) threshold = '2000ft';
       else threshold = 'far';
     } else {
       if (distMeters <= 15) threshold = 'now';
+      else if (distMeters <= 60) threshold = '60m';
       else if (distMeters <= 150) threshold = '150m';
       else if (distMeters <= 300) threshold = '300m';
+      else if (distMeters <= 600) threshold = '600m';
       else threshold = 'far';
     }
     
@@ -1787,24 +1794,27 @@ function NavigationPageContent() {
     // 500 feet = 152.4 meters - trigger arrival when within 500 feet of destination
     const ARRIVAL_THRESHOLD_METERS = 152.4;
     
-    // GUARD: Only allow arrival if we've completed at least 70% of route OR are very close
-    // Relaxed from 90% to prevent missed arrivals on short routes or GPS drift
-    if (currentRoute.routePath && routeProgressRef.current < currentRoute.routePath.length * 0.7 && distance > ARRIVAL_THRESHOLD_METERS) {
+    // GUARD: Only allow arrival if we've completed at least 50% of route OR are very close (within 50m)
+    const routeLen = currentRoute.routePath?.length || 0;
+    const progressRatio = routeLen > 0 ? routeProgressRef.current / routeLen : 0;
+    if (progressRatio < 0.5 && distance > 50) {
       return;
     }
     
     if (distance <= ARRIVAL_THRESHOLD_METERS) {
-      console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m`);
+      console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m, progress: ${(progressRatio * 100).toFixed(0)}%`);
       setShowDestinationReached(true);
       hasShownDestinationDialogRef.current = true;
-      // Announce arrival with voice - always announce when voice is enabled
+      
       if (professionalVoiceEnabled) {
-        // Ensure voice is enabled and force max volume for arrival
         navigationVoice.setEnabled(true);
         navigationVoice.forceMaxVolume();
         navigationVoice.announceArrival();
         console.log('[DESTINATION] Voice announcement: Arrived at destination');
       }
+      
+      setIsLocalNavActive(false);
+      console.log('[DESTINATION] Navigation automatically stopped on arrival');
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
   
