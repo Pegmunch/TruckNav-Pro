@@ -3031,11 +3031,26 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       processedRouteCoordsRef.current = null;
       cachedRouteGeoJsonRef.current = null;
       lastNearestIndexRef.current = 0;
+      lastClipIndexRef.current = -1;
+    };
+    
+    const handleForceRouteRender = () => {
+      console.log('[ROUTE-HEALTH] Force route render event - rebuilding route layers immediately');
+      processedRouteSourceRef.current = null;
+      processedRouteCoordsRef.current = null;
+      cachedRouteGeoJsonRef.current = null;
+      lastNearestIndexRef.current = 0;
+      lastClipIndexRef.current = -1;
+      if (map.current && map.current.isStyleLoaded()) {
+        ensureRouteLayers();
+        renderRouteLayers();
+      }
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
     window.addEventListener('trucknav-reroute-complete', handleRerouteComplete);
+    window.addEventListener('trucknav-force-route-render', handleForceRouteRender);
     
     const canvas = map.current.getCanvas();
     if (canvas) {
@@ -3047,6 +3062,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('trucknav-reroute-complete', handleRerouteComplete);
+      window.removeEventListener('trucknav-force-route-render', handleForceRouteRender);
       if (canvas) {
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       }
