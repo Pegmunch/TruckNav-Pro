@@ -64,6 +64,7 @@ export function useAutoReroute(
   const isReroutingRef = useRef(false);
   const offRouteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offRouteStartTimeRef = useRef<number | null>(null);
+  const lastOffRouteCheckTimeRef = useRef<number>(0);
 
   const gpsRef = useRef(gpsData);
   const toCoordinatesRef = useRef(toCoordinates);
@@ -364,9 +365,18 @@ export function useAutoReroute(
       return;
     }
     
+    const now = Date.now();
+    if (now - lastOffRouteCheckTimeRef.current < 800) {
+      return;
+    }
+    lastOffRouteCheckTimeRef.current = now;
+    
     const { isOff, distance } = checkOffRoute(gpsData);
     
-    setState(prev => ({ ...prev, distanceFromRoute: distance }));
+    const prevDist = state.distanceFromRoute;
+    if (Math.abs(distance - prevDist) > 5) {
+      setState(prev => ({ ...prev, distanceFromRoute: distance }));
+    }
     
     if (isOff) {
       consecutiveOffRouteFixesRef.current++;
@@ -409,7 +419,7 @@ export function useAutoReroute(
       consecutiveOffRouteFixesRef.current = 0;
       setState(prev => ({ ...prev, isOffRoute: false }));
     }
-  }, [gpsData, gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, mergedConfig.offRouteDelaySeconds, hasValidGpsCoordinates]);
+  }, [gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, mergedConfig.offRouteDelaySeconds, hasValidGpsCoordinates, state.distanceFromRoute]);
   
   useEffect(() => {
     return () => {

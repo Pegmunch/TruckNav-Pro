@@ -1342,12 +1342,15 @@ function NavigationPageContent() {
       }
     };
     
-    // Fetch immediately, then set up interval
-    fetchRoadInfo();
-    const intervalId = setInterval(fetchRoadInfo, 5000); // Update every 5 seconds
+    const intervalId = setInterval(fetchRoadInfo, 5000);
     
-    return () => clearInterval(intervalId);
-  }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
+    const initialTimer = setTimeout(fetchRoadInfo, 100);
+    
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(initialTimer);
+    };
+  }, [Math.round((gpsData?.position?.latitude || 0) * 1000) / 1000, Math.round((gpsData?.position?.longitude || 0) * 1000) / 1000]);
   
   useEffect(() => {
     if (!isNavigating || !gpsData?.position?.speed) return;
@@ -1732,6 +1735,30 @@ function NavigationPageContent() {
     }
   }, [isNavigating, nextTurn?.vertexIndex, nextTurn?.direction]);
 
+  const voiceThresholdRef = useRef<string>('');
+  
+  const computedVoiceThreshold = useMemo(() => {
+    if (!nextTurn) return 'none';
+    const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
+    const distFeet = nextTurn.distance * 3.28084;
+    const distMeters = nextTurn.distance;
+    if (unit === 'mi') {
+      if (distFeet <= 50) return 'now';
+      if (distFeet <= 200) return '200ft';
+      if (distFeet <= 500) return '500ft';
+      if (distFeet <= 1000) return '1000ft';
+      if (distFeet <= 2000) return '2000ft';
+      return 'far';
+    } else {
+      if (distMeters <= 15) return 'now';
+      if (distMeters <= 60) return '60m';
+      if (distMeters <= 150) return '150m';
+      if (distMeters <= 300) return '300m';
+      if (distMeters <= 600) return '600m';
+      return 'far';
+    }
+  }, [nextTurn?.distance, measurementSystem]);
+
   useEffect(() => {
     if (!isNavigating || !nextTurn || !professionalVoiceEnabled) {
       return;
@@ -1750,39 +1777,19 @@ function NavigationPageContent() {
     
     if (!isMajorTurn && !isMotorwayJunction) return;
     
-    const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
-    const distFeet = nextTurn.distance * 3.28084;
-    const distMeters = nextTurn.distance;
-    
-    let threshold = '';
-    if (unit === 'mi') {
-      if (distFeet <= 50) threshold = 'now';
-      else if (distFeet <= 200) threshold = '200ft';
-      else if (distFeet <= 500) threshold = '500ft';
-      else if (distFeet <= 1000) threshold = '1000ft';
-      else if (distFeet <= 2000) threshold = '2000ft';
-      else threshold = 'far';
-    } else {
-      if (distMeters <= 15) threshold = 'now';
-      else if (distMeters <= 60) threshold = '60m';
-      else if (distMeters <= 150) threshold = '150m';
-      else if (distMeters <= 300) threshold = '300m';
-      else if (distMeters <= 600) threshold = '600m';
-      else threshold = 'far';
-    }
-    
-    if (threshold === 'far') return;
+    if (computedVoiceThreshold === 'far' || computedVoiceThreshold === 'none') return;
     
     const turnIndex = nextTurn.vertexIndex ?? -1;
     const lastAnn = lastVoiceAnnouncementRef.current;
     
-    if (lastAnn && lastAnn.turnIndex === turnIndex && lastAnn.threshold === threshold) {
+    if (lastAnn && lastAnn.turnIndex === turnIndex && lastAnn.threshold === computedVoiceThreshold) {
       return;
     }
     
-    lastVoiceAnnouncementRef.current = { direction: nextTurn.direction, threshold, turnIndex };
+    lastVoiceAnnouncementRef.current = { direction: nextTurn.direction, threshold: computedVoiceThreshold, turnIndex };
     
-    console.log(`[VOICE-NAV] Announcing turn: ${nextTurn.direction} at ${threshold} (${nextTurn.distance.toFixed(0)}m)`);
+    const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
+    console.log(`[VOICE-NAV] Announcing turn: ${nextTurn.direction} at ${computedVoiceThreshold} (${nextTurn.distance.toFixed(0)}m)`);
     
     navigationVoice.announceTurn(
       nextTurn.direction,
@@ -1790,7 +1797,7 @@ function NavigationPageContent() {
       nextTurn.roadName,
       unit
     );
-  }, [nextTurn?.direction, nextTurn?.distance, isNavigating, professionalVoiceEnabled, measurementSystem]);
+  }, [nextTurn?.direction, computedVoiceThreshold, nextTurn?.vertexIndex, isNavigating, professionalVoiceEnabled, measurementSystem]);
   
   // Detect when destination is reached
   useEffect(() => {
@@ -2246,17 +2253,16 @@ function NavigationPageContent() {
       }
     };
     
-    // Initial update
-    updateRoadName();
+    const initialTimer = setTimeout(updateRoadName, 200);
     
-    // Update every 5 seconds during navigation
     const interval = setInterval(updateRoadName, 5000);
     
     return () => {
       isCancelled = true;
+      clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, [isNavigating, gpsData?.position?.latitude, gpsData?.position?.longitude]);
+  }, [isNavigating, Math.round((gpsData?.position?.latitude || 0) * 1000) / 1000, Math.round((gpsData?.position?.longitude || 0) * 1000) / 1000]);
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
