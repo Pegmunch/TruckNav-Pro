@@ -552,10 +552,9 @@ function NavigationPageContent() {
   }, []);
   
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
-    console.log('[AUTO-REROUTE] === STAGE 1: Applying rerouted route ===');
+    console.log('[AUTO-REROUTE] === SEAMLESS REROUTE START ===');
     console.log('[AUTO-REROUTE] routePath:', newRoute.routePath?.length, 'coords, instructions:', (newRoute as any).instructions?.length || 0);
     
-    // STAGE 1: Ensure geometry exists for map rendering
     if (newRoute.routePath && Array.isArray(newRoute.routePath) && newRoute.routePath.length >= 2 && !newRoute.geometry) {
       (newRoute as any).geometry = {
         type: 'LineString',
@@ -565,17 +564,12 @@ function NavigationPageContent() {
       };
     }
     
-    // STAGE 2: Apply new route to state - triggers map re-render
-    // Reset route progress tracking BEFORE setting new route
     routeProgressRef.current = 0;
     lastVoiceAnnouncementRef.current = null;
     lastProjectedDistanceRef.current = 0;
     distanceTravelledRef.current = 0;
-    
-    // Clear cached cumulative distances to force recalculation for new route
     cachedCumulativeDistancesRef.current = { routeId: '', distances: [], totalLength: 0 };
     
-    // Set new route with a unique timestamp to force React to detect the change
     const routeWithTimestamp = { ...newRoute, _rerouteTimestamp: Date.now() };
     setCurrentRoute(routeWithTimestamp);
     
@@ -592,18 +586,19 @@ function NavigationPageContent() {
     hasShownDestinationDialogRef.current = false;
     setShowDestinationReached(false);
     
-    // Dispatch reroute event to clear map caches (rendering handled by React useEffect)
-    // Use setTimeout to ensure React has processed the state update first
+    window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
+      detail: { routePathLength: newRoute.routePath?.length || 0 }
+    }));
+    
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
+      window.dispatchEvent(new CustomEvent('trucknav-force-route-render', { 
         detail: { routePathLength: newRoute.routePath?.length || 0 }
       }));
-      console.log('[AUTO-REROUTE] === STAGE 2: Cache clear event dispatched ===');
-    }, 50);
+      console.log('[AUTO-REROUTE] === Route rendered on map ===');
+    }, 100);
     
-    // STAGE 3: Voice navigation - announce reroute (ALWAYS, even if voice disabled - safety critical)
     navigationVoice.announceReroute();
-    console.log('[AUTO-REROUTE] === STAGE 3: Voice announced reroute, instructions will update from new route ===');
+    console.log('[AUTO-REROUTE] === SEAMLESS REROUTE COMPLETE - Voice announced, route rendered ===');
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
@@ -653,14 +648,19 @@ function NavigationPageContent() {
     return () => clearInterval(interval);
   }, [currentRoute?.id, fetchTrafficPrediction]);
   
-  // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
-  // Triggers automatic rerouting after 5 seconds off-route without pressing Go button
+  const rerouteContext = useMemo(() => ({
+    toLocation: toLocation,
+    routePreference: routePreference || 'fastest' as const,
+    useCarMode: isCarProfileMode,
+  }), [toLocation, routePreference, isCarProfileMode]);
+
   const { isOffRoute, isRerouting, distanceFromRoute, resetRerouteState } = useAutoReroute(
     currentRoute,
     isNavigating,
     toCoordinates,
     activeProfileId,
     handleRerouteSuccess,
+    rerouteContext,
     {
       lateralThresholdMeters: 35,
       consecutiveFixesRequired: 2,
