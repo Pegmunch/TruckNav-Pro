@@ -663,9 +663,9 @@ function NavigationPageContent() {
     rerouteContext,
     {
       lateralThresholdMeters: 35,
-      consecutiveFixesRequired: 2,
+      consecutiveFixesRequired: 1,
       minSecondsBetweenReroutes: 10,
-      offRouteDelaySeconds: 5,
+      offRouteDelaySeconds: 1,
     }
   );
   
