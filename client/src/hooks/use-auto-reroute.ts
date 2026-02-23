@@ -38,12 +38,19 @@ interface UseAutoRerouteReturn {
   resetRerouteState: () => void;
 }
 
+interface RerouteContext {
+  toLocation: string | null;
+  routePreference: 'fastest' | 'eco' | 'avoid_tolls';
+  useCarMode: boolean;
+}
+
 export function useAutoReroute(
   currentRoute: Route | null,
   isNavigating: boolean,
   toCoordinates: { lat: number; lng: number } | null,
   activeProfileId: string | null,
   onRerouteSuccess: (newRoute: Route) => void,
+  rerouteContext: RerouteContext,
   config: Partial<AutoRerouteConfig> = {}
 ): UseAutoRerouteReturn {
   const gpsData = useGPS();
@@ -71,11 +78,13 @@ export function useAutoReroute(
   const activeProfileIdRef = useRef(activeProfileId);
   const onRerouteSuccessRef = useRef(onRerouteSuccess);
   const lastRerouteAtRef = useRef<number | null>(null);
+  const rerouteContextRef = useRef(rerouteContext);
 
   useEffect(() => { gpsRef.current = gpsData; }, [gpsData]);
   useEffect(() => { toCoordinatesRef.current = toCoordinates; }, [toCoordinates]);
   useEffect(() => { activeProfileIdRef.current = activeProfileId; }, [activeProfileId]);
   useEffect(() => { onRerouteSuccessRef.current = onRerouteSuccess; }, [onRerouteSuccess]);
+  useEffect(() => { rerouteContextRef.current = rerouteContext; }, [rerouteContext]);
   
   const isValidCoordinate = useCallback((coord: unknown): coord is [number, number] => {
     if (!Array.isArray(coord) || coord.length < 2) return false;
@@ -246,6 +255,7 @@ export function useAutoReroute(
     const latestGps = gpsRef.current;
     const latestDest = toCoordinatesRef.current;
     const latestProfileId = activeProfileIdRef.current;
+    const ctx = rerouteContextRef.current;
 
     if (isReroutingRef.current) {
       console.log('[AUTO-REROUTE] Already rerouting, skipping');
@@ -272,22 +282,27 @@ export function useAutoReroute(
     const currentLat = latestGps!.position!.latitude;
     const currentLng = latestGps!.position!.longitude;
     
-    console.log('[AUTO-REROUTE] === REROUTING (same as GO button) ===');
+    const endLocationText = ctx.toLocation || `${latestDest.lat},${latestDest.lng}`;
+    
+    console.log('[AUTO-REROUTE] === AUTOMATIC REROUTE (identical to GO button) ===');
     console.log('[AUTO-REROUTE] From GPS:', { lat: currentLat, lng: currentLng });
-    console.log('[AUTO-REROUTE] To destination:', latestDest);
+    console.log('[AUTO-REROUTE] To destination:', endLocationText, latestDest);
     console.log('[AUTO-REROUTE] Vehicle profile:', latestProfileId);
+    console.log('[AUTO-REROUTE] Route preference:', ctx.routePreference);
+    console.log('[AUTO-REROUTE] Car mode:', ctx.useCarMode);
     
     try {
       const response = await apiRequest('POST', '/api/routes/calculate', {
         startLocation: `${currentLat},${currentLng}`,
-        endLocation: `${latestDest.lat},${latestDest.lng}`,
+        endLocation: endLocationText,
         startCoordinates: {
           lat: currentLat,
           lng: currentLng,
         },
         endCoordinates: latestDest,
         vehicleProfileId: latestProfileId,
-        routePreference: 'fastest',
+        routePreference: ctx.routePreference || 'fastest',
+        useCarMode: ctx.useCarMode,
         isReroute: true,
       });
       
@@ -341,7 +356,7 @@ export function useAutoReroute(
       }));
       consecutiveOffRouteFixesRef.current = 0;
       
-      console.log('[AUTO-REROUTE] === REROUTE COMPLETE - Route updated, awaiting new reference line ===');
+      console.log('[AUTO-REROUTE] === REROUTE COMPLETE - Route rendered automatically ===');
       
     } catch (error) {
       console.error('[AUTO-REROUTE] Reroute failed:', error);
