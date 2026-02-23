@@ -820,6 +820,9 @@ function NavigationPageContent() {
   
   const cachedCumulativeDistancesRef = useRef<{ routeId: string | null; distances: number[]; totalLength: number }>({ routeId: null, distances: [], totalLength: 0 });
   
+  const lastTurnComputeTimeRef = useRef<number>(0);
+  const turnComputeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   const lastVoiceAnnouncementRef = useRef<{ direction: string; threshold: string; turnIndex: number } | null>(null);
   
   // Helper: Generate fallback lane guidance based on turn direction, distance, and road type
@@ -1359,9 +1362,14 @@ function NavigationPageContent() {
   
   // Calculate next turn from route and GPS position
   // Runs in both Navigation mode AND Preview mode so turn indicators appear in both
+  // THROTTLED: Heavy geometry computation limited to once per 400ms to prevent map freezing
   useEffect(() => {
     if ((!isNavigating && !isShowingPreview) || !currentRoute) {
       setNextTurn(null);
+      if (turnComputeTimerRef.current) {
+        clearTimeout(turnComputeTimerRef.current);
+        turnComputeTimerRef.current = null;
+      }
       return;
     }
     
@@ -1370,6 +1378,27 @@ function NavigationPageContent() {
       setNextTurn(null);
       return;
     }
+
+    const THROTTLE_MS = 400;
+    const now = Date.now();
+    const elapsed = now - lastTurnComputeTimeRef.current;
+    
+    if (elapsed < THROTTLE_MS) {
+      if (!turnComputeTimerRef.current) {
+        turnComputeTimerRef.current = setTimeout(() => {
+          turnComputeTimerRef.current = null;
+          lastTurnComputeTimeRef.current = Date.now();
+          computeNextTurn();
+        }, THROTTLE_MS - elapsed);
+      }
+      return;
+    }
+    
+    lastTurnComputeTimeRef.current = now;
+    computeNextTurn();
+    
+    function computeNextTurn() {
+    if (!gpsData?.position || !currentRoute) return;
 
     // Helper: Calculate distance between two coordinates using Haversine formula
     const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
@@ -1680,6 +1709,7 @@ function NavigationPageContent() {
         }
       }
     }
+    } // end computeNextTurn
   }, [isNavigating, isShowingPreview, currentRoute, gpsData?.position]);
 
   useEffect(() => {
