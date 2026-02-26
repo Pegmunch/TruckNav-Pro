@@ -2363,7 +2363,34 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         isNaN(liveGps.latitude) || isNaN(liveGps.longitude) || liveGps.latitude === 0 || liveGps.longitude === 0) return;
 
     let fullCoords = processedRouteCoordsRef.current;
-    if (!fullCoords || fullCoords.length < 2) return;
+    if (!fullCoords || fullCoords.length < 2) {
+      // FIX ROOT CAUSE 1: Self-heal from persistentNavRouteRef instead of silently bailing
+      if (persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
+        const rawCoords = persistentNavRouteRef.current;
+        const rebuilt: number[][] = [];
+        let prevLng = NaN, prevLat = NaN;
+        for (const coord of rawCoords) {
+          const lng = coord.lng;
+          const lat = coord.lat;
+          if (typeof lng !== 'number' || typeof lat !== 'number' || !isFinite(lng) || !isFinite(lat)) continue;
+          const dx = lng - prevLng, dy = lat - prevLat;
+          if (dx * dx + dy * dy > 1e-12 || rebuilt.length === 0) {
+            rebuilt.push([lng, lat]);
+            prevLng = lng; prevLat = lat;
+          }
+        }
+        if (rebuilt.length >= 2) {
+          processedRouteCoordsRef.current = rebuilt;
+          processedRouteSourceRef.current = persistentNavRouteRef.current;
+          lastClipIndexRef.current = -1;
+          fullCoords = rebuilt;
+        } else {
+          return;
+        }
+      } else {
+        return;
+      }
+    }
 
     const gpLng = liveGps.longitude;
     const gpLat = liveGps.latitude;
@@ -2400,7 +2427,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       nearestIndex = fullNearestIdx;
     }
 
-    if (nearestIndex === lastClipIndexRef.current) return;
+    // FIX ROOT CAUSE 2: Also skip guard if cached data was cleared (need to re-render at same index)
+    if (nearestIndex === lastClipIndexRef.current && cachedRouteGeoJsonRef.current) return;
     lastClipIndexRef.current = nearestIndex;
     lastNearestIndexRef.current = nearestIndex;
 
@@ -2737,15 +2765,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!mapInstance || !isLoaded) return;
 
     const performRouteCheck = () => {
-      if (currentRoute?.routePath && currentRoute.routePath.length > 0) {
+      const hasRoutePath = currentRoute?.routePath && currentRoute.routePath.length > 0;
+      const hasCachedRoute = persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2;
+      if (hasRoutePath || (isNavigating && hasCachedRoute)) {
         const hasLayer = mapInstance.getLayer('route-line');
         const hasSource = mapInstance.getSource('route');
         
         if (!hasLayer || !hasSource) {
-          console.warn('[ROUTE-HEALTH] 🚨 Route line or source missing! Triggering restoration...');
-          renderRouteLayers();
+          console.warn('[ROUTE-HEALTH] Route line or source missing - triggering restoration');
+          renderRouteLayersRef.current?.();
+        } else if (isNavigating && !cachedRouteGeoJsonRef.current) {
+          // FIX ROOT CAUSE 4: Source+layer exist but data was cleared - force full re-render
+          console.warn('[ROUTE-HEALTH] Route source has no cached data during navigation - forcing re-render');
+          processedRouteCoordsRef.current = null;
+          processedRouteSourceRef.current = null;
+          lastClipIndexRef.current = -1;
+          renderRouteLayersRef.current?.();
         }
-      } else {
+      } else if (!isNavigating) {
         removeRouteLayers();
       }
     };
@@ -3042,8 +3079,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       lastNearestIndexRef.current = 0;
       lastClipIndexRef.current = -1;
       if (map.current && map.current.isStyleLoaded()) {
-        ensureRouteLayers();
-        renderRouteLayers();
+        // FIX ROOT CAUSE 3 & 5: Use refs (always current) instead of closure-captured functions
+        // which may reference the old currentRoute before React re-renders with the new route
+        ensureRouteLayersRef.current?.();
+        renderRouteLayersRef.current?.();
       }
     };
     
