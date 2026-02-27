@@ -198,37 +198,71 @@ export function useAutoReroute(
     if (!routeLineRef.current || !hasValidGpsCoordinates(gps)) {
       return { isOff: false, distance: 0, bearing: 0 };
     }
-    
+
+    const pos = gps.position!;
+
+    // GATE 1: Speed gate — do not flag off-route when stationary or near-stationary.
+    // Vehicles stopped at lights, junctions or fuel stops would otherwise false-trigger.
+    // 1.5 m/s ≈ 5.4 km/h — below this we treat the vehicle as stationary.
+    if (pos.speed !== null && pos.speed !== undefined && pos.speed < 1.5) {
+      return { isOff: false, distance: 0, bearing: 0 };
+    }
+
+    // GATE 2: GPS quality gate — if the device reports very poor accuracy (> 80 m)
+    // the raw coordinate is too unreliable to make a rerouting decision.
+    const gpsAccuracy = typeof pos.accuracy === 'number' ? pos.accuracy : 0;
+    if (gpsAccuracy > 80) {
+      console.log(`[AUTO-REROUTE] GPS accuracy too poor (${gpsAccuracy.toFixed(0)}m) — skipping off-route check`);
+      return { isOff: false, distance: 0, bearing: 0 };
+    }
+
+    // GATE 3: Confidence gate — use the existing GPS confidence score.
+    // Below 25/100 means the fix is likely stale or jittered.
+    if (typeof pos.confidenceScore === 'number' && pos.confidenceScore < 25) {
+      console.log(`[AUTO-REROUTE] GPS confidence too low (${pos.confidenceScore}) — skipping off-route check`);
+      return { isOff: false, distance: 0, bearing: 0 };
+    }
+
     try {
-      const lng = gps.position!.longitude;
-      const lat = gps.position!.latitude;
-      
+      const lng = pos.longitude;
+      const lat = pos.latitude;
+
       if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
         console.warn('[AUTO-REROUTE] Invalid GPS coordinates:', { lng, lat });
         return { isOff: false, distance: 0, bearing: 0 };
       }
-      
+
       const currentPoint = turf.point([lng, lat]);
       const nearestOnLine = turf.nearestPointOnLine(routeLineRef.current, currentPoint);
-    
+
       const distanceKm = turf.distance(currentPoint, nearestOnLine, { units: 'kilometers' });
       const distanceMeters = distanceKm * 1000;
-      
+
+      // IMPROVEMENT: Dynamic threshold — widen the off-route trigger distance to account
+      // for the GPS accuracy reported by the device. A fix with 30m accuracy should not
+      // trigger rerouting at 35m deviation; only at 35m + a portion of the accuracy margin.
+      // Formula: max(baseThreshold, accuracy × 0.6 + 15), capped at 75m.
+      const dynamicThreshold = Math.min(
+        Math.max(mergedConfig.lateralThresholdMeters, gpsAccuracy * 0.6 + 15),
+        75
+      );
+
+      // Heading deviation against the nearest route segment
       let headingDeviation = 0;
-      const heading = gps.position!.heading;
+      const heading = pos.smoothedHeading ?? pos.heading;
       if (heading !== null && heading !== undefined) {
         const routeCoords = routeLineRef.current.geometry.coordinates;
         const nearestIndex = nearestOnLine.properties.index || 0;
-        
+
         if (nearestIndex < routeCoords.length - 1) {
           const startCoord = routeCoords[nearestIndex];
           const endCoord = routeCoords[nearestIndex + 1];
-          
+
           if (isValidCoordinate(startCoord) && isValidCoordinate(endCoord)) {
             const segmentStart = turf.point(startCoord);
             const segmentEnd = turf.point(endCoord);
             const routeBearing = turf.bearing(segmentStart, segmentEnd);
-            
+
             headingDeviation = Math.abs(heading - routeBearing);
             if (headingDeviation > 180) {
               headingDeviation = 360 - headingDeviation;
@@ -236,15 +270,21 @@ export function useAutoReroute(
           }
         }
       }
-      
-      const isLaterallyOff = distanceMeters > mergedConfig.lateralThresholdMeters;
+
+      const isLaterallyOff = distanceMeters > dynamicThreshold;
       const isHeadingOff = headingDeviation > mergedConfig.headingDeviationDegrees;
-      
-      return {
-        isOff: isLaterallyOff || (distanceMeters > 30 && isHeadingOff),
-        distance: distanceMeters,
-        bearing: headingDeviation,
-      };
+
+      // Only count as off-route if laterally beyond the dynamic threshold,
+      // OR if significantly displaced (>40m) AND heading in the wrong direction.
+      const isOff = isLaterallyOff || (distanceMeters > 40 && isHeadingOff);
+
+      if (isOff) {
+        console.log(
+          `[AUTO-REROUTE] Off-route: ${distanceMeters.toFixed(0)}m (threshold ${dynamicThreshold.toFixed(0)}m, GPS acc ${gpsAccuracy.toFixed(0)}m, hdg dev ${headingDeviation.toFixed(0)}°)`
+        );
+      }
+
+      return { isOff, distance: distanceMeters, bearing: headingDeviation };
     } catch (e) {
       console.warn('[AUTO-REROUTE] Error checking off-route status:', e);
       return { isOff: false, distance: 0, bearing: 0 };
