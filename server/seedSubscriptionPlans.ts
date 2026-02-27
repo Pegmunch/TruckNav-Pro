@@ -6,21 +6,6 @@ async function seedSubscriptionPlans() {
 
   const plans = [
     {
-      name: "1 Month",
-      stripePriceId: "price_1month_test",
-      priceGBP: "6.99",
-      durationMonths: 1,
-      isLifetime: false,
-      category: "navigation",
-      features: [
-        "Full truck navigation",
-        "Real-time traffic",
-        "Route planning",
-        "Incident reporting"
-      ],
-      isActive: true,
-    },
-    {
       name: "3 Months",
       stripePriceId: "price_3months_test",
       priceGBP: "25.99",
