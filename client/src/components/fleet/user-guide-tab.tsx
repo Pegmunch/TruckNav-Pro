@@ -1165,6 +1165,255 @@ export function UserGuideTab() {
                   <p className="font-medium">Vehicle Safety</p>
                   <p className="text-xs text-muted-foreground">MOT, safety inspections</p>
                 </div>
+                <div className="p-2 bg-slate-50 dark:bg-slate-900/20 rounded col-span-2 md:col-span-1">
+                  <p className="font-medium">Information Security (ISMS)</p>
+                  <p className="text-xs text-muted-foreground">ISO 27001:2022 & ISO 27005 compliance</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── ISMS & ISO 27001 ── */}
+          <div className="bg-gradient-to-r from-slate-700 to-slate-900 text-white p-5 rounded-lg">
+            <div className="flex items-center gap-3 mb-2">
+              <Lock className="w-6 h-6 text-blue-300" />
+              <h3 className="text-lg font-bold">Information Security Management System (ISMS)</h3>
+            </div>
+            <p className="text-slate-300 text-sm">ISO 27001:2022 & ISO 27005 — Built into your Fleet Management platform</p>
+          </div>
+
+          <Card className="border-slate-200 dark:border-slate-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="w-5 h-5 text-slate-600" />
+                What is an ISMS?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>
+                An <strong>Information Security Management System (ISMS)</strong> is a systematic framework of policies, 
+                procedures, and controls that protect your organisation's information assets from threats such as data breaches, 
+                cyber attacks, and accidental loss.
+              </p>
+              <p>
+                <strong>ISO 27001:2022</strong> is the internationally recognised standard for ISMS certification. 
+                Achieving certification demonstrates to customers, partners, and regulators that your organisation 
+                manages information security to the highest professional standard.
+              </p>
+              <p>
+                <strong>ISO 27005</strong> is the companion risk management standard. It provides the methodology 
+                for identifying, assessing, and treating information security risks — the risk register you complete 
+                in TruckNav feeds directly into your ISO 27001 certification evidence.
+              </p>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="font-medium text-blue-700 dark:text-blue-300 text-xs mb-1">Key Distinction</p>
+                <p className="text-xs text-muted-foreground">
+                  ISO 27001 is a <strong>certifiable standard</strong> — your organisation can be independently audited 
+                  and awarded a certificate. ISO 27005 is a <strong>guidance document</strong> only; no certificate 
+                  is issued for it. You use ISO 27005 methodology to satisfy ISO 27001's risk assessment requirements.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ClipboardCheck className="w-5 h-5 text-green-600" />
+                ISMS Module — 6 Built-In Sections
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Access the ISMS tab in Fleet Management to manage all six areas of your information security programme:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-blue-600 shrink-0 mt-0.5">1</Badge>
+                  <div>
+                    <p className="font-medium">Compliance Overview</p>
+                    <p className="text-xs text-muted-foreground">Live ISO 27001 compliance score (%), certification roadmap, controls implemented vs in-progress, open risks count, and an actions-required panel. The score updates automatically as you complete controls in the Annex A checklist.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-orange-600 shrink-0 mt-0.5">2</Badge>
+                  <div>
+                    <p className="font-medium">Risk Register (ISO 27005)</p>
+                    <p className="text-xs text-muted-foreground">Log all information security risks with Likelihood × Impact scoring (1–5 each). The system calculates a risk score automatically and assigns a level: Critical, High, Medium, or Low. Each risk has a treatment plan, owner, status, and review date.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-red-600 shrink-0 mt-0.5">3</Badge>
+                  <div>
+                    <p className="font-medium">Security Incidents</p>
+                    <p className="text-xs text-muted-foreground">Log all security incidents separately from road incidents. Track severity, containment steps, and resolution notes. Status workflow: Open → Investigating → Resolved → Closed. Required evidence for ISO 27001 Clause 10 (Improvement).</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-purple-600 shrink-0 mt-0.5">4</Badge>
+                  <div>
+                    <p className="font-medium">Information Asset Register</p>
+                    <p className="text-xs text-muted-foreground">Inventory every information asset: Hardware, Software, Data, People, Facility, or Service. Each asset has a data classification (Public / Internal / Confidential / Restricted) and a criticality rating. Required by ISO 27001 Annex A 5.9 and 5.10.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-green-600 shrink-0 mt-0.5">5</Badge>
+                  <div>
+                    <p className="font-medium">Policy Management</p>
+                    <p className="text-xs text-muted-foreground">Track all security policies by version, owner, and review date. A progress bar shows what percentage of staff have acknowledged each policy. Required by ISO 27001 Clause 5.2 (Policy) and Annex A 5.1.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Badge className="bg-slate-600 shrink-0 mt-0.5">6</Badge>
+                  <div>
+                    <p className="font-medium">ISO 27001:2022 Annex A Controls Checklist</p>
+                    <p className="text-xs text-muted-foreground">A full checklist of the 22 Annex A control categories applicable to your fleet operations. Mark each as Implemented, Partial, Planned, or Not Applicable. Evidence notes are pre-mapped where TruckNav already provides the control. Each status feeds back into the compliance score on the Overview tab.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-200 dark:border-orange-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                ISO 27005 — Risk Management Methodology
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>The Risk Register follows the ISO 27005 risk assessment process:</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="font-medium text-orange-700 dark:text-orange-300">Step 1: Asset Identification</p>
+                  <p className="text-xs text-muted-foreground mt-1">Identify the information asset at risk (from your Asset Register)</p>
+                </div>
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="font-medium text-orange-700 dark:text-orange-300">Step 2: Threat & Vulnerability</p>
+                  <p className="text-xs text-muted-foreground mt-1">Document the threat (e.g. ransomware) and the vulnerability it exploits</p>
+                </div>
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="font-medium text-orange-700 dark:text-orange-300">Step 3: Risk Scoring</p>
+                  <p className="text-xs text-muted-foreground mt-1">Score Likelihood (1–5) × Impact (1–5). Score 1–6 = Low, 7–12 = Medium, 13–19 = High, 20–25 = Critical</p>
+                </div>
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="font-medium text-orange-700 dark:text-orange-300">Step 4: Treatment Decision</p>
+                  <p className="text-xs text-muted-foreground mt-1">Choose a treatment: Mitigate (add a control), Accept, Avoid, or Transfer (insurance)</p>
+                </div>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/20 rounded-lg text-xs text-muted-foreground">
+                <strong>Risk Score Reference:</strong> Critical (20–25) — immediate action required. 
+                High (13–19) — action within 30 days. Medium (7–12) — action within 90 days. 
+                Low (1–6) — monitor and review annually.
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 dark:border-blue-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                ISO 27001:2022 Annex A — Key Controls for Fleet Operations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>ISO 27001:2022 Annex A contains 93 controls across 4 themes. The most relevant to a fleet technology company are:</p>
+              <div className="space-y-2">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="font-medium text-blue-700 dark:text-blue-300">Organisational Controls (5.x)</p>
+                  <p className="text-xs text-muted-foreground">Information security policies, roles & responsibilities, supplier relationships, incident management, and business continuity. TruckNav's Policy Management section covers 5.1, 5.2, and 5.31.</p>
+                </div>
+                <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="font-medium text-green-700 dark:text-green-300">People Controls (6.x)</p>
+                  <p className="text-xs text-muted-foreground">Background checks, security awareness training, and clear desk/screen policies for office and cab environments. Driver device policy is a key evidence item.</p>
+                </div>
+                <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <p className="font-medium text-yellow-700 dark:text-yellow-300">Physical Controls (7.x)</p>
+                  <p className="text-xs text-muted-foreground">Physical security of offices, server rooms, and in-cab devices. Vehicle cab security policy and device encryption are primary evidence items for fleet organisations.</p>
+                </div>
+                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="font-medium text-purple-700 dark:text-purple-300">Technological Controls (8.x)</p>
+                  <p className="text-xs text-muted-foreground">Access control (8.2–8.5), encryption (8.24), secure development (8.25–8.31), backup (8.13), network security (8.20–8.22), and vulnerability management (8.8). TruckNav's cloud infrastructure addresses several of these via Neon DB encryption and HTTPS.</p>
+                </div>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/20 rounded-lg text-xs text-muted-foreground">
+                <strong>Statement of Applicability (SoA):</strong> During an ISO 27001 audit, you must produce a SoA documenting every Annex A control and whether it applies to your organisation. The Annex A checklist in TruckNav's ISMS tab is your working SoA document. Mark controls as Not Applicable only where you can justify the exclusion in writing.
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 dark:border-green-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                Certification Roadmap — Target Q1 2027
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+                  <div>
+                    <p className="font-medium">Gap Analysis <span className="text-xs text-muted-foreground font-normal">— Q1–Q2 2026</span></p>
+                    <p className="text-xs text-muted-foreground">Complete the Annex A checklist in TruckNav to identify gaps. Use the Risk Register to log all identified risks. Target: 100% controls assessed.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+                  <div>
+                    <p className="font-medium">Policy Development <span className="text-xs text-muted-foreground font-normal">— Q2–Q3 2026</span></p>
+                    <p className="text-xs text-muted-foreground">Write and publish all mandatory policies. Minimum required: Information Security Policy, Acceptable Use, Access Control, Incident Response, and Business Continuity. Record acknowledgements in TruckNav.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-yellow-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
+                  <div>
+                    <p className="font-medium">Controls Implementation <span className="text-xs text-muted-foreground font-normal">— Q3–Q4 2026</span></p>
+                    <p className="text-xs text-muted-foreground">Implement all controls identified in the gap analysis. Update the Annex A checklist status to Implemented as each control goes live. Target: 80%+ implemented before Stage 1 audit.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
+                  <div>
+                    <p className="font-medium">Internal Audit <span className="text-xs text-muted-foreground font-normal">— Q4 2026</span></p>
+                    <p className="text-xs text-muted-foreground">Conduct an internal audit of the entire ISMS. Log any non-conformities as security incidents in TruckNav. Corrective actions must be evidenced before Stage 2.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">5</div>
+                  <div>
+                    <p className="font-medium">Certification Audit — Stage 1 & 2 <span className="text-xs text-muted-foreground font-normal">— Q1 2027</span></p>
+                    <p className="text-xs text-muted-foreground">Stage 1 (document review): Auditor reviews your ISMS documentation including policies, risk register, and SoA. Stage 2 (on-site): Auditor verifies controls are implemented and operating effectively. TruckNav ISMS records serve as primary audit evidence.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 dark:border-slate-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bell className="w-5 h-5 text-slate-500" />
+                Using TruckNav as Audit Evidence
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <p>An ISO 27001 auditor will expect to see documented evidence for every control. TruckNav provides this evidence directly:</p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs mt-2">
+                  <thead>
+                    <tr className="border-b bg-gray-50 dark:bg-gray-800">
+                      <th className="text-left py-2 px-2">Auditor Will Ask For</th>
+                      <th className="text-left py-2 px-2">TruckNav Evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    <tr><td className="py-2 px-2">Risk assessment records</td><td className="py-2 px-2 text-muted-foreground">Risk Register with L×I scores</td></tr>
+                    <tr><td className="py-2 px-2">Asset inventory</td><td className="py-2 px-2 text-muted-foreground">Information Asset Register</td></tr>
+                    <tr><td className="py-2 px-2">Policy acknowledgements</td><td className="py-2 px-2 text-muted-foreground">Policy Management — staff sign-off %</td></tr>
+                    <tr><td className="py-2 px-2">Statement of Applicability</td><td className="py-2 px-2 text-muted-foreground">Annex A Controls Checklist</td></tr>
+                    <tr><td className="py-2 px-2">Incident log</td><td className="py-2 px-2 text-muted-foreground">Security Incidents register</td></tr>
+                    <tr><td className="py-2 px-2">Compliance monitoring</td><td className="py-2 px-2 text-muted-foreground">Compliance Overview score & roadmap</td></tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
