@@ -2352,6 +2352,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const processedRouteSourceRef = useRef<any>(null);
   const layersOnTopRef = useRef(false);
   const lastClipIndexRef = useRef(-1);
+  const lastProcessedRerouteTimestampRef = useRef<number | null>(null);
 
   const updateRouteClipping = useCallback(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
@@ -3008,6 +3009,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         renderRouteLayers();
         return true;
       }
+
+      // Task 2: Verify source DATA validity, not just layer existence.
+      // If source+layer exist but our cached GeoJSON is null, the source data was lost
+      // (can happen after WebGL context restore, style reload, or reroute race condition).
+      if (hasSource && hasLayer && !cachedRouteGeoJsonRef.current && (hasRoute || hasCache)) {
+        console.log('[ROUTE-HEALTH] Source/layer present but GeoJSON data is null — refreshing data');
+        processedRouteCoordsRef.current = null;
+        processedRouteSourceRef.current = null;
+        renderRouteLayers();
+        return true;
+      }
+
       return false;
     };
     
@@ -3026,6 +3039,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         consecutiveFailures = 0;
       } else {
         consecutiveFailures = 0;
+        // Task 4: Nuclear safety net — re-apply cached GeoJSON data to the source every
+        // health-check cycle during navigation. Guards against the map source silently
+        // losing its data (WebGL context issues, style reloads, reroute race conditions).
+        if (cachedRouteGeoJsonRef.current && map.current.getSource('route')) {
+          try {
+            const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+            if (src && src.setData) {
+              src.setData(cachedRouteGeoJsonRef.current);
+            }
+          } catch (_) {}
+        }
       }
     }, 3000);
     
@@ -3165,10 +3189,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       prevStartCoord.lng !== newStartCoord.lng
     );
     
+    // Task 3: Detect reroutes via _rerouteTimestamp, not just ID/length/coord comparisons.
+    // A reroute that starts close to the original origin (same first coord, same ID, similar
+    // length) would previously go undetected and keep the stale map source data.
+    const rerouteTimestamp = (currentRoute as any)._rerouteTimestamp as number | undefined;
+    const isNewReroute = !!(rerouteTimestamp && rerouteTimestamp !== lastProcessedRerouteTimestampRef.current);
+
     const isRouteChanged = (
       previousRouteIdRef.current !== currentRouteId ||
       Math.abs(previousRoutePathLengthRef.current - currentPathLength) > 5 ||
-      firstCoordChanged
+      firstCoordChanged ||
+      isNewReroute
     );
     
     if (currentRoute.routePath.length >= 2) {
@@ -3179,11 +3210,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-CHANGE] Route changed detected - replacing old route with new route');
       console.log(`[ROUTE-CHANGE] Previous ID: ${previousRouteIdRef.current}, New ID: ${currentRouteId}`);
       console.log(`[ROUTE-CHANGE] Previous length: ${previousRoutePathLengthRef.current}, New length: ${currentPathLength}`);
-      console.log(`[ROUTE-CHANGE] Start coord changed: ${firstCoordChanged}`);
+      console.log(`[ROUTE-CHANGE] Start coord changed: ${firstCoordChanged}, isNewReroute: ${isNewReroute}`);
       
       // Update refs immediately
       previousRouteIdRef.current = currentRouteId;
       previousRoutePathLengthRef.current = currentPathLength;
+      if (isNewReroute && rerouteTimestamp) {
+        lastProcessedRerouteTimestampRef.current = rerouteTimestamp;
+      }
       
       cachedRouteGeoJsonRef.current = null;
       lastNearestIndexRef.current = 0;
@@ -3246,11 +3280,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       updateRouteData();
       
+      // First retry at 100ms (handles normal React re-render commit timing)
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
           updateRouteData();
         }
       }, 100);
+
+      // Task 3: Second retry at 350ms as a safety net for slow devices or
+      // React concurrent-mode batching that defers the commit past the 100ms window.
+      setTimeout(() => {
+        if (map.current && map.current.isStyleLoaded()) {
+          updateRouteData();
+        }
+      }, 350);
     } else if (!isRouteChanged) {
       // Same route - just update refs
       previousRouteIdRef.current = currentRouteId;
@@ -5016,11 +5059,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       // Native layers are "working" if source and at least one layer exist
       const nativesAvailable = !!(hasRouteSource && (hasRouteLine || hasRouteOutline));
+
+      // KEY FIX: Only declare native layers "failed" when route data actually exists and should
+      // be showing native layers. Without this guard, startup fires "FAILED" (no layers, no route yet)
+      // so nativeLayersWorking=false when navigation begins — immediately activating the SVG fallback
+      // as a diagonal line across the screen before native layers have been added.
+      const routeDataExists = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
       
-      // Update native layers working state
-      if (nativesAvailable !== nativeLayersWorking) {
-        setNativeLayersWorking(nativesAvailable);
-        console.log('[ROUTE-FALLBACK] Native layers status:', nativesAvailable ? 'WORKING' : 'FAILED');
+      if (routeDataExists) {
+        // We EXPECT layers to be present — treat absence as genuine failure
+        if (nativesAvailable !== nativeLayersWorking) {
+          setNativeLayersWorking(nativesAvailable);
+          console.log('[ROUTE-FALLBACK] Native layers status:', nativesAvailable ? 'WORKING' : 'FAILED');
+        }
+      } else {
+        // No route data — layers will not exist, that is expected. Keep nativeLayersWorking=true
+        // so the SVG overlay never activates when there is nothing to show.
+        if (!nativeLayersWorking) {
+          setNativeLayersWorking(true);
+        }
       }
       
       // Native layers are primary - always show them when available
