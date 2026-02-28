@@ -96,6 +96,7 @@ import { MeasurementSelector } from "@/components/measurement/measurement-select
 import LanguageSelector from "@/components/language/language-selector";
 import IncidentAlertPopup, { type IncidentAlertData } from "@/components/navigation/incident-alert-popup";
 import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
+import { useSpeedCameraAlerts } from "@/hooks/use-speed-camera-alerts";
 
 
 // Extended Route type with API-only fields for route calculation responses
@@ -679,6 +680,14 @@ function NavigationPageContent() {
     routePathForIncidents,
     isNavigating && !!currentRoute,
     120000
+  );
+
+  // Speed camera proximity alerts — announces at 500m, 300m and 100m with voice + beep
+  useSpeedCameraAlerts(
+    liveRouteIncidents,
+    gpsData?.position ?? null,
+    isNavigating,
+    false
   );
   
   // Detect new incidents ahead and trigger proactive alerts

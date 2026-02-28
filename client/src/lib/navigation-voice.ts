@@ -912,6 +912,41 @@ export class NavigationVoice {
   }
   
   /**
+   * Announce speed camera ahead — always speaks regardless of motorway-only mode.
+   * Uses traffic_emergency priority so it cuts through other announcements.
+   */
+  public announceSpeedCamera(distanceMeters: number, speedLimitMph?: number): void {
+    if (!this.isEnabled()) return;
+
+    const isMetric = this.shouldUseMetric();
+    let distanceText: string;
+
+    if (isMetric) {
+      if (distanceMeters >= 1000) {
+        distanceText = `${(distanceMeters / 1000).toFixed(1)} kilometres`;
+      } else {
+        const rounded = Math.round(distanceMeters / 50) * 50;
+        distanceText = `${rounded} metres`;
+      }
+    } else {
+      const yards = Math.round(distanceMeters * 1.09361 / 50) * 50;
+      if (yards >= 880) {
+        const miles = (distanceMeters / 1609.34).toFixed(1);
+        distanceText = `${miles} miles`;
+      } else {
+        distanceText = `${yards} yards`;
+      }
+    }
+
+    let message = `Speed camera ahead in ${distanceText}`;
+    if (speedLimitMph && speedLimitMph > 0) {
+      message += `, limit ${speedLimitMph} ${isMetric ? 'kilometres per hour' : 'miles per hour'}`;
+    }
+
+    this.speak(message, 'emergency', true, 'traffic_emergency');
+  }
+
+  /**
    * Announce speed warning - uses speed_warning type (muted in motorway-only mode)
    */
   public announceSpeedWarning(currentSpeed: number, limit: number, unit: 'mph' | 'kmh' = 'mph'): void {

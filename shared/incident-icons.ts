@@ -32,6 +32,9 @@ export const INCIDENT_TYPES = {
   FLOODING: 'flooding',
   ICE: 'ice',
   FOG: 'fog',
+
+  // Speed Enforcement
+  SPEED_CAMERA: 'speed_camera',
 } as const;
 
 export type IncidentTypeKey = typeof INCIDENT_TYPES[keyof typeof INCIDENT_TYPES];
@@ -216,6 +219,16 @@ export const INCIDENT_ICON_LIBRARY: Record<IncidentTypeKey, IncidentIconConfig> 
     bgColor: '#F1F5F9',
     description: 'Heavy fog, low visibility',
     category: 'weather',
+  },
+
+  // Speed Enforcement
+  [INCIDENT_TYPES.SPEED_CAMERA]: {
+    emoji: '📷',
+    label: 'Speed Camera',
+    color: '#D97706',
+    bgColor: '#FEF3C7',
+    description: 'Speed camera or enforcement zone',
+    category: 'hazard',
   },
 };
 

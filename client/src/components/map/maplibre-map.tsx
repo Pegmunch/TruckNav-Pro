@@ -3223,13 +3223,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       lastNearestIndexRef.current = 0;
       lastClipIndexRef.current = -1;
       
-      const updateRouteData = () => {
-        if (!map.current || !map.current.isStyleLoaded() || !currentRoute?.routePath) return;
+      // Task 3: Snapshot the route path NOW — before any setTimeout fires.
+      // This prevents stale-closure bugs where a second reroute could arrive
+      // within the 100ms/350ms retry window and cause updateRouteData to read
+      // the wrong currentRoute from its closure.
+      const snapshotPath = [...currentRoute.routePath];
+      const snapshotRerouteTs = (currentRoute as any)._rerouteTimestamp;
+
+      const updateRouteData = (path: typeof snapshotPath) => {
+        if (!map.current || !map.current.isStyleLoaded() || !path?.length) return;
         
         let routeCoordinates: number[][] = [];
         let prevLng = NaN, prevLat = NaN;
-        for (let i = 0; i < currentRoute.routePath.length; i++) {
-          const coord = currentRoute.routePath[i];
+        for (let i = 0; i < path.length; i++) {
+          const coord = path[i];
           if (!coord) continue;
           const lng = coord.lng;
           const lat = coord.lat;
@@ -3247,9 +3254,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           console.warn('[ROUTE-CHANGE] Insufficient valid coordinates');
           return;
         }
+
+        // Guard: if a newer reroute has already been processed, skip stale retries
+        if (snapshotRerouteTs && lastProcessedRerouteTimestampRef.current !== snapshotRerouteTs &&
+            lastProcessedRerouteTimestampRef.current > snapshotRerouteTs) {
+          console.log('[ROUTE-CHANGE] Skipping stale retry — newer reroute already processed');
+          return;
+        }
         
         processedRouteCoordsRef.current = routeCoordinates;
-        processedRouteSourceRef.current = currentRoute.routePath;
+        processedRouteSourceRef.current = path;
         
         const geoJsonData = {
           type: 'Feature' as const,
@@ -3278,20 +3292,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       };
       
-      updateRouteData();
+      updateRouteData(snapshotPath);
       
       // First retry at 100ms (handles normal React re-render commit timing)
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
-          updateRouteData();
+          updateRouteData(snapshotPath);
         }
       }, 100);
 
-      // Task 3: Second retry at 350ms as a safety net for slow devices or
+      // Second retry at 350ms as a safety net for slow devices or
       // React concurrent-mode batching that defers the commit past the 100ms window.
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
-          updateRouteData();
+          updateRouteData(snapshotPath);
         }
       }, 350);
     } else if (!isRouteChanged) {
