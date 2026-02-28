@@ -4469,74 +4469,7 @@ function NavigationPageContent() {
                     }}
                   >
                     {/* Action Buttons - Info boxes moved to infoBoxes prop */}
-                    <div className="flex flex-col items-center gap-3 pointer-events-auto w-full max-w-sm">
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 w-full">
-                        {/* Incident Report Button - same functionality as Navigation mode */}
-                        {/* Uses onTouchStart for iOS Safari WebGL compatibility */}
-                        <Button
-                          onTouchStart={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('[INCIDENT-BTN] 🟠 Orange button TOUCHSTART in PREVIEW mode - opening Incident Report Dialog');
-                            setShowIncidentReportDialog(true);
-                          }}
-                          onPointerDown={(e) => {
-                            if (e.pointerType === 'mouse') {
-                              e.preventDefault();
-                              console.log('[INCIDENT-BTN] 🟠 Orange button POINTERDOWN (mouse) in PREVIEW mode');
-                              setShowIncidentReportDialog(true);
-                            }
-                          }}
-                          variant="outline"
-                          className="h-11 w-11 p-0 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white border-0 shadow-lg touch-manipulation"
-                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                          data-testid="button-report-incident-preview"
-                        >
-                          <AlertCircle className="w-5 h-5" />
-                        </Button>
-                        {/* View Incidents Button - Red border for iOS Safari WebGL compatibility */}
-                        <Button
-                          onTouchStart={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART in PREVIEW mode');
-                            handleViewIncidents();
-                          }}
-                          onPointerDown={(e) => {
-                            if (e.pointerType === 'mouse') {
-                              e.preventDefault();
-                              console.log('[INCIDENTS-BTN] 🔴 View Incidents POINTERDOWN (mouse) in PREVIEW mode');
-                              handleViewIncidents();
-                            }
-                          }}
-                          variant="outline"
-                          className="h-11 w-11 p-0 bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 border-red-500 shadow-lg touch-manipulation"
-                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                          data-testid="button-view-incidents-preview"
-                        >
-                          <AlertCircle className="w-5 h-5" />
-                        </Button>
-                        <Button
-                          onClick={handlePreviewRoute}
-                          disabled={isFlyByInProgress}
-                          variant="outline"
-                          className="flex-1 h-11 font-semibold bg-white/90 backdrop-blur-sm"
-                          data-testid="button-preview-route"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Preview
-                        </Button>
-                        <Button
-                          onClick={handleStartNavigation}
-                          className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                          data-testid="button-start-navigation"
-                        >
-                          <Navigation className="w-4 h-4 mr-2" />
-                          Start
-                        </Button>
-                      </div>
-                    </div>
+                    {/* Action buttons removed: Preview is in the top strip, Start/GO is in the speedometer crescent */}
                     
                     {/* Legal Ownership */}
                     <div className="w-full pointer-events-auto">
