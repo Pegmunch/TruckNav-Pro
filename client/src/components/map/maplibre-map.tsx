@@ -2861,81 +2861,64 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
 
     if (mapInstance.isStyleLoaded()) {
-      renderRouteLayers();
-    } else {
-      console.log('[ROUTE-RENDER] Style not loaded yet - will render on styledata event');
+      renderRouteLayersRef.current?.();
     }
     
     const safetyRenderTimer = setTimeout(() => {
-      if (map.current && map.current.isStyleLoaded() && currentRoute?.routePath && currentRoute.routePath.length >= 2) {
-        const hasRouteLayer = map.current.getLayer('route-line');
-        const hasRouteSource = map.current.getSource('route');
-        if (!hasRouteLayer || !hasRouteSource) {
-          console.log('[ROUTE-RENDER] Safety re-render: route layers missing after 1.5s - rebuilding');
-          renderRouteLayers();
+      if (!map.current || !map.current.isStyleLoaded()) return;
+      const hasRouteLayer = map.current.getLayer('route-line');
+      const hasRouteSource = map.current.getSource('route');
+      const hasData = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
+      if ((!hasRouteLayer || !hasRouteSource) && hasData) {
+        ensureRouteLayersRef.current?.();
+        if (cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
+        } else {
+          renderRouteLayersRef.current?.();
         }
       }
     }, 1500);
 
     // CRITICAL: Listen CONTINUOUSLY for styledata events to re-render route after view mode changes
-    // This ensures the route layer persists when switching roads ⇄ satellite or during zoom
+    // Uses refs (not closures) so the handler always has the latest render functions regardless
+    // of when React last re-ran this effect.
     const handleStyleChange = () => {
-      // If no cached data but we have a route, render it now (initial load case)
-      if (!cachedRouteGeoJsonRef.current && currentRoute?.routePath) {
-        console.log('[ROUTE-STYLE] No cached data but route exists - calling renderRouteLayers');
-        setTimeout(() => {
-          if (mapInstance.isStyleLoaded()) {
-            renderRouteLayers();
-          }
-        }, 100);
-        return;
-      }
-      
-      // Use cached data for rebuilding - don't depend on React state which may be stale
-      if (!cachedRouteGeoJsonRef.current) {
-        console.log('[ROUTE-STYLE] No cached route data during style change');
-        return;
-      }
-      
-      // Small delay to ensure style has fully loaded all layers
       setTimeout(() => {
-        if (mapInstance.isStyleLoaded()) {
-          const source = mapInstance.getSource('route') as maplibregl.GeoJSONSource;
-          
-          // If source is missing, rebuild everything from cache
-          if (!source) {
-            console.log('[ROUTE-STYLE] Route source missing after style change - rebuilding from cache');
-            ensureRouteLayers();
-          } else if (cachedRouteGeoJsonRef.current) {
-            // Source exists - always refresh data from cache and move layers to top
-            console.log('[ROUTE-STYLE] Refreshing route data from cache after style change');
-            try {
-              source.setData(cachedRouteGeoJsonRef.current);
-              if (mapInstance.getLayer('route-outline')) {
-                mapInstance.moveLayer('route-outline');
-              }
-              if (mapInstance.getLayer('route-line')) {
-                mapInstance.moveLayer('route-line');
-              }
-              // TRAFFIC FIX: Always move traffic overlay above route line
-              if (mapInstance.getLayer('route-traffic-overlay-layer')) {
-                mapInstance.moveLayer('route-traffic-overlay-layer');
-              }
-            } catch (e) {
-              // Layers might not exist, rebuild them
-              ensureRouteLayers();
-            }
+        if (!mapInstance.isStyleLoaded()) return;
+
+        const hasCached = !!cachedRouteGeoJsonRef.current;
+        const hasPersistent = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
+        if (!hasCached && !hasPersistent) return;
+
+        const source = mapInstance.getSource('route') as maplibregl.GeoJSONSource;
+
+        if (!source) {
+          // Source was wiped by the style reload - rebuild everything from refs
+          ensureRouteLayersRef.current?.();
+          if (cachedRouteGeoJsonRef.current) {
+            const rebuilt = mapInstance.getSource('route') as maplibregl.GeoJSONSource;
+            try { rebuilt?.setData?.(cachedRouteGeoJsonRef.current); } catch (_) {}
+          } else {
+            renderRouteLayersRef.current?.();
           }
-          
-          // CRITICAL: Always re-render to apply latest GPS-based route shortening during navigation
-          // This ensures the visible line matches the current route segment
-          // HEALTH & SAFETY: Use persistent cache if currentRoute is temporarily null
-          if (currentRoute?.routePath || (isNavigating && persistentNavRouteRef.current)) {
-            console.log('[ROUTE-STYLE] Re-rendering route with latest data after style change');
-            renderRouteLayers();
+        } else {
+          // Source still exists - refresh data and bring layers to top
+          try {
+            if (cachedRouteGeoJsonRef.current) {
+              source.setData(cachedRouteGeoJsonRef.current);
+            }
+            if (mapInstance.getLayer('route-outline')) mapInstance.moveLayer('route-outline');
+            if (mapInstance.getLayer('route-line')) mapInstance.moveLayer('route-line');
+            if (mapInstance.getLayer('route-traffic-overlay-layer')) mapInstance.moveLayer('route-traffic-overlay-layer');
+          } catch (_) {
+            ensureRouteLayersRef.current?.();
+            renderRouteLayersRef.current?.();
           }
         }
-      }, 75); // Fast delay - style should be ready quickly
+      }, 75);
     };
 
     mapInstance.on('styledata', handleStyleChange);
@@ -2944,7 +2927,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       clearTimeout(safetyRenderTimer);
       mapInstance.off('styledata', handleStyleChange);
     };
-  }, [currentRoute, isNavigating, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
+  }, [currentRoute, isNavigating, isLoaded, removeRouteLayers]);
 
   // CRITICAL: Restore route layers when navigation state changes
   // This ensures the blue polyline stays visible when switching to/from navigation mode
@@ -2964,105 +2947,118 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const hasRouteLayer = map.current.getLayer('route-line');
         const hasRouteSource = map.current.getSource('route');
         if (!hasRouteLayer || !hasRouteSource) {
-          ensureRouteLayers();
+          ensureRouteLayersRef.current?.();
         }
-        renderRouteLayers();
+        if (cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
+        } else {
+          renderRouteLayersRef.current?.();
+        }
         try {
-          if (map.current.getLayer('route-outline')) {
-            map.current.moveLayer('route-outline');
-          }
-          if (map.current.getLayer('route-line')) {
-            map.current.moveLayer('route-line');
-          }
-        } catch (e) {}
+          if (map.current.getLayer('route-outline')) map.current.moveLayer('route-outline');
+          if (map.current.getLayer('route-line')) map.current.moveLayer('route-line');
+        } catch (_) {}
       };
       
       renderNow();
       setTimeout(() => renderNow(), 100);
       setTimeout(() => renderNow(), 300);
     }
-  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
+  }, [isNavigating, isLoaded, currentRoute]);
 
   useEffect(() => {
     if (!isNavigating || !isLoaded || !map.current) return;
     
-    let consecutiveFailures = 0;
-    
+    // Restore route source+layers from refs — never uses stale React-state closures
     const rebuildRouteLayers = () => {
-      if (!map.current || !map.current.isStyleLoaded()) return;
+      if (!map.current || !map.current.isStyleLoaded()) return false;
       const hasSource = !!map.current.getSource('route');
       const hasLayer = !!map.current.getLayer('route-line');
-      const hasRoute = !!(currentRoute?.routePath?.length && currentRoute.routePath.length >= 2);
-      const hasCache = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
+      const hasData = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
       
-      if ((!hasSource || !hasLayer) && (hasRoute || hasCache)) {
-        ensureRouteLayers();
-        renderRouteLayers();
-        return true;
-      }
-
-      return false;
-    };
-    
-    const healthCheckInterval = setInterval(() => {
-      if (!map.current) return;
-      
-      if (!map.current.isStyleLoaded()) {
-        consecutiveFailures++;
-        if (consecutiveFailures > 3) {
-          console.log('[ROUTE-HEALTH] Style not loaded after multiple checks');
-        }
-        return;
-      }
-      
-      if (rebuildRouteLayers()) {
-        consecutiveFailures = 0;
-      } else {
-        consecutiveFailures = 0;
-        // Task 4: Nuclear safety net — re-apply cached GeoJSON data to the source every
-        // health-check cycle during navigation. Guards against the map source silently
-        // losing its data (WebGL context issues, style reloads, reroute race conditions).
-        if (cachedRouteGeoJsonRef.current && map.current.getSource('route')) {
+      if ((!hasSource || !hasLayer) && hasData) {
+        ensureRouteLayersRef.current?.();
+        if (cachedRouteGeoJsonRef.current) {
           try {
             const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
-            if (src && src.setData) {
-              src.setData(cachedRouteGeoJsonRef.current);
-            }
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
+        } else {
+          renderRouteLayersRef.current?.();
+        }
+        return true;
+      }
+      return false;
+    };
+
+    // Health check every 800ms — fast enough to recover before user notices
+    const healthCheckInterval = setInterval(() => {
+      if (!map.current || !map.current.isStyleLoaded()) return;
+      
+      if (!rebuildRouteLayers()) {
+        // Layers exist — silently reapply cached GeoJSON data in case the source lost its data
+        // without removing the layer (can happen on WebGL context recovery, tile worker crashes)
+        if (cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
           } catch (_) {}
         }
       }
-    }, 3000);
+    }, 800);
+
+    // ALWAYS-ON GUARDIAN: MapLibre render event fires every animation frame (~60fps).
+    // Throttled to once per 800ms. This is the last line of defence — catches ANY scenario
+    // where the route line disappears (style reload, WebGL context loss, tile worker crash,
+    // memory pressure) and restores it within one 800ms window.
+    let lastGuardCheck = 0;
+    const renderGuard = () => {
+      const now = Date.now();
+      if (now - lastGuardCheck < 800) return;
+      lastGuardCheck = now;
+      if (!map.current || !map.current.isStyleLoaded()) return;
+      rebuildRouteLayers();
+    };
+    map.current.on('render', renderGuard);
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[ROUTE-HEALTH] App returned to foreground - checking route layers');
         setTimeout(() => {
-          if (rebuildRouteLayers()) {
-            console.log('[ROUTE-HEALTH] Route layers rebuilt after foreground return');
-          } else {
-            renderRouteLayers();
-            console.log('[ROUTE-HEALTH] Route layers OK - refreshed after foreground return');
+          if (!rebuildRouteLayers() && cachedRouteGeoJsonRef.current) {
+            try {
+              const src = map.current?.getSource('route') as maplibregl.GeoJSONSource;
+              src?.setData?.(cachedRouteGeoJsonRef.current);
+            } catch (_) {}
           }
         }, 300);
       }
     };
     
     const handleOnline = () => {
-      console.log('[ROUTE-HEALTH] Network restored - checking route layers');
       setTimeout(() => {
-        if (rebuildRouteLayers()) {
-          console.log('[ROUTE-HEALTH] Route layers rebuilt after network restore');
-        } else {
-          renderRouteLayers();
+        if (!rebuildRouteLayers() && cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current?.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
         }
       }, 500);
     };
     
     const handleWebGLContextRestored = () => {
-      console.log('[ROUTE-HEALTH] WebGL context restored - rebuilding route layers');
       setTimeout(() => {
-        ensureRouteLayers();
-        renderRouteLayers();
+        ensureRouteLayersRef.current?.();
+        if (cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current?.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
+        } else {
+          renderRouteLayersRef.current?.();
+        }
       }, 200);
     };
     
@@ -3074,15 +3070,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
     }
     
+    const mapRef = map.current;
     return () => {
       clearInterval(healthCheckInterval);
+      mapRef.off('render', renderGuard);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
       if (canvas) {
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       }
     };
-  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers, removeRouteLayers]);
+  }, [isNavigating, isLoaded]);
 
   const pendingRouteRafRef = useRef<number | null>(null);
   useEffect(() => {
