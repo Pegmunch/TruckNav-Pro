@@ -2353,6 +2353,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const layersOnTopRef = useRef(false);
   const lastClipIndexRef = useRef(-1);
   const lastProcessedRerouteTimestampRef = useRef<number | null>(null);
+  const lastClearedRerouteTimestampRef = useRef<number | null>(null);
 
   const updateRouteClipping = useCallback(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
@@ -2773,14 +2774,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const hasSource = mapInstance.getSource('route');
         
         if (!hasLayer || !hasSource) {
-          console.warn('[ROUTE-HEALTH] Route line or source missing - triggering restoration');
-          renderRouteLayersRef.current?.();
-        } else if (isNavigating && !cachedRouteGeoJsonRef.current) {
-          // FIX ROOT CAUSE 4: Source+layer exist but data was cleared - force full re-render
-          console.warn('[ROUTE-HEALTH] Route source has no cached data during navigation - forcing re-render');
-          processedRouteCoordsRef.current = null;
-          processedRouteSourceRef.current = null;
-          lastClipIndexRef.current = -1;
           renderRouteLayersRef.current?.();
         }
       } else if (!isNavigating) {
@@ -2814,11 +2807,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       pendingStyleListenerRef.current = null;
     }
 
-    console.log('[ROUTE-RENDER] Route manager - currentRoute:', !!currentRoute, 'isNavigating:', isNavigating, 'styleLoaded:', mapInstance.isStyleLoaded());
 
-    // Detect reroute: clear all caches to force fresh rendering of new route
-    if (currentRoute && (currentRoute as any)._rerouteTimestamp) {
-      console.log('[ROUTE-RENDER] 🔄 Reroute detected - clearing all rendering caches for clean re-render');
+    // Detect reroute: clear caches ONCE per unique reroute timestamp to force fresh rendering.
+    // Guarded by lastClearedRerouteTimestampRef so subsequent re-renders of the same route
+    // don't wipe the cache that updateRouteData already wrote.
+    const rerouteTs = (currentRoute as any)?._rerouteTimestamp as number | undefined;
+    if (currentRoute && rerouteTs && rerouteTs !== lastClearedRerouteTimestampRef.current) {
+      lastClearedRerouteTimestampRef.current = rerouteTs;
       processedRouteSourceRef.current = null;
       processedRouteCoordsRef.current = null;
       cachedRouteGeoJsonRef.current = null;
@@ -2829,7 +2824,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // This ensures we NEVER lose the route during reroutes or state transitions
     if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
       persistentNavRouteRef.current = [...currentRoute.routePath];
-      console.log('[ROUTE-RENDER] ✅ Cached', currentRoute.routePath.length, 'coordinates for persistent navigation');
     }
     
     // Track navigation state transitions
@@ -2964,8 +2958,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // When navigation starts, ensure route layers exist AND re-render the route
     if (isNavigating && hasRouteData) {
-      console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
-      console.log('[ROUTE-NAV-STATE] Route has', routeCoords!.length, 'coordinates (from', currentRoute?.routePath ? 'currentRoute' : 'persistentCache', ')');
       
       const renderNow = () => {
         if (!map.current || !map.current.isStyleLoaded()) return;
@@ -3004,19 +2996,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const hasCache = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
       
       if ((!hasSource || !hasLayer) && (hasRoute || hasCache)) {
-        console.log('[ROUTE-HEALTH] Route layers missing - rebuilding');
         ensureRouteLayers();
-        renderRouteLayers();
-        return true;
-      }
-
-      // Task 2: Verify source DATA validity, not just layer existence.
-      // If source+layer exist but our cached GeoJSON is null, the source data was lost
-      // (can happen after WebGL context restore, style reload, or reroute race condition).
-      if (hasSource && hasLayer && !cachedRouteGeoJsonRef.current && (hasRoute || hasCache)) {
-        console.log('[ROUTE-HEALTH] Source/layer present but GeoJSON data is null — refreshing data');
-        processedRouteCoordsRef.current = null;
-        processedRouteSourceRef.current = null;
         renderRouteLayers();
         return true;
       }
@@ -3086,34 +3066,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }, 200);
     };
     
-    const handleRerouteComplete = () => {
-      console.log('[ROUTE-HEALTH] Reroute complete event received - clearing caches only (React useEffect handles re-render)');
-      processedRouteSourceRef.current = null;
-      processedRouteCoordsRef.current = null;
-      cachedRouteGeoJsonRef.current = null;
-      lastNearestIndexRef.current = 0;
-      lastClipIndexRef.current = -1;
-    };
-    
-    const handleForceRouteRender = () => {
-      console.log('[ROUTE-HEALTH] Force route render event - rebuilding route layers immediately');
-      processedRouteSourceRef.current = null;
-      processedRouteCoordsRef.current = null;
-      cachedRouteGeoJsonRef.current = null;
-      lastNearestIndexRef.current = 0;
-      lastClipIndexRef.current = -1;
-      if (map.current && map.current.isStyleLoaded()) {
-        // FIX ROOT CAUSE 3 & 5: Use refs (always current) instead of closure-captured functions
-        // which may reference the old currentRoute before React re-renders with the new route
-        ensureRouteLayersRef.current?.();
-        renderRouteLayersRef.current?.();
-      }
-    };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
-    window.addEventListener('trucknav-reroute-complete', handleRerouteComplete);
-    window.addEventListener('trucknav-force-route-render', handleForceRouteRender);
     
     const canvas = map.current.getCanvas();
     if (canvas) {
@@ -3124,8 +3078,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       clearInterval(healthCheckInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
-      window.removeEventListener('trucknav-reroute-complete', handleRerouteComplete);
-      window.removeEventListener('trucknav-force-route-render', handleForceRouteRender);
       if (canvas) {
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       }
@@ -3148,8 +3100,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const hasSource = !!map.current.getSource('route');
       const hasLayer = !!map.current.getLayer('route-line');
       if (!hasSource || !hasLayer) {
-        ensureRouteLayers();
-        renderRouteLayers();
+        ensureRouteLayersRef.current?.();
+        renderRouteLayersRef.current?.();
       } else {
         updateRouteClipping();
       }
@@ -3161,7 +3113,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         pendingRouteRafRef.current = null;
       }
     };
-  }, [isNavigating, isLoaded, gpsPosition, ensureRouteLayers, renderRouteLayers, updateRouteClipping]);
+  }, [isNavigating, isLoaded, gpsPosition, updateRouteClipping]);
 
   // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
   // This ensures the blue line updates when user selects a different route
@@ -3207,10 +3159,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
     
     if (isRouteChanged && map.current.isStyleLoaded()) {
-      console.log('[ROUTE-CHANGE] Route changed detected - replacing old route with new route');
-      console.log(`[ROUTE-CHANGE] Previous ID: ${previousRouteIdRef.current}, New ID: ${currentRouteId}`);
-      console.log(`[ROUTE-CHANGE] Previous length: ${previousRoutePathLengthRef.current}, New length: ${currentPathLength}`);
-      console.log(`[ROUTE-CHANGE] Start coord changed: ${firstCoordChanged}, isNewReroute: ${isNewReroute}`);
       
       // Update refs immediately
       previousRouteIdRef.current = currentRouteId;
@@ -3277,7 +3225,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const routeSource = map.current.getSource('route') as maplibregl.GeoJSONSource;
         
         if (routeSource) {
-          console.log('[ROUTE-CHANGE] Updating route source + clipping refs with', routeCoordinates.length, 'coords');
           routeSource.setData(geoJsonData);
           cachedRouteGeoJsonRef.current = geoJsonData;
           
@@ -3287,27 +3234,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             if (map.current.getLayer('route-traffic-overlay-layer')) map.current.moveLayer('route-traffic-overlay-layer');
           } catch (e) {}
         } else {
-          console.log('[ROUTE-CHANGE] No existing source - full render');
           renderRouteLayers();
         }
       };
       
       updateRouteData(snapshotPath);
       
-      // First retry at 100ms (handles normal React re-render commit timing)
+      // Retry at 250ms — gives slow mobile devices time to commit the React state update
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
           updateRouteData(snapshotPath);
         }
-      }, 100);
+      }, 250);
 
-      // Second retry at 350ms as a safety net for slow devices or
-      // React concurrent-mode batching that defers the commit past the 100ms window.
+      // Safety net at 600ms for very slow devices or heavily loaded UI threads
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
           updateRouteData(snapshotPath);
         }
-      }, 350);
+      }, 600);
     } else if (!isRouteChanged) {
       // Same route - just update refs
       previousRouteIdRef.current = currentRouteId;

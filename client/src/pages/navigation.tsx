@@ -587,19 +587,7 @@ function NavigationPageContent() {
     hasShownDestinationDialogRef.current = false;
     setShowDestinationReached(false);
     
-    window.dispatchEvent(new CustomEvent('trucknav-reroute-complete', { 
-      detail: { routePathLength: newRoute.routePath?.length || 0 }
-    }));
-    
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('trucknav-force-route-render', { 
-        detail: { routePathLength: newRoute.routePath?.length || 0 }
-      }));
-      console.log('[AUTO-REROUTE] === Route rendered on map ===');
-    }, 100);
-    
     navigationVoice.announceReroute();
-    console.log('[AUTO-REROUTE] === SEAMLESS REROUTE COMPLETE - Voice announced, route rendered ===');
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
