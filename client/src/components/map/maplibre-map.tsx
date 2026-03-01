@@ -2978,7 +2978,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const hasSource = !!map.current.getSource('route');
       const hasLayer = !!map.current.getLayer('route-line');
       const hasData = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
-      
+
+      // TASK 2: Structure missing — rebuild from scratch
       if ((!hasSource || !hasLayer) && hasData) {
         ensureRouteLayersRef.current?.();
         if (cachedRouteGeoJsonRef.current) {
@@ -2991,6 +2992,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
         return true;
       }
+
+      // TASK 2: Structure exists but GeoJSON data silently lost (WebGL context recovery,
+      // tile-worker crash, etc.) — force a full re-render from persistentNavRouteRef
+      if (hasSource && hasLayer && !cachedRouteGeoJsonRef.current && hasData) {
+        renderRouteLayersRef.current?.();
+        return true;
+      }
+
       return false;
     };
 
@@ -3009,6 +3018,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       }
     }, 800);
+
+    // TASK 4: Nuclear safety net — forced full source data push every 5 s.
+    // Catches any silent data-loss scenario not covered by the 800ms check
+    // (e.g., driver keeps phone in pocket, display sleeps briefly, worker GC).
+    const forceRefreshInterval = setInterval(() => {
+      if (!map.current || !map.current.isStyleLoaded()) return;
+      if (cachedRouteGeoJsonRef.current) {
+        try {
+          const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+          src?.setData?.(cachedRouteGeoJsonRef.current);
+        } catch (_) {}
+      } else if (persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
+        // No cached GeoJSON yet — trigger a full layer render from the persistent path
+        renderRouteLayersRef.current?.();
+      }
+    }, 5000);
 
     // ALWAYS-ON GUARDIAN: MapLibre render event fires every animation frame (~60fps).
     // Throttled to once per 800ms. This is the last line of defence — catches ANY scenario
@@ -3073,6 +3098,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const mapRef = map.current;
     return () => {
       clearInterval(healthCheckInterval);
+      clearInterval(forceRefreshInterval);
       mapRef.off('render', renderGuard);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);

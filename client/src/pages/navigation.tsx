@@ -571,9 +571,22 @@ function NavigationPageContent() {
     distanceTravelledRef.current = 0;
     cachedCumulativeDistancesRef.current = { routeId: '', distances: [], totalLength: 0 };
     
-    const routeWithTimestamp = { ...newRoute, _rerouteTimestamp: Date.now() };
+    const rerouteTs = Date.now();
+    const routeWithTimestamp = { ...newRoute, _rerouteTimestamp: rerouteTs };
     setCurrentRoute(routeWithTimestamp);
-    
+
+    // TASK 3: Strip the timestamp after all map retries have completed (600ms max retry
+    // window + safety margin). This prevents a component remount from seeing a stale
+    // timestamp and re-triggering cache-clear logic on an already-rendered route.
+    setTimeout(() => {
+      setCurrentRoute(prev => {
+        if (!prev || (prev as any)._rerouteTimestamp !== rerouteTs) return prev;
+        const cleaned = { ...prev } as any;
+        delete cleaned._rerouteTimestamp;
+        return cleaned;
+      });
+    }, 1500);
+
     if (newRoute.distance) {
       setDynamicDistanceRemaining(newRoute.distance * 1609.344);
     }
@@ -5336,6 +5349,16 @@ function NavigationPageContent() {
                       />
                     </div>
 
+                    {/* Green Gear Button - Desktop Preview - top right */}
+                    <button
+                      onClick={() => setShowVehicleSettings(true)}
+                      className="fixed flex items-center justify-center w-11 h-11 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full shadow-lg transition-colors pointer-events-auto"
+                      style={{ top: '60px', right: '16px', zIndex: 500002 }}
+                      title="Settings"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
+
                     {/* Right Action Stack - Map controls */}
                     <div className="fixed flex flex-col gap-1 pointer-events-auto"
                       style={{
@@ -5462,41 +5485,34 @@ function NavigationPageContent() {
                       </div>
                     </div>
 
-                    {/* Preview/Start action buttons - positioned above speedometer */}
+                    {/* Preview action button only - Start is handled by GO crescent on speedometer */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(80px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
-                      <div className="flex items-center gap-1.5">
+                      style={{ bottom: 'calc(110px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      <div className="flex items-center gap-2">
                         <Button
                           onClick={handlePreviewRoute}
                           disabled={isFlyByInProgress}
                           variant="outline"
-                          className="h-8 px-4 text-xs font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
+                          className="h-10 px-5 text-sm font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
                           data-testid="button-preview-route-desktop"
                         >
-                          <Eye className="w-3.5 h-3.5 mr-1.5" />
+                          <Eye className="w-4 h-4 mr-2" />
                           Preview
-                        </Button>
-                        <Button
-                          onClick={handleStartNavigation}
-                          className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg"
-                          data-testid="button-start-navigation-desktop"
-                        >
-                          <Navigation className="w-3.5 h-3.5 mr-1.5" />
-                          Start
                         </Button>
                       </div>
                     </div>
 
-                    {/* Speedometer HUD - at bottom */}
+                    {/* Speedometer HUD - at bottom, scaled up for desktop */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(2px + var(--safe-area-bottom, 0px))', zIndex: 500000 }}>
+                      style={{ bottom: 'calc(2px + var(--safe-area-bottom, 0px))', zIndex: 500000, transform: 'translateX(-50%) scale(1.45)', transformOrigin: 'bottom center' }}>
                       <SpeedometerHUD
                         currentSpeed={gpsData?.position?.speed || 0}
                         speedLimit={currentSpeedLimit || undefined}
                         roadInfo={roadInfo}
                         isNavigating={false}
-                        showGoButton={false}
+                        showGoButton={true}
                         showStopButton={false}
+                        onStartNavigation={handleStartNavigation}
                         timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0) * 60}
                         distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
                         vehicleType={vehicleType}
@@ -5703,13 +5719,13 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Info Boxes - Distance, ETA, Arrival during navigation - positioned above white mask (110px) */}
+                    {/* Info Boxes + Gear Button - Distance, ETA, Arrival during navigation */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(120px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <RouteIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                      style={{ bottom: 'calc(130px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl shadow-lg w-[120px]">
+                          <RouteIcon className="w-5 h-5 flex-shrink-0" />
+                          <span className="font-bold text-base">
                             {(() => {
                               const distanceMeters = dynamicDistanceRemaining > 0 
                                 ? dynamicDistanceRemaining 
@@ -5720,9 +5736,9 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                        <div className="flex items-center justify-center gap-2 bg-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg w-[120px]">
+                          <Clock className="w-5 h-5 flex-shrink-0" />
+                          <span className="font-bold text-base">
                             {(() => {
                               const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
                               const hours = Math.floor(etaMin / 60);
@@ -5732,15 +5748,22 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                        <div className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl shadow-lg w-[120px]">
+                          <Clock className="w-5 h-5 flex-shrink-0" />
+                          <span className="font-bold text-base">
                             {(() => {
                               const etaMin = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0);
                               return new Date(Date.now() + etaMin * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
                             })()}
                           </span>
                         </div>
+                        <button
+                          onClick={() => setShowVehicleSettings(true)}
+                          className="flex items-center justify-center w-11 h-11 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full shadow-lg transition-colors"
+                          title="Settings"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
 
@@ -5768,12 +5791,12 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Route Mask - Solid white mask covering bottom area behind speedometer */}
+                    {/* Route Mask - Solid white mask covering bottom area behind speedometer (taller for scaled HUD) */}
                     <div 
                       className="fixed left-0 right-0 pointer-events-none"
                       style={{
                         bottom: '0px',
-                        height: 'calc(70px + var(--safe-area-bottom, 0px))',
+                        height: 'calc(100px + var(--safe-area-bottom, 0px))',
                         background: 'white',
                         zIndex: 499998
                       }}
@@ -5782,20 +5805,22 @@ function NavigationPageContent() {
                     <div 
                       className="fixed left-0 right-0 pointer-events-none"
                       style={{
-                        bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        height: '40px',
+                        bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+                        height: '50px',
                         background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)',
                         zIndex: 499997
                       }}
                       data-testid="route-mask-gradient"
                     />
 
-                    {/* Professional Oval Speedometer HUD */}
+                    {/* Professional Oval Speedometer HUD - scaled up for desktop readability */}
                     <div 
-                      className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      className="fixed left-1/2 pointer-events-auto"
                       style={{
                         bottom: 'calc(0px + var(--safe-area-bottom, 0px))',
-                        zIndex: 500000
+                        zIndex: 500000,
+                        transform: 'translateX(-50%) scale(1.45)',
+                        transformOrigin: 'bottom center'
                       }}
                       data-testid="speedometer-hud-navigate"
                     >
