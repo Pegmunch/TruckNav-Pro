@@ -79,7 +79,6 @@ export function useRouteTrafficOverlay(
     }
 
     const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY;
-    console.log('[ROUTE-TRAFFIC] TomTom API key present:', !!TOMTOM_API_KEY);
     if (!TOMTOM_API_KEY) {
       console.warn('[ROUTE-TRAFFIC] No TomTom API key found - trying HERE fallback only');
     }
