@@ -167,14 +167,10 @@ class AudioBluetoothInit {
         await ctx.resume();
       }
 
-      // Tell iOS this is playback (not voip/default) — allows ducking
-      const nav = navigator as any;
-      if (nav.audioSession) {
-        try {
-          nav.audioSession.type = 'playback';
-          console.log('[AudioBluetooth] Set navigator.audioSession.type = playback');
-        } catch (_) {}
-      }
+      // NOTE: Do NOT set navigator.audioSession.type = 'playback' here.
+      // 'playback' tells iOS this is a music player, which blocks speech synthesis
+      // from sharing the audio route. The silent audio loop below is sufficient
+      // to claim the Bluetooth A2DP channel while leaving speech synthesis working.
 
       // Play the silent audio loop — this is what holds the media session
       if (this.silentAudio) {

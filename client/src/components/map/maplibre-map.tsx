@@ -612,8 +612,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
       } else {
         console.log(`[3D-TOGGLE] Applying TILTED view directly`);
+        const togglePitch = preferencesRef.current.mapViewMode === 'satellite' ? 60 : 45;
         const padding = isNavigating ? { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 0 };
-        map.current.easeTo({ pitch: 60, bearing: heading, padding, duration: 300 });
+        map.current.easeTo({ pitch: togglePitch, bearing: heading, padding, duration: 300 });
       }
     },
     is3DMode: () => viewStateRef.current === 'tilted',
@@ -3296,7 +3297,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
         // Guard: if a newer reroute has already been processed, skip stale retries
         if (snapshotRerouteTs && lastProcessedRerouteTimestampRef.current !== snapshotRerouteTs &&
-            lastProcessedRerouteTimestampRef.current > snapshotRerouteTs) {
+            (lastProcessedRerouteTimestampRef.current ?? 0) > snapshotRerouteTs) {
           console.log('[ROUTE-CHANGE] Skipping stale retry — newer reroute already processed');
           return;
         }
@@ -4395,7 +4396,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[3D-NAV] 🚀 INITIAL 3D NAVIGATION VIEW ACTIVATED');
       console.log(`[3D-NAV] Center: ${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`);
       console.log(`[3D-NAV] Initial bearing: ${useBearing.toFixed(1)}°`);
-      console.log(`[3D-NAV] Pitch: 60° | Zoom: 17`);
+      const initNavPitch = preferencesRef.current.mapViewMode === 'satellite' ? 60 : 45;
+      console.log(`[3D-NAV] Pitch: ${initNavPitch}° | Zoom: 17`);
       console.log('[3D-NAV] ==========================================');
       
       userPreferredZoomRef.current = 17;
@@ -4407,7 +4409,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         mapInstance.easeTo({
           center: [centerLng, centerLat],
           zoom: 17,
-          pitch: 60,
+          pitch: initNavPitch,
           bearing: useBearing,
           padding: {
             top: Math.round(containerHeight * 0.65),
@@ -4600,7 +4602,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             const currentViewState = viewStateRef.current;
-            const targetPitch = currentViewState === 'tilted' ? 60 : 0;
+            // Road map tiles (256px raster) get severely distorted at 60° pitch —
+            // using 45° gives a good 3D feel while keeping tiles sharp.
+            // Satellite imagery is already photo-blurred so 60° looks fine.
+            const isSatelliteMode = preferencesRef.current.mapViewMode === 'satellite';
+            const targetPitch = currentViewState === 'tilted' ? (isSatelliteMode ? 60 : 45) : 0;
             const targetBearing = currentViewState === 'plan' ? 0 : bearing;
 
             // In tilted/normal mode: rotate map with GPS heading so route appears vertical
@@ -5042,8 +5048,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       map.current.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 300 });
     } else {
       console.log(`[3D-TOGGLE] Applying TILTED view directly`);
+      const togglePitch2 = preferencesRef.current.mapViewMode === 'satellite' ? 60 : 45;
       const padding = isNavigating ? { top: Math.round(containerHeight * 0.65), bottom: 0, left: 0, right: 0 } : { top: 0, bottom: 0, left: 0, right: 0 };
-      map.current.easeTo({ pitch: 60, bearing: heading, padding, duration: 300 });
+      map.current.easeTo({ pitch: togglePitch2, bearing: heading, padding, duration: 300 });
     }
   };
   
