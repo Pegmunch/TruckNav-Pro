@@ -4,3 +4,28 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Test screenshots (automated testing artifacts - do not commit)
+after-*.png
+after_*.png
+before-*.png
+before_*.png
+verify-*.png
+verify_*.png
+zoom*.png
+vehicle_*.png
+screenshot*.png
+
+# Leftover test/session files
+cookies*.txt
+session*.txt
+stress*.txt
+rapid*.txt
+deployment-log.txt
+
+# Temporary test scripts
+clear_localStorage.js
+remove_toasts.js
+remove_toasts.mjs
+test_localStorage.js
+test-poi-search.js
