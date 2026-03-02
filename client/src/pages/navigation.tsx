@@ -3382,6 +3382,7 @@ function NavigationPageContent() {
       return;
     }
 
+    const gpsHeading = gpsData?.position?.smoothedHeading ?? gpsData?.position?.heading;
     const routeData = {
       startLocation: finalStartLoc,
       endLocation: finalEndLoc,
@@ -3390,9 +3391,10 @@ function NavigationPageContent() {
       vehicleProfileId: activeProfileId,
       routePreference: routePreference || 'fastest',
       useCarMode: isCarProfileMode,
+      ...(gpsHeading !== undefined && gpsHeading !== null ? { startHeading: gpsHeading } : {}),
     };
 
-    console.log('[PLAN-ROUTE] Using Car mode:', isCarProfileMode);
+    console.log('[PLAN-ROUTE] Using Car mode:', isCarProfileMode, '| Heading:', gpsHeading ?? 'none');
     calculateRouteMutation.mutate(routeData);
   };
 
@@ -3791,13 +3793,15 @@ function NavigationPageContent() {
       setToCoordinates(finalEndCoords);
       
       // Calculate route
+      const routeHeading = gpsData?.position?.smoothedHeading ?? gpsData?.position?.heading;
       const route = await calculateRouteMutation.mutateAsync({
         startLocation: fromLocation,
         endLocation: toLocation,
         startCoordinates: finalStartCoords,
         endCoordinates: finalEndCoords,
         vehicleProfileId: selectedProfile?.id?.toString(),
-        routePreference: 'fastest'
+        routePreference: 'fastest',
+        ...(routeHeading !== undefined && routeHeading !== null ? { startHeading: routeHeading } : {}),
       });
       
       console.log('[ROUTE-READY] ✅ Route calculated:', route?.id);

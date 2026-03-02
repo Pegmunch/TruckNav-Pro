@@ -332,6 +332,9 @@ export function useAutoReroute(
     console.log('[AUTO-REROUTE] Route preference:', ctx.routePreference);
     console.log('[AUTO-REROUTE] Car mode:', ctx.useCarMode);
     
+    const currentHeading = latestGps!.position!.smoothedHeading ?? latestGps!.position!.heading;
+    console.log('[AUTO-REROUTE] Departure heading:', currentHeading ?? 'none (stationary/unavailable)');
+    
     try {
       const response = await apiRequest('POST', '/api/routes/calculate', {
         startLocation: `${currentLat},${currentLng}`,
@@ -345,6 +348,7 @@ export function useAutoReroute(
         routePreference: ctx.routePreference || 'fastest',
         useCarMode: ctx.useCarMode,
         isReroute: true,
+        ...(currentHeading !== undefined && currentHeading !== null ? { startHeading: currentHeading } : {}),
       });
       
       if (!response.ok) {

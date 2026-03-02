@@ -304,7 +304,8 @@ export const planningRequestSchema = z.object({
   endCoordinates: z.object({
     lat: z.number().min(-90).max(90),
     lng: z.number().min(-180).max(180)
-  }).optional()
+  }).optional(),
+  startHeading: z.number().min(0).max(359).optional()
 });
 
 export const insertTrafficIncidentSchema = createInsertSchema(trafficIncidents).omit({

@@ -235,7 +235,7 @@ async function callTomTomRoutingAPI(
   startCoords: { lat: number; lng: number },
   endCoords: { lat: number; lng: number },
   vehicleProfile: VehicleProfile,
-  options?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string }
+  options?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string; startHeading?: number }
 ): Promise<{
   distance: number;
   duration: number;
@@ -335,6 +335,13 @@ async function callTomTomRoutingAPI(
     
     // Add language preference
     tomtomUrl.searchParams.set('language', 'en-GB');
+    
+    // Add departure heading so TomTom knows which direction the vehicle is already travelling.
+    // This prevents the API from routing backwards down the current road (wrong first turn direction).
+    if (options?.startHeading !== undefined && options.startHeading !== null) {
+      tomtomUrl.searchParams.set('heading', Math.round(options.startHeading).toString());
+      console.log(`[TOMTOM-ROUTING] Departure heading: ${Math.round(options.startHeading)}°`);
+    }
     
     console.log('[TOMTOM-ROUTING] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
     
@@ -725,7 +732,7 @@ async function calculateStrictVehicleClassRoute(
   endCoords: { lat: number; lng: number },
   vehicleProfile: VehicleProfile,
   restrictions: Restriction[],
-  routingOptions?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string }
+  routingOptions?: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string; startHeading?: number }
 ): Promise<{
   distance: number;
   duration: number;
@@ -2443,7 +2450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Routes with strict vehicle class enforcement (open access for route planning)
   app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
-      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference, useCarMode } = req.body;
+      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference, useCarMode, startHeading } = req.body;
       
       if (!startLocation || !endLocation) {
         return res.status(400).json({ message: "Start and end locations are required" });
@@ -2562,7 +2569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Build routing options from route preference
-        const routingOptions: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string } = {};
+        const routingOptions: { avoidTolls?: boolean; avoidFerries?: boolean; routeType?: string; startHeading?: number } = {};
         if (preference === 'eco') {
           routingOptions.routeType = 'eco';
         } else if (preference === 'avoid_tolls') {
@@ -2570,6 +2577,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           routingOptions.routeType = 'fastest';
         } else {
           routingOptions.routeType = 'fastest';
+        }
+        // Pass GPS heading so TomTom knows which direction the vehicle is already travelling.
+        // Prevents routing backwards down the current road (wrong first turn direction).
+        if (startHeading !== undefined && startHeading !== null) {
+          routingOptions.startHeading = startHeading;
+          console.log(`[ROUTE] Departure heading included: ${startHeading}°`);
         }
         console.log(`[ROUTE] Routing options for TomTom:`, routingOptions);
         
