@@ -346,58 +346,29 @@ class AudioBluetoothInit {
   // ─────────────────────────────────────────────────────────────────────────
 
   public startAudioDucking(): void {
+    // Previously this created AudioContext oscillators and changed navigator.audioSession.type,
+    // which caused iOS to renegotiate the AVAudioSession on every utterance — the root cause
+    // of music cutting out every ~1 second. The persistent session silent loop already holds
+    // the Bluetooth A2DP route open, and iOS speech synthesis handles its own ducking
+    // natively through AVAudioSession mixing. No manual oscillators or session type changes
+    // are needed here.
     if (this.isDucking) return;
-    try {
-      const nav = navigator as any;
-      if (nav.audioSession) {
-        try { nav.audioSession.type = 'auto'; } catch (_) {}
-      }
-
-      const ctx = this.getAudioContext();
-      if (ctx) {
-        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-
-        this.duckingGain = ctx.createGain();
-        this.duckingGain.connect(ctx.destination);
-        this.duckingGain.gain.setValueAtTime(0, ctx.currentTime);
-        this.duckingGain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 0.05);
-
-        this.duckingOscillator = ctx.createOscillator();
-        this.duckingOscillator.type = 'sine';
-        this.duckingOscillator.frequency.value = 100;
-        this.duckingOscillator.connect(this.duckingGain);
-        this.duckingOscillator.start();
-
-        this.isDucking = true;
-        console.log('[AudioBluetooth] Audio ducking STARTED');
-      }
-    } catch (error) {
-      console.warn('[AudioBluetooth] Audio ducking start failed:', error);
-    }
+    this.isDucking = true;
+    console.log('[AudioBluetooth] Audio ducking flag set (passive — no session interruption)');
   }
 
   public stopAudioDucking(): void {
     if (!this.isDucking) return;
+    this.isDucking = false;
+    // Clean up any leftover nodes from before this refactor (safety)
     try {
-      const ctx = this.getAudioContext();
-      if (this.duckingGain && ctx) {
-        this.duckingGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-      }
-      setTimeout(() => {
-        try {
-          this.duckingOscillator?.stop();
-          this.duckingOscillator?.disconnect();
-          this.duckingOscillator = null;
-          this.duckingGain?.disconnect();
-          this.duckingGain = null;
-        } catch (_) {}
-        this.isDucking = false;
-        console.log('[AudioBluetooth] Audio ducking STOPPED');
-      }, 400);
-    } catch (error) {
-      this.isDucking = false;
-      console.warn('[AudioBluetooth] Audio ducking stop failed:', error);
-    }
+      this.duckingOscillator?.stop();
+      this.duckingOscillator?.disconnect();
+      this.duckingOscillator = null;
+      this.duckingGain?.disconnect();
+      this.duckingGain = null;
+    } catch (_) {}
+    console.log('[AudioBluetooth] Audio ducking flag cleared');
   }
 
   public isAudioDucking(): boolean {
