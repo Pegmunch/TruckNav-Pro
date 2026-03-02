@@ -30,7 +30,7 @@ class CustomButtonControl implements IControl {
     this.button.className = 'maplibre-custom-control-btn';
     this.button.setAttribute('data-testid', this.options.testId);
     this.button.title = this.options.title;
-    this.button.innerHTML = this.options.icon;
+    this.setSvgIcon(this.button, this.options.icon);
     
     this.button.style.cssText = `
       width: 36px;
@@ -99,9 +99,16 @@ class CustomButtonControl implements IControl {
     }
   }
 
+  private setSvgIcon(target: HTMLElement, svgString: string): void {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svg = doc.documentElement;
+    target.replaceChildren(svg);
+  }
+
   updateIcon(icon: string): void {
     if (this.button) {
-      this.button.innerHTML = icon;
+      this.setSvgIcon(this.button, icon);
     }
   }
 }
