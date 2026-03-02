@@ -235,6 +235,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
   const restrictionViolationsRef = useRef(restrictionViolations);
   const isNavigatingRef = useRef(isNavigating);
+  const isLoadedRef = useRef(isLoaded);
+  isLoadedRef.current = isLoaded;
   const onViewIncidentsRef = useRef(onViewIncidents);
   onViewIncidentsRef.current = onViewIncidents;
   const onToggleTrafficRef = useRef(onToggleTraffic);
@@ -1624,25 +1626,32 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const tileRetryTrackerMap: Record<string, number> = {};
       const MAX_TILE_RETRIES = 3;
       map.current.on('error', (e: any) => {
-        if (e?.error?.message?.includes('tile') || e?.error?.status === 0 || e?.error?.status === 408 || e?.error?.status === 429 || e?.error?.status >= 500) {
+        const isTileError = e?.error?.message?.includes('tile') || e?.error?.status === 0 || e?.error?.status === 408 || e?.error?.status === 429 || e?.error?.status >= 500;
+        if (isTileError) {
           const tileUrl = e?.error?.url || e?.source?.url || '';
-          const retryCount = tileRetryTrackerMap[tileUrl] || 0;
-          if (retryCount < MAX_TILE_RETRIES && tileUrl) {
-            tileRetryTrackerMap[tileUrl] = retryCount + 1;
+          const sourceId = e?.sourceId || '';
+          const retryKey = tileUrl || sourceId || 'generic';
+          const retryCount = tileRetryTrackerMap[retryKey] || 0;
+          if (retryCount < MAX_TILE_RETRIES) {
+            tileRetryTrackerMap[retryKey] = retryCount + 1;
             const delay = (retryCount + 1) * 1500;
-            console.log(`[MAP-TILES] Tile load error, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_TILE_RETRIES})`);
+            console.log(`[MAP-TILES] Tile error on ${sourceId || tileUrl.slice(-40)}, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_TILE_RETRIES})`);
             setTimeout(() => {
-              if (map.current) {
-                const source = map.current.getSource('osm-tiles');
-                if (source && 'reload' in source) {
-                  (source as any).reload();
-                } else {
-                  const center = map.current.getCenter();
-                  map.current.panBy([1, 0], { duration: 0 });
-                  setTimeout(() => {
-                    if (map.current) map.current.panBy([-1, 0], { duration: 0 });
-                  }, 50);
+              if (!map.current) return;
+              // Try to reload the specific source that failed
+              let reloaded = false;
+              if (sourceId) {
+                const src = map.current.getSource(sourceId);
+                if (src && 'reload' in src) {
+                  try { (src as any).reload(); reloaded = true; } catch (_) {}
                 }
+              }
+              // Fallback: nudge the viewport to force tile re-evaluation for all sources
+              if (!reloaded) {
+                map.current.panBy([1, 0], { duration: 0 });
+                setTimeout(() => {
+                  if (map.current) map.current.panBy([-1, 0], { duration: 0 });
+                }, 50);
               }
             }, delay);
           }
@@ -3051,6 +3060,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        // Restore route line
         setTimeout(() => {
           if (!rebuildRouteLayers() && cachedRouteGeoJsonRef.current) {
             try {
@@ -3059,6 +3069,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             } catch (_) {}
           }
         }, 300);
+
+        // Force MapLibre to re-request any tiles that were evicted while the app was in the
+        // background (iOS frequently purges the GPU tile cache under memory pressure).
+        // resize() recalculates the viewport and triggers new tile fetches for empty areas.
+        setTimeout(() => {
+          try {
+            if (map.current) {
+              map.current.resize();
+              // Tiny pan-and-revert nudges the tile engine to re-evaluate coverage
+              map.current.panBy([0, 1], { duration: 0 });
+              setTimeout(() => {
+                if (map.current) map.current.panBy([0, -1], { duration: 0 });
+              }, 60);
+            }
+          } catch (_) {}
+        }, 800);
       }
     };
     
@@ -3107,6 +3133,47 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     };
   }, [isNavigating, isLoaded]);
+
+  // ALWAYS-ON ROUTE GUARDIAN — runs for the full component lifetime, never tears down
+  // Uses only refs so state changes (isLoaded flicker during style transitions) cannot kill it.
+  // This is the last line of defence: if the main health check is momentarily torn down
+  // during a style reload, this 500ms loop will restore the route line independently.
+  useEffect(() => {
+    const guardian = setInterval(() => {
+      if (!isNavigatingRef.current) return;
+      if (!map.current || !map.current.isStyleLoaded()) return;
+
+      const hasSource = !!map.current.getSource('route');
+      const hasLayer = !!map.current.getLayer('route-line');
+      const hasData = !!(persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2);
+
+      if (!hasData) return;
+
+      if (!hasSource || !hasLayer) {
+        // Structure missing — full rebuild
+        ensureRouteLayersRef.current?.();
+        if (cachedRouteGeoJsonRef.current) {
+          try {
+            const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+            src?.setData?.(cachedRouteGeoJsonRef.current);
+          } catch (_) {}
+        } else {
+          renderRouteLayersRef.current?.();
+        }
+      } else if (cachedRouteGeoJsonRef.current) {
+        // Structure exists — silently reapply GeoJSON to catch silent data loss
+        try {
+          const src = map.current.getSource('route') as maplibregl.GeoJSONSource;
+          src?.setData?.(cachedRouteGeoJsonRef.current);
+        } catch (_) {}
+      } else {
+        // Structure exists but no cached GeoJSON — trigger a full re-render
+        renderRouteLayersRef.current?.();
+      }
+    }, 500);
+
+    return () => clearInterval(guardian);
+  }, []);
 
   const pendingRouteRafRef = useRef<number | null>(null);
   useEffect(() => {

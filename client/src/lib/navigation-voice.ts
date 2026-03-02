@@ -579,7 +579,11 @@ export class NavigationVoice {
       }
     }
     
-    this.synthesis.cancel();
+    // NOTE: Do NOT call synthesis.cancel() here. On iOS, cancel() triggers an
+    // AVAudioSession interruption that cuts off Bluetooth audio (music/radio)
+    // *before* the Bluetooth bridge is active, causing a gap of silence.
+    // Cancellation for interrupt/emergency is handled upstream in speak() via
+    // cancelCurrent() which is only called when truly needed.
     
     await audioBluetoothInit.activateBluetoothForSpeech();
     

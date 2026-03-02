@@ -269,10 +269,16 @@ function NavigationPageContent() {
     if (isNavigating) {
       console.log('[WAKE-LOCK] Navigation started - acquiring screen wake lock');
       acquireWakeLock();
+      // Start the persistent audio session FIRST so the Bluetooth A2DP route
+      // is claimed before any voice announcements try to speak.
+      // This prevents music from being cut off when the first turn is announced.
+      audioBluetoothInit.startPersistentSession().catch(() => {});
       audioBluetoothInit.startNavigationKeepAlive();
     } else {
       releaseWakeLock();
       audioBluetoothInit.stopNavigationKeepAlive();
+      // Stop the persistent session only after navigation fully ends.
+      audioBluetoothInit.stopPersistentSession();
     }
   }, [isNavigating, acquireWakeLock, releaseWakeLock]);
   
@@ -2527,6 +2533,44 @@ function NavigationPageContent() {
     }
   }, []);
   
+  // CRASH RECOVERY — on mount, check if the previous session was killed
+  // by iOS (memory pressure, etc.) while navigation was active.
+  // If a recent snapshot exists (< 5 min old), restore the destination and route.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('nav_crash_snapshot');
+      if (!raw) return;
+      const snapshot = JSON.parse(raw);
+      const age = Date.now() - (snapshot.ts || 0);
+      // Only restore if snapshot is fresh (< 5 minutes) and has a route
+      if (age > 5 * 60 * 1000) {
+        localStorage.removeItem('nav_crash_snapshot');
+        return;
+      }
+      if (!snapshot.route?.routePath?.length) return;
+
+      console.log('[CRASH-RECOVERY] Found recent navigation snapshot, restoring...');
+
+      // Restore destination fields
+      if (snapshot.toLocation) setToLocation(snapshot.toLocation);
+      if (snapshot.fromLocation) setFromLocation(snapshot.fromLocation);
+      if (snapshot.toCoordinates) setToCoordinates(snapshot.toCoordinates);
+      if (snapshot.fromCoordinates) setFromCoordinates(snapshot.fromCoordinates);
+
+      // Reconstruct a minimal route object and resume navigation
+      const restoredRoute = snapshot.route as any;
+      setCurrentRoute(restoredRoute);
+      setIsLocalNavActive(true);
+
+      // Clear the snapshot after successful restore so it doesn't re-trigger
+      localStorage.removeItem('nav_crash_snapshot');
+      console.log('[CRASH-RECOVERY] Navigation session restored after crash/reload');
+    } catch (_) {
+      localStorage.removeItem('nav_crash_snapshot');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // PWA/Mobile lifecycle management - PHONE CALL HANDLING
   // Navigation continues running during phone calls and auto-resumes when returning
   useEffect(() => {
@@ -2560,6 +2604,25 @@ function NavigationPageContent() {
           // Save timestamp and keep navigation active
           localStorage.setItem('navigation_paused_timestamp', Date.now().toString());
           localStorage.setItem('navigation_was_active', 'true');
+          // Save full crash recovery snapshot whenever we go to background
+          // so iOS memory pressure kills don't lose navigation state
+          if (isNavigating && currentRoute) {
+            try {
+              const snap = {
+                ts: Date.now(),
+                toLocation, fromLocation, toCoordinates, fromCoordinates,
+                route: {
+                  routePath: currentRoute.routePath,
+                  totalDistance: currentRoute.totalDistance,
+                  totalTime: currentRoute.totalTime,
+                  startLocation: currentRoute.startLocation,
+                  endLocation: currentRoute.endLocation,
+                  endCoordinates: (currentRoute as any).endCoordinates,
+                },
+              };
+              localStorage.setItem('nav_crash_snapshot', JSON.stringify(snap));
+            } catch (_) {}
+          }
         }
       } else if (document.visibilityState === 'visible') {
         // APP RETURNING TO FOREGROUND (after phone call, etc.)
@@ -2608,11 +2671,43 @@ function NavigationPageContent() {
       }
     };
     
+    // Save full navigation state — called on freeze, page hide, and periodically
+    const saveFullNavigationState = () => {
+      if (!isNavigating) return;
+      try {
+        const snapshot = {
+          ts: Date.now(),
+          toLocation,
+          fromLocation,
+          toCoordinates,
+          fromCoordinates,
+          route: currentRoute ? {
+            routePath: currentRoute.routePath,
+            totalDistance: currentRoute.totalDistance,
+            totalTime: currentRoute.totalTime,
+            startLocation: currentRoute.startLocation,
+            endLocation: currentRoute.endLocation,
+            endCoordinates: (currentRoute as any).endCoordinates,
+          } : null,
+        };
+        localStorage.setItem('nav_crash_snapshot', JSON.stringify(snapshot));
+        console.log('[LIFECYCLE] Navigation crash snapshot saved');
+      } catch (_) {}
+    };
+
     // Handle freeze event (modern lifecycle API) - only on actual freeze
     const handleFreeze = () => {
-      console.log('[LIFECYCLE] App frozen - saving state');
+      console.log('[LIFECYCLE] App frozen - saving full navigation state');
       localStorage.setItem('navigation_was_active', isNavigating ? 'true' : 'false');
+      saveFullNavigationState();
     };
+
+    // Periodic state save during navigation (every 10 s) as a belt-and-suspenders
+    // safeguard. If iOS kills the page due to memory pressure, the snapshot will
+    // be at most 10 s old when the app relaunches.
+    const crashSaveInterval = isNavigating
+      ? setInterval(saveFullNavigationState, 10000)
+      : null;
     
     // Handle beforeunload (page closing - NOT phone call)
     const handleBeforeUnload = () => {
@@ -2622,6 +2717,9 @@ function NavigationPageContent() {
       if (navMode === 'navigate') {
         clearNavigationState();
       }
+      // Also clear the crash snapshot on clean close so we don't falsely
+      // offer to restore after a voluntary exit.
+      localStorage.removeItem('nav_crash_snapshot');
     };
     
     // Register all lifecycle listeners
@@ -2636,8 +2734,9 @@ function NavigationPageContent() {
       window.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('freeze', handleFreeze);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (crashSaveInterval) clearInterval(crashSaveInterval);
     };
-  }, [isNavigating, acquireWakeLock]);
+  }, [isNavigating, acquireWakeLock, toLocation, fromLocation, toCoordinates, fromCoordinates, currentRoute]);
 
   // Android hardware back button handling for professional truck navigation
   useAndroidBackHandlerWithPriority(() => {
