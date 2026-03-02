@@ -26,6 +26,9 @@ import { IncidentControl, TrafficControl, TiltControl } from "./maplibre-custom-
 const isValidCoord = (val: unknown): val is number => 
   typeof val === 'number' && !isNaN(val) && isFinite(val);
 
+const escapeHtml = (str: string): string =>
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 const isValidLatLng = (coord: { lat?: unknown; lng?: unknown } | null | undefined): coord is { lat: number; lng: number } =>
   coord !== null && coord !== undefined && isValidCoord(coord.lat) && isValidCoord(coord.lng);
 
@@ -3692,7 +3695,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               font-size: 11px;
               font-weight: 600;
             ">
-              ${incident.severity.toUpperCase()}
+              ${escapeHtml(incident.severity).toUpperCase()}
             </span>
             <span style="
               background: ${incident.source === 'tomtom' || incident.source === 'here' ? '#0284C7' : '#7C3AED'}; 
@@ -3707,8 +3710,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">
             ${iconConfig.label}
           </div>
-          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${incident.description}</div>` : ''}
-          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${incident.roadName}</div>` : ''}
+          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${escapeHtml(incident.description)}</div>` : ''}
+          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${escapeHtml(incident.roadName)}</div>` : ''}
           ${incident.delay ? `<div style="font-size: 12px; color: #DC2626; margin-bottom: 4px;">⏱️ ${Math.round(incident.delay / 60)} min delay</div>` : ''}
           <div style="font-size: 11px; color: #9CA3AF; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
             Reported ${formatTimeAgo(incident.reportedAt)}
@@ -3803,7 +3806,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               font-size: 11px;
               font-weight: 600;
             ">
-              ${(incident.severity || 'low').toUpperCase()}
+              ${escapeHtml(incident.severity || 'low').toUpperCase()}
             </span>
             <span style="
               border: 1px solid #E5E7EB; 
@@ -3816,10 +3819,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             </span>
           </div>
           <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">
-            ${incident.title || iconConfig.label}
+            ${escapeHtml(incident.title || iconConfig.label)}
           </div>
-          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${incident.description}</div>` : ''}
-          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${incident.roadName}</div>` : ''}
+          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${escapeHtml(incident.description)}</div>` : ''}
+          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${escapeHtml(incident.roadName)}</div>` : ''}
           <div style="font-size: 11px; color: #9CA3AF; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
             Reported ${formatTimeAgo(incident.reportedAt || new Date())}
           </div>
