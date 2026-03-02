@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 const PORT = process.env.PORT || '5000';
 
@@ -14,7 +14,7 @@ function killPort(port: string) {
   try {
     // Try to find and kill processes using the port
     // This works on Unix-like systems (including Replit)
-    execSync(`fuser -k ${portNum}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
+    execFileSync('fuser', ['-k', `${portNum}/tcp`], { stdio: 'ignore' });
     console.log(`Cleared port ${portNum}`);
   } catch (error) {
     // Port might already be free
