@@ -1967,7 +1967,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.addSource('protomaps-buildings', {
             type: 'vector',
             tiles: [
-              'https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=1003762824b9687f'
+              `https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=${import.meta.env.VITE_PROTOMAPS_API_KEY}`
             ],
             minzoom: 0,
             maxzoom: 15
