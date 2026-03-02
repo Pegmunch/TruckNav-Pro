@@ -135,7 +135,7 @@ export function buildPOIMarkerElement(
   return `
     <div 
       class="poi-marker ${additionalClasses}" 
-      data-testid="poi-marker-${type}"
+      data-testid="poi-marker-${iconType}"
       role="button"
       tabindex="0"
       style="
@@ -211,7 +211,7 @@ export function buildIncidentMarkerElement(
   return `
     <div 
       class="incident-marker ${additionalClasses}"
-      data-testid="incident-marker-${type}"
+      data-testid="incident-marker-${iconType}"
       role="button"
       tabindex="0"
       style="
