@@ -607,6 +607,15 @@ function NavigationPageContent() {
     setShowDestinationReached(false);
     
     navigationVoice.announceReroute();
+
+    // Immediately snap the map camera to the new route — mirrors pressing GO.
+    // Reset the 3D-init flag so the navigation view fully reinitialises with
+    // the fresh route, then call resetNavigationCamera once React has had one
+    // tick to commit the new currentRoute state.
+    hasInitialized3DRef.current = false;
+    setTimeout(() => {
+      mapRef.current?.resetNavigationCamera();
+    }, 150);
   }, []);
 
   // Fetch traffic prediction when route changes (includes driver behavior adjustments)
