@@ -1,0 +1,442 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Navigazione Professionale per Camion",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Pianificazione Percorso",
+    "vehicle_setup": "Configurazione Veicolo", 
+    "facility_search": "Ricerca Strutture",
+    "live_traffic": "Traffico in Tempo Reale",
+    "restrictions": "Restrizioni",
+    "settings": "Impostazioni"
+  },
+  "vehicle": {
+    "profile": "Profilo Veicolo",
+    "name": "Nome Veicolo",
+    "height": "Altezza",
+    "width": "Larghezza", 
+    "length": "Lunghezza",
+    "weight": "Peso",
+    "axles": "Assi",
+    "hazmat": "Materiali Pericolosi",
+    "feet": "piedi",
+    "inches": "pollici",
+    "tons": "tonnellate",
+    "save": "Salva Profilo"
+  },
+  "route": {
+    "plan": "Pianifica Percorso",
+    "from": "Da",
+    "to": "A",
+    "calculate": "Calcola Percorso",
+    "distance": "Distanza",
+    "duration": "Durata",
+    "restrictions": "Restrizioni Trovate",
+    "alternative": "Percorso Alternativo"
+  },
+  "facilities": {
+    "search": "Cerca Strutture",
+    "truck_stop": "Area di Sosta Camion",
+    "fuel": "Stazione di Servizio",
+    "parking": "Parcheggio",
+    "restaurant": "Ristorante",
+    "hotel": "Hotel",
+    "restrooms": "Servizi Igienici",
+    "showers": "Docce",
+    "near_me": "Vicino a Me"
+  },
+  "legal": {
+    "title": "Accordo Legale Richiesto - TruckNav Pro",
+    "description": "Devi accettare questi termini legali per usare TruckNav Pro",
+    "patent_notice": "TruckNav Pro contiene tecnologia brevettata di proprietà di Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro e Professional Navigation sono marchi registrati",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Tutti i diritti riservati",
+    "accept": "Accetto Questi Termini",
+    "decline": "Non Accetto",
+    "terms_of_service": "Termini di Servizio",
+    "privacy_policy": "Politica sulla Privacy"
+  },
+  "subscription": {
+    "plans": "Piani di Abbonamento",
+    "3month": "Piano 3 Mesi",
+    "6month": "Piano 6 Mesi", 
+    "12month": "Piano 12 Mesi",
+    "lifetime": "Accesso a Vita",
+    "price_3m": "25,99 €",
+    "price_6m": "49,99 €",
+    "price_12m": "99,99 €",
+    "price_lifetime": "200,00 €",
+    "features": "Funzionalità Incluse",
+    "subscribe": "Abbonati Ora"
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "cancel": "Annulla",
+    "continue": "Continua",
+    "back": "Indietro",
+    "next": "Avanti",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "close": "Chiudi",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "language": "Lingua"
+  },
+  "amazon": {
+    "fire_tv": "Ottimizzato per Fire TV",
+    "fire_tablet": "Ottimizzato per Fire Tablet",
+    "silk_browser": "Migliorato per Silk Browser",
+    "voice_support": "Navigazione Vocale Supportata",
+    "remote_navigation": "Navigazione con Telecomando"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continua dritto",
+      "right": "Svolta a destra",
+      "left": "Svolta a sinistra",
+      "slight_right": "Mantieni la destra",
+      "slight_left": "Mantieni la sinistra",
+      "sharp_right": "Svolta bruscamente a destra",
+      "sharp_left": "Svolta bruscamente a sinistra",
+      "u_turn": "Fai inversione",
+      "roundabout_right": "Prendi la rotonda a destra",
+      "roundabout_left": "Prendi la rotonda a sinistra",
+      "exit_right": "Prendi l'uscita a destra",
+      "exit_left": "Prendi l'uscita a sinistra"
+    },
+    "distances": {
+      "now": "{{direction}} adesso",
+      "in_200_feet": "{{direction}} tra 60 metri",
+      "in_500_feet": "Tra 150 metri, {{direction}}",
+      "in_800_feet": "Tra 250 metri, {{direction}}",
+      "in_50_meters": "{{direction}} tra 50 metri",
+      "in_150_meters": "Tra 150 metri, {{direction}}",
+      "in_250_meters": "Tra 250 metri, {{direction}}"
+    },
+    "onto_road": "su {{roadName}}",
+    "announcements": {
+      "recalculating": "Ricalcolo percorso",
+      "arrived": "Sei arrivato a destinazione",
+      "use_lanes": "Usa {{lanes}}",
+      "voice_ready": "La guida vocale è pronta per la navigazione"
+    },
+    "warnings": {
+      "incident_ahead": "Attenzione: {{type}} avanti",
+      "in_miles": "tra {{distance}} miglia",
+      "in_kilometers": "tra {{distance}} chilometri",
+      "speed_warning": "Avviso velocità. Velocità attuale {{speed}} {{unit}}. Limite di velocità {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "ingorgo",
+      "accident": "incidente",
+      "road_hazard": "pericolo stradale",
+      "road_closed": "strada chiusa",
+      "police_ahead": "polizia avanti",
+      "speed_camera": "autovelox",
+      "construction": "lavori in corso",
+      "bad_weather": "maltempo"
+    },
+    "units": {
+      "mph": "miglia all'ora",
+      "kmh": "chilometri all'ora"
+    }
+  },
+  "settings": {
+    "language": "Lingua",
+    "select_language": "Seleziona Lingua",
+    "voice_language": "Lingua Vocale",
+    "language_changed": "Lingua cambiata in {{language}}"
+  },
+  "languages": {
+    "en-US": "Inglese (US)",
+    "en-GB": "Inglese (UK)",
+    "es-ES": "Spagnolo",
+    "de-DE": "Tedesco",
+    "it-IT": "Italiano",
+    "pt-BR": "Portoghese",
+    "pl-PL": "Polacco",
+    "ro-RO": "Rumeno",
+    "zh-CN": "Cinese",
+    "ja-JP": "Giapponese"
+  },
+  "fleet": {
+    "title": "Gestione Flotta",
+    "navigation": "Navigazione",
+    "dashboard": "Dashboard",
+    "vehicles": {
+      "title": "Veicoli",
+      "registry": "Registro Veicoli",
+      "add": "Aggiungi Veicolo",
+      "edit": "Modifica Veicolo",
+      "registration": "Targa",
+      "trailer": "Numero Rimorchio",
+      "make": "Marca",
+      "model": "Modello",
+      "year": "Anno",
+      "vin": "VIN",
+      "type": "Tipo Veicolo",
+      "fuel_type": "Tipo Carburante",
+      "tank_capacity": "Capacità Serbatoio",
+      "mileage": "Chilometraggio",
+      "status": {
+        "title": "Stato",
+        "active": "Attivo",
+        "maintenance": "Manutenzione",
+        "decommissioned": "Dismesso"
+      }
+    },
+    "operators": {
+      "title": "Operatori",
+      "add": "Aggiungi Operatore",
+      "edit": "Modifica Operatore",
+      "name": "Nome",
+      "license_number": "Numero Patente",
+      "license_type": "Tipo Patente",
+      "license_expiry": "Scadenza Patente",
+      "cpc_expiry": "Scadenza CQC",
+      "tacho_card": "Carta Tachigrafica",
+      "employee_id": "ID Dipendente",
+      "status": {
+        "title": "Stato",
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "suspended": "Sospeso"
+      }
+    },
+    "service": {
+      "title": "Registri Manutenzione",
+      "add": "Aggiungi Manutenzione",
+      "type": {
+        "title": "Tipo Servizio",
+        "routine": "Routine",
+        "mot": "Revisione",
+        "repair": "Riparazione",
+        "inspection": "Ispezione",
+        "tacho_calibration": "Calibrazione Tachigrafo"
+      },
+      "date": "Data Servizio",
+      "next_due": "Prossima Scadenza",
+      "mileage": "Km al Servizio",
+      "cost": "Costo",
+      "provider": "Fornitore",
+      "parts": "Parti Sostituite"
+    },
+    "fuel": {
+      "title": "Registri Carburante",
+      "add": "Aggiungi Rifornimento",
+      "odometer": "Lettura Contachilometri",
+      "liters": "Litri Aggiunti",
+      "cost": "Costo",
+      "location": "Luogo",
+      "type": "Tipo Carburante",
+      "mpg": "L/100km",
+      "efficiency": "Efficienza Carburante"
+    },
+    "documents": {
+      "title": "Documenti",
+      "upload": "Carica Documento",
+      "type": {
+        "registration": "Libretto",
+        "mot": "Certificato Revisione",
+        "insurance": "Assicurazione",
+        "maintenance": "Registro Manutenzione"
+      },
+      "expiry": "Data Scadenza"
+    },
+    "costs": {
+      "title": "Analisi Costi",
+      "total": "Costi Totali",
+      "average": "Media per Veicolo",
+      "breakdown": "Ripartizione Costi",
+      "per_vehicle": "Costi per Veicolo",
+      "monthly_trends": "Trend Mensili",
+      "categories": {
+        "fuel": "Carburante",
+        "maintenance": "Manutenzione",
+        "insurance": "Assicurazione",
+        "tolls": "Pedaggi",
+        "other": "Altro"
+      }
+    },
+    "incidents": {
+      "title": "Incidenti",
+      "add": "Registra Incidente",
+      "type": {
+        "accident": "Incidente",
+        "damage": "Danno",
+        "violation": "Violazione",
+        "breakdown": "Guasto",
+        "near_miss": "Quasi Incidente"
+      },
+      "severity": {
+        "critical": "Critico",
+        "high": "Alto",
+        "medium": "Medio",
+        "low": "Basso"
+      },
+      "root_cause": "Causa Radice",
+      "preventative": "Misure Preventive",
+      "insurance_claim": "Reclamo Assicurazione"
+    },
+    "trips": {
+      "title": "Viaggi",
+      "add": "Aggiungi Viaggio",
+      "planned": "Pianificato",
+      "actual": "Effettivo",
+      "distance": "Distanza",
+      "duration": "Durata",
+      "cost": "Costo",
+      "revenue": "Ricavi",
+      "profit": "Profitto",
+      "margin": "Margine",
+      "efficiency": "Efficienza Percorso"
+    },
+    "compliance": {
+      "title": "Conformità",
+      "status": {
+        "compliant": "Conforme",
+        "non_compliant": "Non Conforme",
+        "pending": "In Revisione"
+      },
+      "types": {
+        "dvla": "Controllo Motorizzazione",
+        "emissions": "Standard Emissioni",
+        "hazmat": "Certificazione ADR",
+        "tacho": "Ispezione Tachigrafo",
+        "working_hours": "Orari di Lavoro"
+      }
+    },
+    "tracking": {
+      "title": "Tracciamento Flotta",
+      "live_map": "Mappa Live",
+      "vehicle_list": "Lista Veicoli",
+      "refresh": "Aggiorna",
+      "last_update": "Ultimo Aggiornamento",
+      "status": {
+        "moving": "In Movimento",
+        "stopped": "Fermo",
+        "offline": "Offline"
+      },
+      "speed": "Velocità",
+      "heading": "Direzione",
+      "address": "Posizione Attuale"
+    },
+    "geofencing": {
+      "title": "Geofencing",
+      "zones": "Zone Geofence",
+      "add": "Aggiungi Zona",
+      "edit": "Modifica Zona",
+      "name": "Nome Zona",
+      "radius": "Raggio",
+      "type": {
+        "warehouse": "Magazzino",
+        "customer": "Cliente",
+        "restricted": "Limitato",
+        "checkpoint": "Checkpoint"
+      },
+      "alerts": {
+        "entry": "Allarme Ingresso",
+        "exit": "Allarme Uscita",
+        "today": "Allarmi Oggi"
+      },
+      "events": "Storico Eventi"
+    },
+    "behavior": {
+      "title": "Comportamento Autista",
+      "analytics": "Analisi Comportamento",
+      "safety_score": "Punteggio Sicurezza",
+      "fleet_average": "Media Flotta",
+      "high_risk": "Autisti Alto Rischio",
+      "events_today": "Eventi Oggi",
+      "leaderboard": "Classifica Autisti",
+      "breakdown": "Analisi Comportamento",
+      "types": {
+        "speeding": "Eccesso Velocità",
+        "harsh_braking": "Frenata Brusca",
+        "harsh_acceleration": "Accelerazione Brusca",
+        "sharp_cornering": "Curva Stretta"
+      },
+      "risk": {
+        "low": "Rischio Basso",
+        "medium": "Rischio Medio",
+        "high": "Rischio Alto"
+      }
+    },
+    "hos": {
+      "title": "Ore di Servizio",
+      "driver_status": "Stato HoS Autista",
+      "violations": "Avvisi Violazioni",
+      "daily_driving": "Guida Giornaliera",
+      "weekly_driving": "Guida Settimanale",
+      "remaining_daily": "Restante Giornaliero",
+      "remaining_weekly": "Restante Settimanale",
+      "status": {
+        "driving": "Guida",
+        "on_duty": "In Servizio",
+        "off_duty": "Fuori Servizio",
+        "sleeper": "Riposo"
+      },
+      "violation_types": {
+        "daily_exceeded": "Guida Giornaliera Superata",
+        "weekly_exceeded": "Guida Settimanale Superata",
+        "break_not_taken": "Pausa Non Presa",
+        "rest_period": "Violazione Periodo Riposo"
+      }
+    },
+    "billing": {
+      "title": "Fatturazione Clienti",
+      "customers": "Clienti",
+      "add": "Aggiungi Cliente",
+      "edit": "Modifica Cliente",
+      "top_customers": "Migliori Clienti",
+      "contract_type": {
+        "title": "Tipo Contratto",
+        "per_mile": "Per Chilometro",
+        "per_hour": "Per Ora",
+        "fixed": "Tariffa Fissa",
+        "hybrid": "Ibrido"
+      },
+      "rate_per_mile": "Tariffa per Km",
+      "rate_per_hour": "Tariffa per Ora",
+      "fixed_rate": "Tariffa Fissa",
+      "total_trips": "Viaggi Totali",
+      "total_revenue": "Ricavi Totali",
+      "profit_margin": "Margine Profitto",
+      "outstanding": "Saldo in Sospeso",
+      "status": {
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "pending": "In Attesa"
+      }
+    },
+    "notifications": {
+      "expires": "Scade",
+      "days": "giorni",
+      "done": "Fatto",
+      "dismiss": "Ignora"
+    },
+    "common": {
+      "no_data": "Nessun dato disponibile",
+      "loading": "Caricamento...",
+      "error": "Errore nel caricamento",
+      "retry": "Riprova",
+      "actions": "Azioni",
+      "view": "Visualizza",
+      "details": "Dettagli",
+      "date_range": "Intervallo Date",
+      "all": "Tutti",
+      "today": "Oggi",
+      "week": "Questa Settimana",
+      "month": "Questo Mese",
+      "hours": "ore",
+      "miles": "miglia",
+      "km": "km"
+    }
+  }
+}

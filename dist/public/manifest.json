@@ -1,0 +1,117 @@
+{
+  "name": "TruckNav Pro - Professional Truck Navigation",
+  "short_name": "TruckNav Pro",
+  "description": "Professional truck navigation for HGVs with height restrictions, facility finder, and live traffic updates. Patent-protected technology by Bespoke Marketing.Ai Ltd.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2563eb",
+  "background_color": "#2563eb",
+  "scope": "/",
+  "categories": ["navigation", "travel", "productivity", "business"],
+  "lang": "en",
+  
+  "icons": [
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "180x180",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+trucknav",
+      "url": "/?route=%s"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Plan Route",
+      "short_name": "Route",
+      "description": "Plan a new truck route",
+      "url": "/navigation?action=plan",
+      "icons": [{ "src": "/app-icon.jpg", "sizes": "180x180" }]
+    },
+    {
+      "name": "Find Facilities",
+      "short_name": "Facilities", 
+      "description": "Find truck stops and facilities",
+      "url": "/navigation?action=facilities",
+      "icons": [{ "src": "/app-icon.jpg", "sizes": "180x180" }]
+    }
+  ],
+  
+  "author": "Bespoke Marketing.Ai Ltd",
+  "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved. Patent-protected technology.",
+  
+  "features": [
+    "offline-navigation",
+    "offline-maps", 
+    "gps-tracking",
+    "restriction-awareness",
+    "facility-finder",
+    "voice-guidance",
+    "background-sync"
+  ],
+  
+  "offline": {
+    "enabled": true,
+    "fallback_page": "/offline.html",
+    "cache_strategy": "cache-first",
+    "sync_background": true
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
+  "custom": {
+    "legal_notice": "TruckNav Pro is patent-protected intellectual property owned by Bespoke Marketing.Ai Ltd. Any replication of truck navigation features requires compensation.",
+    "trademark": "TruckNav Pro and Professional Navigation are trademarks of Bespoke Marketing.Ai Ltd"
+  },
+  
+  "amazon": {
+    "app_id": "com.bespokemarketing.trucknav.pro",
+    "store_ready": true,
+    "fire_tv_compatible": true,
+    "fire_tablet_compatible": true,
+    "silk_accelerated": true,
+    "content_rating": "Everyone",
+    "tv_navigation": "directional",
+    "input_support": ["remote", "voice", "touch"],
+    "categories": ["navigation", "productivity", "travel", "business"],
+    "required_features": [],
+    "optional_features": ["location", "internet"],
+    "privacy_policy": "https://trucknav.replit.app/privacy",
+    "terms_of_service": "https://trucknav.replit.app/terms",
+    "supported_languages": [
+      "en-US", "en-GB", "de-DE", "fr-FR", "es-ES", "ja-JP",
+      "it-IT", "pt-BR", "nl-NL", "sv-SE", "pl-PL", "tr-TR",
+      "ar-SA", "ar-AE", "hi-IN", "zh-CN", "ko-KR", "th-TH"
+    ],
+    "localization": {
+      "default_language": "en-US",
+      "auto_detect": true,
+      "fallback_language": "en-US"
+    }
+  }
+}

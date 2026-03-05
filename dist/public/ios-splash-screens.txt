@@ -1,0 +1,133 @@
+iOS Splash Screen Requirements for TruckNav Pro
+==============================================
+
+This file documents the required splash screen images for iOS PWA support.
+These images will be displayed when the app is launched from the home screen.
+
+IMPORTANT: Actual images need to be created using design tools (e.g., Figma, Photoshop).
+The images should feature the TruckNav Pro branding with the blue theme (#2563eb).
+
+Required Splash Screen Images:
+------------------------------
+
+1. iPhone 15 Pro Max / 14 Pro Max
+   - Filename: splash-iphone-15-pro-max.png
+   - Dimensions: 1290 x 2796 pixels (430 x 932 @3x)
+   - Device Width: 430px
+   - Device Height: 932px
+   - Pixel Ratio: 3x
+   - Media Query: (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)
+
+2. iPhone 15 Pro / 14 Pro / 13 Pro / 12 Pro
+   - Filename: splash-iphone-15-pro.png
+   - Dimensions: 1179 x 2556 pixels (393 x 852 @3x)
+   - Device Width: 393px
+   - Device Height: 852px
+   - Pixel Ratio: 3x
+   - Media Query: (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)
+
+3. iPhone SE (2nd/3rd generation) / 8 / 7 / 6s
+   - Filename: splash-iphone-se.png
+   - Dimensions: 750 x 1334 pixels (375 x 667 @2x)
+   - Device Width: 375px
+   - Device Height: 667px
+   - Pixel Ratio: 2x
+   - Media Query: (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)
+
+4. iPhone 8 Plus / 7 Plus / 6s Plus
+   - Filename: splash-iphone-8-plus.png
+   - Dimensions: 1242 x 2208 pixels (414 x 736 @3x)
+   - Device Width: 414px
+   - Device Height: 736px
+   - Pixel Ratio: 3x
+   - Media Query: (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)
+
+5. iPad Pro 12.9" (5th/6th generation)
+   - Filename: splash-ipad-pro.png
+   - Dimensions: 2048 x 2732 pixels (1024 x 1366 @2x)
+   - Device Width: 1024px
+   - Device Height: 1366px
+   - Pixel Ratio: 2x
+   - Media Query: (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)
+
+Design Guidelines:
+-----------------
+
+Background Color: #2563eb (TruckNav Pro Blue)
+Logo: Center-aligned TruckNav Pro logo
+Text: "TruckNav Pro" in white
+Subtitle: "Professional Truck Navigation" in light gray/white
+Footer: "by Bespoke Marketing.Ai Ltd" in small text
+
+Safe Area Considerations:
+- Keep important content within the safe area
+- Account for notches and home indicators on modern iPhones
+- Ensure branding is visible and centered
+
+Additional Recommendations:
+--------------------------
+
+6. iPhone 14 Plus / 13 / 12 / 11
+   - Dimensions: 1170 x 2532 pixels (390 x 844 @3x)
+   - Device Width: 390px
+   - Device Height: 844px
+   - Pixel Ratio: 3x
+
+7. iPhone XS Max / 11 Pro Max
+   - Dimensions: 1242 x 2688 pixels (414 x 896 @3x)
+   - Device Width: 414px
+   - Device Height: 896px
+   - Pixel Ratio: 3x
+
+8. iPad Mini / Air
+   - Dimensions: 1536 x 2048 pixels (768 x 1024 @2x)
+   - Device Width: 768px
+   - Device Height: 1024px
+   - Pixel Ratio: 2x
+
+Testing:
+--------
+
+To test splash screens on iOS:
+1. Add the app to home screen via Safari
+2. Close Safari completely
+3. Launch the app from home screen
+4. The splash screen should appear during app load
+
+Note: Splash screens only appear when launching from home screen,
+not when opening the PWA in the browser.
+
+Implementation Status:
+---------------------
+
+✓ Link tags added to index.html
+✓ Media queries configured for all device sizes
+⏳ Placeholder images needed (create with design tools)
+
+To create actual splash screen images:
+--------------------------------------
+
+Option 1: Use Figma/Sketch
+- Create artboards with exact pixel dimensions
+- Export as PNG with @1x, @2x, @3x variants
+- Ensure color profile is sRGB
+
+Option 2: Use PWA Asset Generator
+- Install: npm install -g pwa-asset-generator
+- Run: pwa-asset-generator logo.png client/public --splash-only
+
+Option 3: Manual Creation
+- Use Photoshop/GIMP with exact dimensions
+- Save as optimized PNG
+- Test on actual devices
+
+Current Status:
+--------------
+The HTML link tags are in place in client/index.html.
+Placeholder image files need to be created and placed in client/public/.
+Until images are created, iOS will show the default white screen during launch.
+
+Copyright Notice:
+----------------
+TruckNav Pro is patent-protected technology owned by Bespoke Marketing.Ai Ltd
+All splash screens must include appropriate branding and copyright notices.

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate White Truck Icons</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        canvas { 
+            margin: 10px; 
+            border: 1px solid #ccc; 
+            background: white;
+        }
+        .icon-set {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .icon-item {
+            text-align: center;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚛 TruckNav Pro - White Icon Generator</h1>
+    <p>Click the download buttons below each icon to save them.</p>
+    
+    <div class="icon-set" id="iconSet"></div>
+
+    <script>
+        const sizes = [
+            { size: 16, name: 'favicon-16x16.png' },
+            { size: 32, name: 'favicon-32x32.png' },
+            { size: 180, name: 'apple-touch-icon.png' },
+            { size: 192, name: 'android-chrome-192x192.png' },
+            { size: 512, name: 'android-chrome-512x512.png' }
+        ];
+
+        function drawTruckIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 512; // Base size 512
+            
+            // Blue background
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(0, 0, size, size);
+            
+            // White truck icon
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 8 * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Scale factor for positioning
+            const s = scale;
+            
+            // Draw truck cabin (left part)
+            ctx.fillRect(120 * s, 180 * s, 120 * s, 140 * s);
+            
+            // Draw truck container (right part) 
+            ctx.fillRect(240 * s, 140 * s, 180 * s, 180 * s);
+            
+            // Draw cabin roof
+            ctx.beginPath();
+            ctx.moveTo(120 * s, 180 * s);
+            ctx.lineTo(160 * s, 140 * s);
+            ctx.lineTo(240 * s, 140 * s);
+            ctx.lineTo(240 * s, 180 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw wheels
+            const wheelRadius = 30 * s;
+            const wheelY = 320 * s;
+            
+            // Front wheel
+            ctx.beginPath();
+            ctx.arc(180 * s, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Back wheel 1
+            ctx.beginPath();
+            ctx.arc(300 * s, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Back wheel 2
+            ctx.beginPath();
+            ctx.arc(360 * s, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add windows
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(140 * s, 160 * s, 40 * s, 40 * s); // Front window
+            ctx.fillRect(190 * s, 160 * s, 40 * s, 40 * s); // Side window
+            
+            // Add wheel details (dark centers)
+            ctx.fillStyle = '#1d4ed8';
+            const innerRadius = wheelRadius * 0.5;
+            
+            ctx.beginPath();
+            ctx.arc(180 * s, wheelY, innerRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(300 * s, wheelY, innerRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(360 * s, wheelY, innerRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        // Generate all icons
+        sizes.forEach(({ size, name }) => {
+            const container = document.createElement('div');
+            container.className = 'icon-item';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            drawTruckIcon(canvas, size);
+            
+            const label = document.createElement('div');
+            label.textContent = `${size}×${size}`;
+            label.style.marginTop = '5px';
+            label.style.fontWeight = 'bold';
+            
+            const btn = document.createElement('button');
+            btn.textContent = `Download ${name}`;
+            btn.onclick = () => downloadCanvas(canvas, name);
+            
+            container.appendChild(canvas);
+            container.appendChild(label);
+            container.appendChild(btn);
+            document.getElementById('iconSet').appendChild(container);
+        });
+    </script>
+</body>
+</html>

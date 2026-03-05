@@ -1,0 +1,8 @@
+{
+  "appId": "com.bespokesoftwarecb.trucknav",
+  "appName": "TruckNav4Pros",
+  "webDir": "dist/public",
+  "server": {
+    "androidScheme": "https"
+  }
+}
