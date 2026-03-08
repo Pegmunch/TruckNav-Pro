@@ -4,10 +4,12 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  base: "./",
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    sourcemap: true,
   },
   resolve: {
     alias: {

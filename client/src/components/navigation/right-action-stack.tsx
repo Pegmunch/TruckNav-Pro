@@ -1,10 +1,11 @@
 import React from "react";
 type ButtonHandler = () => void;
-export const buttonRegistry = {
-  register: (_id: string, _handler: ButtonHandler) => {},
-  unregister: (_id: string) => {},
-  trigger: (_id: string) => {},
-};
+interface ButtonRegistration {
+  callback: ButtonHandler;
+  getRect: () => DOMRect | null;
+  lastFired?: number;
+}
+export const buttonRegistry = new Map<string, ButtonRegistration>();
 export function globalDebounce(fn: () => void, delay: number): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null;
   return () => {
