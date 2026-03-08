@@ -17,6 +17,219 @@
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		9C5909962F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 44D6062E8C618EC2B8F1D7229E8AD501;
+			remoteInfo = Capacitor;
+		};
+		9C5909982F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CDFF4A7EE78A2AC8170A2DC20868DF1F;
+			remoteInfo = CapacitorApp;
+		};
+		9C59099A2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D7A57EC38D1DB1366F085C2BD7135303;
+			remoteInfo = CapacitorBackgroundRunner;
+		};
+		9C59099C2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A60135599BA436B4A540E7E9B24C699D;
+			remoteInfo = CapacitorBrowser;
+		};
+		9C59099E2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 1ABFDA3391AEBA42EFB0FEBF824A6E34;
+			remoteInfo = CapacitorCordova;
+		};
+		9C5909A02F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26969F9EEC9F4DDCD493EF0884E1EDEC;
+			remoteInfo = CapacitorGeolocation;
+		};
+		9C5909A22F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 4830CABC2D58B5C50BE6EFECA34B2895;
+			remoteInfo = CapacitorHaptics;
+		};
+		9C5909A42F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 43F80CDA05D5624A6B812123E023B138;
+			remoteInfo = CapacitorKeyboard;
+		};
+		9C5909A62F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 70E052060A1D7DF2CCC7B1124232A9F7;
+			remoteInfo = CapacitorLocalNotifications;
+		};
+		9C5909A82F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D1DBB07504DB9E35792933311691E212;
+			remoteInfo = CapacitorNetwork;
+		};
+		9C5909AA2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3DACEBA8D9FF185120299BBB519CA59B;
+			remoteInfo = CapacitorPreferences;
+		};
+		9C5909AC2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A9C1AE5EF2DE4871B3A49E5726100845;
+			remoteInfo = CapacitorPushNotifications;
+		};
+		9C5909AE2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0391CB10F6FC8CE6B82C8A5DDD52C704;
+			remoteInfo = CapacitorSplashScreen;
+		};
+		9C5909B02F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 37915BEC3E9EB6CD453C07348A49B51A;
+			remoteInfo = CapacitorStatusBar;
+		};
+		9C5909B22F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5BEF4602752E47C46E8C10FB8B4B57F2;
+			remoteInfo = "Pods-App";
+		};
+		9C5909C42F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 44D6062E8C618EC2B8F1D7229E8AD501;
+			remoteInfo = Capacitor;
+		};
+		9C5909C62F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CDFF4A7EE78A2AC8170A2DC20868DF1F;
+			remoteInfo = CapacitorApp;
+		};
+		9C5909C82F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D7A57EC38D1DB1366F085C2BD7135303;
+			remoteInfo = CapacitorBackgroundRunner;
+		};
+		9C5909CA2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A60135599BA436B4A540E7E9B24C699D;
+			remoteInfo = CapacitorBrowser;
+		};
+		9C5909CC2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 1ABFDA3391AEBA42EFB0FEBF824A6E34;
+			remoteInfo = CapacitorCordova;
+		};
+		9C5909CE2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 26969F9EEC9F4DDCD493EF0884E1EDEC;
+			remoteInfo = CapacitorGeolocation;
+		};
+		9C5909D02F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 4830CABC2D58B5C50BE6EFECA34B2895;
+			remoteInfo = CapacitorHaptics;
+		};
+		9C5909D22F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 43F80CDA05D5624A6B812123E023B138;
+			remoteInfo = CapacitorKeyboard;
+		};
+		9C5909D42F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 70E052060A1D7DF2CCC7B1124232A9F7;
+			remoteInfo = CapacitorLocalNotifications;
+		};
+		9C5909D62F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D1DBB07504DB9E35792933311691E212;
+			remoteInfo = CapacitorNetwork;
+		};
+		9C5909D82F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3DACEBA8D9FF185120299BBB519CA59B;
+			remoteInfo = CapacitorPreferences;
+		};
+		9C5909DA2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A9C1AE5EF2DE4871B3A49E5726100845;
+			remoteInfo = CapacitorPushNotifications;
+		};
+		9C5909DC2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0391CB10F6FC8CE6B82C8A5DDD52C704;
+			remoteInfo = CapacitorSplashScreen;
+		};
+		9C5909DE2F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 37915BEC3E9EB6CD453C07348A49B51A;
+			remoteInfo = CapacitorStatusBar;
+		};
+		9C5909E02F5AF4070001F10B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5BEF4602752E47C46E8C10FB8B4B57F2;
+			remoteInfo = "Pods-App";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -27,6 +240,8 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		9C5909792F5AF35C0001F10B /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
+		9C59097C2F5AF3660001F10B /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
@@ -48,6 +263,7 @@
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
+				9C5909792F5AF35C0001F10B /* Pods.xcodeproj */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -88,10 +304,55 @@
 		7F8756D8B27F46E3366F6CEA /* Pods */ = {
 			isa = PBXGroup;
 			children = (
+				9C59097C2F5AF3660001F10B /* Pods.xcodeproj */,
 				FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */,
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		9C5909822F5AF4070001F10B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9C5909972F5AF4070001F10B /* Capacitor.framework */,
+				9C5909992F5AF4070001F10B /* CapacitorApp.framework */,
+				9C59099B2F5AF4070001F10B /* CapacitorBackgroundRunner.framework */,
+				9C59099D2F5AF4070001F10B /* CapacitorBrowser.framework */,
+				9C59099F2F5AF4070001F10B /* Cordova.framework */,
+				9C5909A12F5AF4070001F10B /* CapacitorGeolocation.framework */,
+				9C5909A32F5AF4070001F10B /* CapacitorHaptics.framework */,
+				9C5909A52F5AF4070001F10B /* CapacitorKeyboard.framework */,
+				9C5909A72F5AF4070001F10B /* CapacitorLocalNotifications.framework */,
+				9C5909A92F5AF4070001F10B /* CapacitorNetwork.framework */,
+				9C5909AB2F5AF4070001F10B /* CapacitorPreferences.framework */,
+				9C5909AD2F5AF4070001F10B /* CapacitorPushNotifications.framework */,
+				9C5909AF2F5AF4070001F10B /* CapacitorSplashScreen.framework */,
+				9C5909B12F5AF4070001F10B /* CapacitorStatusBar.framework */,
+				9C5909B32F5AF4070001F10B /* Pods_App.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9C5909842F5AF4070001F10B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9C5909C52F5AF4070001F10B /* Capacitor.framework */,
+				9C5909C72F5AF4070001F10B /* CapacitorApp.framework */,
+				9C5909C92F5AF4070001F10B /* CapacitorBackgroundRunner.framework */,
+				9C5909CB2F5AF4070001F10B /* CapacitorBrowser.framework */,
+				9C5909CD2F5AF4070001F10B /* Cordova.framework */,
+				9C5909CF2F5AF4070001F10B /* CapacitorGeolocation.framework */,
+				9C5909D12F5AF4070001F10B /* CapacitorHaptics.framework */,
+				9C5909D32F5AF4070001F10B /* CapacitorKeyboard.framework */,
+				9C5909D52F5AF4070001F10B /* CapacitorLocalNotifications.framework */,
+				9C5909D72F5AF4070001F10B /* CapacitorNetwork.framework */,
+				9C5909D92F5AF4070001F10B /* CapacitorPreferences.framework */,
+				9C5909DB2F5AF4070001F10B /* CapacitorPushNotifications.framework */,
+				9C5909DD2F5AF4070001F10B /* CapacitorSplashScreen.framework */,
+				9C5909DF2F5AF4070001F10B /* CapacitorStatusBar.framework */,
+				9C5909E12F5AF4070001F10B /* Pods_App.framework */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -146,12 +407,235 @@
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 9C5909822F5AF4070001F10B /* Products */;
+					ProjectRef = 9C5909792F5AF35C0001F10B /* Pods.xcodeproj */;
+				},
+				{
+					ProductGroup = 9C5909842F5AF4070001F10B /* Products */;
+					ProjectRef = 9C59097C2F5AF3660001F10B /* Pods.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		9C5909972F5AF4070001F10B /* Capacitor.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Capacitor.framework;
+			remoteRef = 9C5909962F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909992F5AF4070001F10B /* CapacitorApp.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorApp.framework;
+			remoteRef = 9C5909982F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C59099B2F5AF4070001F10B /* CapacitorBackgroundRunner.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorBackgroundRunner.framework;
+			remoteRef = 9C59099A2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C59099D2F5AF4070001F10B /* CapacitorBrowser.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorBrowser.framework;
+			remoteRef = 9C59099C2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C59099F2F5AF4070001F10B /* Cordova.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Cordova.framework;
+			remoteRef = 9C59099E2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909A12F5AF4070001F10B /* CapacitorGeolocation.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorGeolocation.framework;
+			remoteRef = 9C5909A02F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909A32F5AF4070001F10B /* CapacitorHaptics.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorHaptics.framework;
+			remoteRef = 9C5909A22F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909A52F5AF4070001F10B /* CapacitorKeyboard.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorKeyboard.framework;
+			remoteRef = 9C5909A42F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909A72F5AF4070001F10B /* CapacitorLocalNotifications.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorLocalNotifications.framework;
+			remoteRef = 9C5909A62F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909A92F5AF4070001F10B /* CapacitorNetwork.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorNetwork.framework;
+			remoteRef = 9C5909A82F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909AB2F5AF4070001F10B /* CapacitorPreferences.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorPreferences.framework;
+			remoteRef = 9C5909AA2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909AD2F5AF4070001F10B /* CapacitorPushNotifications.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorPushNotifications.framework;
+			remoteRef = 9C5909AC2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909AF2F5AF4070001F10B /* CapacitorSplashScreen.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorSplashScreen.framework;
+			remoteRef = 9C5909AE2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909B12F5AF4070001F10B /* CapacitorStatusBar.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorStatusBar.framework;
+			remoteRef = 9C5909B02F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909B32F5AF4070001F10B /* Pods_App.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Pods_App.framework;
+			remoteRef = 9C5909B22F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909C52F5AF4070001F10B /* Capacitor.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Capacitor.framework;
+			remoteRef = 9C5909C42F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909C72F5AF4070001F10B /* CapacitorApp.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorApp.framework;
+			remoteRef = 9C5909C62F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909C92F5AF4070001F10B /* CapacitorBackgroundRunner.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorBackgroundRunner.framework;
+			remoteRef = 9C5909C82F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909CB2F5AF4070001F10B /* CapacitorBrowser.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorBrowser.framework;
+			remoteRef = 9C5909CA2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909CD2F5AF4070001F10B /* Cordova.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Cordova.framework;
+			remoteRef = 9C5909CC2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909CF2F5AF4070001F10B /* CapacitorGeolocation.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorGeolocation.framework;
+			remoteRef = 9C5909CE2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909D12F5AF4070001F10B /* CapacitorHaptics.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorHaptics.framework;
+			remoteRef = 9C5909D02F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909D32F5AF4070001F10B /* CapacitorKeyboard.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorKeyboard.framework;
+			remoteRef = 9C5909D22F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909D52F5AF4070001F10B /* CapacitorLocalNotifications.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorLocalNotifications.framework;
+			remoteRef = 9C5909D42F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909D72F5AF4070001F10B /* CapacitorNetwork.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorNetwork.framework;
+			remoteRef = 9C5909D62F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909D92F5AF4070001F10B /* CapacitorPreferences.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorPreferences.framework;
+			remoteRef = 9C5909D82F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909DB2F5AF4070001F10B /* CapacitorPushNotifications.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorPushNotifications.framework;
+			remoteRef = 9C5909DA2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909DD2F5AF4070001F10B /* CapacitorSplashScreen.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorSplashScreen.framework;
+			remoteRef = 9C5909DC2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909DF2F5AF4070001F10B /* CapacitorStatusBar.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CapacitorStatusBar.framework;
+			remoteRef = 9C5909DE2F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9C5909E12F5AF4070001F10B /* Pods_App.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Pods_App.framework;
+			remoteRef = 9C5909E02F5AF4070001F10B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		504EC3021FED79650016851F /* Resources */ = {
@@ -366,6 +850,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -389,6 +874,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

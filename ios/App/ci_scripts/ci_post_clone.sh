@@ -13,6 +13,11 @@ npx cap sync ios
 
 echo "=== Installing CocoaPods ==="
 cd "$CI_PRIMARY_REPOSITORY_PATH/ios/App"
-pod install
+export LANG=en_US.UTF-8
+gem install cocoapods
+pod install --repo-update
+
+echo "=== Verifying Pods xcconfig exists ==="
+ls -la Pods/Target\ Support\ Files/Pods-App/
 
 echo "=== Build preparation complete ==="
