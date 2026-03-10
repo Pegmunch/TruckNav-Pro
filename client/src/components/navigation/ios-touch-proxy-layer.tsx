@@ -161,7 +161,11 @@ export function IOSTouchProxyLayer() {
       const openOverlay = document.querySelector('[data-radix-dialog-overlay]');
       const openAlertDialog = document.querySelector('[role="alertdialog"]');
       const openSettingsPanel = document.querySelector('[data-settings-overlay="true"]');
-      const dialogOpen = !!(openDialog || openSheet || openOverlay || openAlertDialog || openSettingsPanel);
+      // Also detect the comprehensive mobile menu (full-screen fixed div)
+      const openComprehensiveMenu = document.querySelector('[data-testid="comprehensive-mobile-menu"]');
+      // Detect any full-screen fixed overlay with high z-index
+      const openFullScreenOverlay = document.querySelector('[data-testid="vehicle-settings-overlay"], [data-testid="weather-tool"], [data-testid="entertainment-tool"]');
+      const dialogOpen = !!(openDialog || openSheet || openOverlay || openAlertDialog || openSettingsPanel || openComprehensiveMenu || openFullScreenOverlay);
       
       // Hide entire container when any modal is open
       containerRef.current.style.display = dialogOpen ? 'none' : 'block';

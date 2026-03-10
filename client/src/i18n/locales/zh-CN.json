@@ -1,0 +1,678 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "专业卡车导航",
+    "owner": "Bespoke Marketing. Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "路线规划",
+    "vehicle_setup": "车辆设置", 
+    "facility_search": "设施搜索",
+    "live_traffic": "实时交通",
+    "restrictions": "限制",
+    "settings": "设置"
+  },
+  "vehicle": {
+    "profile": "车辆配置",
+    "name": "车辆名称",
+    "height": "高度",
+    "width": "宽度", 
+    "length": "长度",
+    "weight": "重量",
+    "axles": "车轴",
+    "hazmat": "危险品",
+    "feet": "英尺",
+    "inches": "英寸",
+    "tons": "吨",
+    "save": "保存配置"
+  },
+  "route": {
+    "plan": "规划路线",
+    "from": "起点",
+    "to": "终点",
+    "calculate": "计算路线",
+    "distance": "距离",
+    "duration": "时长",
+    "restrictions": "发现限制",
+    "alternative": "替代路线"
+  },
+  "facilities": {
+    "search": "搜索设施",
+    "truck_stop": "卡车停车场",
+    "fuel": "加油站",
+    "parking": "停车场",
+    "restaurant": "餐厅",
+    "hotel": "酒店",
+    "restrooms": "洗手间",
+    "showers": "淋浴",
+    "near_me": "附近"
+  },
+  "legal": {
+    "title": "需要法律协议 - TruckNav Pro",
+    "description": "您必须接受这些法律条款才能使用TruckNav Pro",
+    "patent_notice": "TruckNav Pro包含Bespoke Marketing. Ai Ltd拥有的专利技术",
+    "trademark_notice": "TruckNav Pro和Professional Navigation是注册商标",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. 保留所有权利",
+    "accept": "我接受这些条款",
+    "decline": "我不接受",
+    "terms_of_service": "服务条款",
+    "privacy_policy": "隐私政策",
+    "termsTitle": "TruckNav Pro - 法律条款和保护"
+  },
+  "subscription": {
+    "plans": "订阅计划",
+    "3month": "3个月计划",
+    "6month": "6个月计划", 
+    "12month": "12个月计划",
+    "lifetime": "终身使用",
+    "price_3m": "¥199",
+    "price_6m": "¥399",
+    "price_12m": "¥799",
+    "price_lifetime": "¥1599",
+    "features": "包含功能",
+    "subscribe": "立即订阅"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "search": "搜索",
+    "filter": "筛选",
+    "language": "语言",
+    "guide": "指南",
+    "legal": "法律"
+  },
+  "amazon": {
+    "fire_tv": "为Fire TV优化",
+    "fire_tablet": "为Fire平板优化",
+    "silk_browser": "为Silk浏览器增强",
+    "voice_support": "支持语音导航",
+    "remote_navigation": "遥控器导航"
+  },
+  "voice": {
+    "directions": {
+      "straight": "直行",
+      "right": "右转",
+      "left": "左转",
+      "slight_right": "稍向右转",
+      "slight_left": "稍向左转",
+      "sharp_right": "急转右",
+      "sharp_left": "急转左",
+      "u_turn": "掉头",
+      "roundabout_right": "环岛右行",
+      "roundabout_left": "环岛左行",
+      "exit_right": "右侧驶出",
+      "exit_left": "左侧驶出"
+    },
+    "distances": {
+      "now": "现在{{direction}}",
+      "in_100_feet": "30米后{{direction}}",
+      "in_200_feet": "60米后{{direction}}",
+      "in_500_feet": "150米后，{{direction}}",
+      "in_800_feet": "250米后，{{direction}}",
+      "in_1000_feet": "300米后，{{direction}}",
+      "in_30_meters": "30米后{{direction}}",
+      "in_50_meters": "50米后{{direction}}",
+      "in_150_meters": "150米后，{{direction}}",
+      "in_250_meters": "250米后，{{direction}}",
+      "in_300_meters": "300米后，{{direction}}"
+    },
+    "onto_road": "进入{{roadName}}",
+    "announcements": {
+      "recalculating": "正在重新规划路线",
+      "arrived": "您已到达目的地",
+      "use_lanes": "请使用{{lanes}}",
+      "use_lanes_in_100_feet": "30米后，请使用{{lanes}}",
+      "use_lanes_in_500_feet": "150米后，请使用{{lanes}}",
+      "use_lanes_in_1000_feet": "300米后，请使用{{lanes}}",
+      "use_lanes_in_30_meters": "30米后，请使用{{lanes}}",
+      "use_lanes_in_150_meters": "150米后，请使用{{lanes}}",
+      "use_lanes_in_300_meters": "300米后，请使用{{lanes}}",
+      "voice_ready": "语音导航已准备就绪"
+    },
+    "warnings": {
+      "incident_ahead": "注意：前方{{type}}",
+      "in_miles": "{{distance}}英里后",
+      "in_kilometers": "{{distance}}公里后",
+      "speed_warning": "超速警告。当前速度{{speed}}{{unit}}。限速{{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "交通拥堵",
+      "accident": "事故",
+      "road_hazard": "道路危险",
+      "road_closed": "道路封闭",
+      "police_ahead": "前方有警察",
+      "speed_camera": "测速摄像头",
+      "construction": "施工",
+      "bad_weather": "恶劣天气"
+    },
+    "units": {
+      "mph": "英里每小时",
+      "kmh": "公里每小时"
+    }
+  },
+  "settings": {
+    "language": "语言",
+    "select_language": "选择语言",
+    "voice_language": "语音语言",
+    "language_changed": "语言已更改为{{language}}"
+  },
+  "languages": {
+    "en-US": "英语（美国）",
+    "en-GB": "英语（英国）",
+    "es-ES": "西班牙语",
+    "de-DE": "德语",
+    "it-IT": "意大利语",
+    "pt-BR": "葡萄牙语",
+    "pl-PL": "波兰语",
+    "ro-RO": "罗马尼亚语",
+    "zh-CN": "简体中文",
+    "ja-JP": "日语"
+  },
+  "fleet": {
+    "title": "车队管理",
+    "navigation": "导航",
+    "dashboard": "仪表板",
+    "vehicles": {
+      "title": "车辆",
+      "registry": "车辆登记",
+      "add": "添加车辆",
+      "edit": "编辑车辆",
+      "registration": "车牌号",
+      "trailer": "挂车号",
+      "make": "品牌",
+      "model": "型号",
+      "year": "年份",
+      "vin": "车架号",
+      "type": "车辆类型",
+      "fuel_type": "燃料类型",
+      "tank_capacity": "油箱容量",
+      "mileage": "里程数",
+      "status": {
+        "title": "状态",
+        "active": "活跃",
+        "maintenance": "维修中",
+        "decommissioned": "已报废"
+      }
+    },
+    "operators": {
+      "title": "驾驶员",
+      "add": "添加驾驶员",
+      "edit": "编辑驾驶员",
+      "name": "姓名",
+      "license_number": "驾驶证号",
+      "license_type": "驾驶证类型",
+      "license_expiry": "驾驶证有效期",
+      "cpc_expiry": "从业资格证有效期",
+      "tacho_card": "行车记录仪卡",
+      "employee_id": "员工编号",
+      "status": {
+        "title": "状态",
+        "active": "在职",
+        "inactive": "离职",
+        "suspended": "暂停"
+      }
+    },
+    "service": {
+      "title": "维修记录",
+      "add": "添加维修记录",
+      "type": {
+        "title": "维修类型",
+        "routine": "例行保养",
+        "mot": "年检",
+        "repair": "维修",
+        "inspection": "检查",
+        "tacho_calibration": "行车记录仪校准"
+      },
+      "date": "维修日期",
+      "next_due": "下次维修",
+      "mileage": "维修时里程",
+      "cost": "费用",
+      "provider": "服务商",
+      "parts": "更换配件"
+    },
+    "fuel": {
+      "title": "加油记录",
+      "add": "添加加油记录",
+      "odometer": "里程读数",
+      "liters": "加油升数",
+      "cost": "费用",
+      "location": "地点",
+      "type": "燃料类型",
+      "mpg": "百公里油耗",
+      "efficiency": "燃油效率"
+    },
+    "documents": {
+      "title": "文档",
+      "upload": "上传文档",
+      "type": {
+        "registration": "登记证",
+        "mot": "年检证书",
+        "insurance": "保险",
+        "maintenance": "维修记录"
+      },
+      "expiry": "到期日期"
+    },
+    "costs": {
+      "title": "成本分析",
+      "total": "总成本",
+      "average": "平均每车",
+      "breakdown": "成本明细",
+      "per_vehicle": "每车成本",
+      "monthly_trends": "月度趋势",
+      "categories": {
+        "fuel": "燃料",
+        "maintenance": "维修",
+        "insurance": "保险",
+        "tolls": "过路费",
+        "other": "其他"
+      }
+    },
+    "incidents": {
+      "title": "事故记录",
+      "add": "报告事故",
+      "type": {
+        "accident": "事故",
+        "damage": "损坏",
+        "violation": "违章",
+        "breakdown": "故障",
+        "near_miss": "险情"
+      },
+      "severity": {
+        "critical": "严重",
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "root_cause": "原因",
+      "preventative": "预防措施",
+      "insurance_claim": "保险理赔"
+    },
+    "trips": {
+      "title": "行程",
+      "add": "添加行程",
+      "planned": "计划",
+      "actual": "实际",
+      "distance": "距离",
+      "duration": "时长",
+      "cost": "成本",
+      "revenue": "收入",
+      "profit": "利润",
+      "margin": "利润率",
+      "efficiency": "路线效率"
+    },
+    "compliance": {
+      "title": "合规管理",
+      "status": {
+        "compliant": "合规",
+        "non_compliant": "不合规",
+        "pending": "待审核"
+      },
+      "types": {
+        "dvla": "车辆年检",
+        "emissions": "排放标准",
+        "hazmat": "危险品资质",
+        "tacho": "行车记录仪检查",
+        "working_hours": "工作时间"
+      }
+    },
+    "tracking": {
+      "title": "车队追踪",
+      "live_map": "实时地图",
+      "vehicle_list": "车辆列表",
+      "refresh": "刷新",
+      "last_update": "最后更新",
+      "status": {
+        "moving": "行驶中",
+        "stopped": "停止",
+        "offline": "离线"
+      },
+      "speed": "速度",
+      "heading": "方向",
+      "address": "当前位置",
+      "toast": {
+        "loadFailed": "车队数据加载失败",
+        "loadFailedDesc": "无法获取GPS追踪数据"
+      }
+    },
+    "geofencing": {
+      "title": "电子围栏",
+      "zones": "围栏区域",
+      "add": "添加区域",
+      "edit": "编辑区域",
+      "name": "区域名称",
+      "radius": "半径",
+      "type": {
+        "warehouse": "仓库",
+        "customer": "客户",
+        "restricted": "禁区",
+        "checkpoint": "检查站"
+      },
+      "alerts": {
+        "entry": "进入提醒",
+        "exit": "离开提醒",
+        "today": "今日提醒"
+      },
+      "events": "事件历史"
+    },
+    "behavior": {
+      "title": "驾驶行为",
+      "analytics": "行为分析",
+      "safety_score": "安全评分",
+      "fleet_average": "车队平均",
+      "high_risk": "高风险驾驶员",
+      "events_today": "今日事件",
+      "leaderboard": "驾驶员排名",
+      "breakdown": "行为分析",
+      "types": {
+        "speeding": "超速",
+        "harsh_braking": "急刹车",
+        "harsh_acceleration": "急加速",
+        "sharp_cornering": "急转弯"
+      },
+      "risk": {
+        "low": "低风险",
+        "medium": "中风险",
+        "high": "高风险"
+      },
+      "toast": {
+        "loadFailed": "驾驶行为数据加载失败",
+        "loadFailedDesc": "无法获取分析数据"
+      }
+    },
+    "hos": {
+      "title": "工作时间",
+      "driver_status": "驾驶员工时状态",
+      "violations": "违规提醒",
+      "daily_driving": "日驾驶时间",
+      "weekly_driving": "周驾驶时间",
+      "remaining_daily": "日剩余",
+      "remaining_weekly": "周剩余",
+      "status": {
+        "driving": "驾驶中",
+        "on_duty": "工作中",
+        "off_duty": "休息",
+        "sleeper": "休息舱"
+      },
+      "violation_types": {
+        "daily_exceeded": "超日限",
+        "weekly_exceeded": "超周限",
+        "break_not_taken": "未休息",
+        "rest_period": "休息时间违规"
+      },
+      "toast": {
+        "loadFailed": "工作时间数据加载失败",
+        "loadFailedDesc": "无法获取工作时间合规数据"
+      }
+    },
+    "billing": {
+      "title": "客户账单",
+      "customers": "客户",
+      "add": "添加客户",
+      "edit": "编辑客户",
+      "top_customers": "主要客户",
+      "contract_type": {
+        "title": "合同类型",
+        "per_mile": "按公里",
+        "per_hour": "按小时",
+        "fixed": "固定价格",
+        "hybrid": "混合计费"
+      },
+      "rate_per_mile": "每公里价格",
+      "rate_per_hour": "每小时价格",
+      "fixed_rate": "固定价格",
+      "total_trips": "总行程数",
+      "total_revenue": "总收入",
+      "profit_margin": "利润率",
+      "outstanding": "待收款",
+      "status": {
+        "active": "活跃",
+        "inactive": "停用",
+        "pending": "待定"
+      },
+      "toast": {
+        "loadFailed": "客户加载失败",
+        "loadFailedDesc": "无法获取客户计费数据",
+        "loadFailedAnalytics": "分析加载失败"
+      }
+    },
+    "notifications": {
+      "expires": "到期",
+      "days": "天",
+      "done": "完成",
+      "dismiss": "忽略"
+    },
+    "common": {
+      "no_data": "暂无数据",
+      "loading": "加载中...",
+      "error": "加载失败",
+      "retry": "重试",
+      "actions": "操作",
+      "view": "查看",
+      "details": "详情",
+      "date_range": "日期范围",
+      "all": "全部",
+      "today": "今天",
+      "week": "本周",
+      "month": "本月",
+      "hours": "小时",
+      "miles": "英里",
+      "km": "公里"
+    }
+  },
+  "userGuide": {
+    "title": "TruckNav Pro 用户指南",
+    "subtitle": "所有功能及其使用方法的完整指南",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "开始使用",
+      "planMode": "规划模式",
+      "planModeDesc": "点击左上角的菜单按钮(☰)打开路线规划器。使用搜索栏输入目的地。应用程序将找到避开低矮桥梁和重量限制的卡车安全路线。",
+      "previewMode": "预览模式",
+      "previewModeDesc": "规划后，在地图上查看您的路线。黄色警告图标显示沿途的限制。点击任何限制可查看高度、重量或宽度限制的详细信息。",
+      "navigateMode": "导航模式",
+      "navigateModeDesc": "点击\"开始导航\"开始逐向导航。地图会自动跟随您的位置并显示即将到来的操作。"
+    },
+    "vehicleSetup": {
+      "title": "车辆设置",
+      "profiles": "车辆配置文件",
+      "profilesDesc": "通过菜单 → 车辆选项卡访问。为每辆车创建包含尺寸(高度、宽度、长度)、重量和轴数的配置文件。",
+      "hazmat": "危险品设置",
+      "hazmatDesc": "启用危险品选项以进行符合ADR规定的路线规划。应用程序将避开隧道和禁止危险货物通行的路线。",
+      "trailerType": "拖车类型",
+      "trailerTypeDesc": "选择您的拖车配置（单拖车、双拖车或无拖车）。根据总车辆长度和转弯半径要求优化路线。"
+    },
+    "previewFlyby": {
+      "title": "预览与飞越模式",
+      "routePreview": "路线预览",
+      "routePreviewDesc": "规划路线后，在开始导航前在地图上查看完整路径。缩放和平移以检查路线的任何部分。",
+      "flybyAnimation": "飞越动画",
+      "flybyAnimationDesc": "点击播放按钮观看整个路线的动画飞越。摄像机沿着道路显示转弯、限制和地标。",
+      "etaDisplay": "预计到达时间显示",
+      "etaDisplayDesc": "预览显示基于当前交通状况的预计到达时间、总距离和预期行驶时间。",
+      "noAutoStart": "手动启动",
+      "noAutoStartDesc": "导航不会自动开始。准备好后点击\"开始导航\"，让您有时间先查看路线。"
+    },
+    "etaInfo": {
+      "title": "预计到达时间和行程信息",
+      "arrivalTime": "到达时间",
+      "arrivalTimeDesc": "预计到达时间根据您的速度、交通状况和剩余距离持续更新。",
+      "remainingDistance": "剩余距离",
+      "remainingDistanceDesc": "到目的地的剩余距离，以您偏好的单位（英里或公里）显示。",
+      "remainingTime": "剩余时间",
+      "remainingTimeDesc": "根据当前交通状况到达目的地的预计行驶时间。",
+      "tripStrip": "行程条",
+      "tripStripDesc": "屏幕底部的可视化进度条，显示您的行程进度、即将到来的转弯和航点。"
+    },
+    "controlButtons": {
+      "title": "地图控制按钮",
+      "compass": "指南针",
+      "compassDesc": "点击可将地图方向重置为朝北。导航期间显示当前行驶方向。",
+      "recenter": "重新居中",
+      "recenterDesc": "当您平移离开时，点击可将地图重新居中到当前位置。",
+      "3dButton": "3D按钮",
+      "3dButtonDesc": "在倾斜的3D透视图和传统的俯视2D视图之间切换。",
+      "satellite": "卫星",
+      "satelliteDesc": "在卫星图像和标准地图视图之间切换。",
+      "traffic": "交通",
+      "trafficDesc": "启用或禁用实时交通图层，在道路上显示交通流量颜色（绿色、黄色、红色）。",
+      "zoomIn": "放大",
+      "zoomInDesc": "放大地图以查看更多细节。",
+      "zoomOut": "缩小",
+      "zoomOutDesc": "缩小地图以查看更大范围的路线。",
+      "layers": "图层",
+      "layersDesc": "控制地图图层，包括POI、卡车限制和交通。"
+    },
+    "3dMap": {
+      "title": "3D地图与地形",
+      "tiltedView": "倾斜视图",
+      "tiltedViewDesc": "倾斜地图以获得3D透视效果，更清楚地显示前方道路。",
+      "buildings": "3D建筑",
+      "buildingsDesc": "城市区域的建筑物以其实际高度以3D形式显示。",
+      "hillShading": "山体阴影",
+      "hillShadingDesc": "地形可视化显示山丘和坡度，对卡车司机很有帮助。",
+      "rotation": "地图旋转",
+      "rotationDesc": "地图随您的行驶方向旋转，或者您可以用指南针按钮锁定为北向上。"
+    },
+    "restrictions": {
+      "title": "限制警告",
+      "panel": "限制面板",
+      "panelDesc": "在预览模式下，面板显示路线上的所有限制。必须避开严重违规(红色)。高级(橙色)和中级(黄色)需要注意。",
+      "markers": "地图标记",
+      "markersDesc": "地图上的黄色三角形图标显示限制位置。点击任何标记可查看详细信息。",
+      "heightLimit": "高度限制",
+      "heightLimitDesc": "低矮桥梁和立交桥的警告。应用程序将净空高度与您的车辆高度进行比较。",
+      "weightLimit": "重量限制",
+      "weightLimitDesc": "桥梁和道路的重量限制。应用程序确保路线能够承受您的车辆重量。"
+    },
+    "dynamicRoutes": {
+      "title": "动态路线",
+      "alternative": "备选路线",
+      "alternativeDesc": "导航期间，应用程序每5分钟检查一次是否有更快的路线。当发现更快选项时会显示绿色横幅。",
+      "oneTouch": "一键切换",
+      "oneTouchDesc": "当有更快的路线可用时，点击绿色栏即可立即切换到新路线。"
+    },
+    "incidentReporting": {
+      "title": "事件报告",
+      "voiceReport": "语音报告",
+      "voiceReportDesc": "使用语音命令安全地报告事件。点击麦克风按钮并说出您看到的情况。",
+      "trafficJam": "交通拥堵",
+      "trafficJamDesc": "报告严重交通或停滞状况。其他司机将收到警报。",
+      "accident": "事故",
+      "accidentDesc": "报告道路事故以警告司机并更新交通数据。",
+      "roadHazard": "道路危险",
+      "roadHazardDesc": "报告碎片、坑洼或其他道路危险。",
+      "policeSpeedCamera": "警察/测速摄像头",
+      "policeSpeedCameraDesc": "报告警察存在或测速摄像头位置。",
+      "roadClosure": "道路封闭",
+      "roadClosureDesc": "报告封闭的道路，以便司机可以选择替代路线。"
+    },
+    "voiceFeatures": {
+      "title": "语音功能",
+      "guidance": "语音导航",
+      "guidanceDesc": "清晰的语音逐向指导，包含街道名称和距离。",
+      "dictation": "语音输入",
+      "dictationDesc": "通过语音而不是打字来搜索目的地。",
+      "commands": "语音命令",
+      "commandsDesc": "说出命令如\"报告交通\"、\"查找卡车停靠站\"或\"静音\"。",
+      "languageSync": "语言同步",
+      "languageSyncDesc": "语音导航自动匹配您选择的应用语言。"
+    },
+    "alertsHaptics": {
+      "title": "警报与触觉",
+      "speedWarning": "超速警告",
+      "speedWarningDesc": "当您超过速度限制时发出音频和视觉警报。",
+      "hapticFeedback": "触觉反馈",
+      "hapticFeedbackDesc": "按钮按下和导航事件的振动反馈。",
+      "fatigueAlert": "疲劳警报",
+      "fatigueAlertDesc": "长时间驾驶后提醒您休息。"
+    },
+    "arNavigation": {
+      "title": "AR导航",
+      "cameraView": "摄像头视图",
+      "cameraViewDesc": "使用您的摄像头在真实世界上叠加导航信息。",
+      "maneuverOverlay": "操作叠加",
+      "maneuverOverlayDesc": "即将到来的转弯和方向显示在摄像头视图上。",
+      "speedDisplay": "速度显示",
+      "speedDisplayDesc": "当前速度和限速叠加在AR视图上。"
+    },
+    "widgets": {
+      "title": "仪表板小部件",
+      "speed": "速度小部件",
+      "speedDesc": "突出显示您的当前速度。",
+      "eta": "预计到达时间小部件",
+      "etaDesc": "预计到达时间，实时更新。",
+      "distance": "距离小部件",
+      "distanceDesc": "到目的地的剩余距离。",
+      "compass": "指南针小部件",
+      "compassDesc": "显示您当前的行驶方向。",
+      "customize": "自定义小部件",
+      "customizeDesc": "点击设置图标添加、删除或重新排列小部件。"
+    },
+    "facilities": {
+      "title": "设施搜索",
+      "finding": "查找卡车停靠站",
+      "findingDesc": "使用菜单中的POI搜索查找附近的卡车停靠站、加油站、停车场、餐厅和休息区。",
+      "truckStops": "卡车停靠站",
+      "truckStopsDesc": "查找附近的卡车停靠站，提供燃料、停车和设施。",
+      "fuel": "加油站",
+      "fuelDesc": "查找提供卡车用柴油的加油站。",
+      "parking": "卡车停车场",
+      "parkingDesc": "查找安全的卡车停车区和休息站。",
+      "restaurants": "餐厅",
+      "restaurantsDesc": "有卡车停车位的卡车司机友好餐饮选择。"
+    },
+    "fleet": {
+      "title": "车队管理",
+      "vehicles": "车辆追踪",
+      "vehiclesDesc": "在地图上查看所有车队车辆的实时GPS位置。",
+      "drivers": "驾驶员管理",
+      "driversDesc": "管理驾驶员档案、驾照和分配。",
+      "service": "维修记录",
+      "serviceDesc": "跟踪车辆维护历史和计划。",
+      "fuel": "燃油管理",
+      "fuelDesc": "监控燃油支出和效率。",
+      "compliance": "合规追踪",
+      "complianceDesc": "跟踪车辆检查和法规要求。"
+    },
+    "fleetManagement": {
+      "title": "车队管理(桌面版)",
+      "access": "访问车队工具",
+      "accessDesc": "车队管理仅在桌面版上可用。通过顶部导航栏访问。"
+    },
+    "pwa": {
+      "title": "应用安装",
+      "installing": "在您的设备上安装",
+      "installingDesc": "在iOS上：点击分享 → 添加到主屏幕。在Android上：点击菜单 → 安装应用。",
+      "ios": "iOS安装",
+      "iosDesc": "在Safari中打开，点击分享按钮，选择\"添加到主屏幕\"。",
+      "android": "Android安装",
+      "androidDesc": "在Chrome中打开，点击菜单，选择\"安装应用\"。",
+      "offline": "离线支持",
+      "offlineDesc": "下载区域以便在没有互联网连接的情况下使用地图和路线。"
+    },
+    "settings": {
+      "title": "设置和偏好",
+      "language": "语言设置",
+      "languageDesc": "通过菜单 → 设置访问。选择您的首选语言。",
+      "units": "单位偏好",
+      "unitsDesc": "在公制(公里、米)和英制(英里、英尺)测量之间切换。",
+      "theme": "主题",
+      "themeDesc": "在浅色、深色或系统自动主题之间选择。"
+    },
+    "entertainment": {
+      "title": "娱乐系统",
+      "radio": "网络电台",
+      "radioDesc": "导航期间通过电台按钮访问。播放适合卡车司机的电台。"
+    }
+  }
+}

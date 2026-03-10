@@ -1,0 +1,3184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide Replit development banner in PWA/standalone mode */
+/* IMPORTANT: Only target specific Replit elements, NOT all fixed position elements */
+@media (display-mode: standalone) {
+  #replit-dev-banner,
+  [id^="replit-"],
+  [id^="__replit"],
+  [class*="replit-banner"],
+  [class*="dev-banner"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Additional fallback - hide all Replit injected elements globally in PWA */
+@media (display-mode: standalone) {
+  body > div:not(#root):first-child,
+  body > div[data-testid^="replit"] {
+    display: none !important;
+  }
+}
+
+/* CRITICAL FIX: Hide ALL MapLibre native controls in PWA standalone mode */
+/* This prevents the blue GeolocateControl badge from appearing in top-left corner */
+@media (display-mode: standalone) {
+  .maplibregl-ctrl-top-left,
+  .maplibregl-ctrl-top-right .maplibregl-ctrl-geolocate,
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-geolocate,
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-geolocate,
+  .maplibregl-control-container .maplibregl-ctrl-geolocate {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* CRITICAL FIX: Override MapLibre's transparent button color rule */
+/* MapLibre sets .maplibregl-map button { color: rgba(0,0,0,0) !important; } */
+/* Use class selector to guarantee icon visibility */
+button.tnp-control {
+  color: #1f2937 !important;
+}
+button.tnp-control svg,
+button.tnp-control svg * {
+  color: #1f2937 !important;
+  stroke: #1f2937 !important;
+  fill: none !important;
+}
+
+/* Fallback for browsers that don't support dvh */
+@supports not (height: 100dvh) {
+  [data-testid="legal-disclaimer-popup"] {
+    height: 100vh;
+  }
+}
+
+/* Automotive-optimized styling for CarPlay/Android Auto */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  /* CRITICAL: Ensure full height for map rendering */
+  height: 100%;
+  /* Use theme-aware background instead of forced white */
+  background-color: transparent;
+  /* Safe area handling is managed at component level to prevent double spacing */
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* CRITICAL: Ensure full height for map rendering */
+  height: 100%;
+  /* Theme-aware background color - use white for better PWA compatibility */
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground));
+  /* Larger base font size for automotive visibility */
+  font-size: 16px;
+}
+
+/* Ensure proper background in standalone PWA mode */
+@media (display-mode: standalone) {
+  html, body {
+    background-color: hsl(var(--background)) !important;
+  }
+}
+
+/* CRITICAL: Ensure root container has full height for map rendering */
+#root {
+  height: 100%;
+}
+
+/* CSS Custom Properties for Safe Areas */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Mobile Layout - Clean flex column skeleton with safe area handling */
+.mobile-layout {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto; /* CRITICAL: Ensure touch events reach map and UI elements */
+}
+
+/* Apply safe area padding ONLY in standalone PWA mode for non-navigation screens */
+/* Do NOT add padding when navigation UI is active - absolute positioning handles safe areas */
+@media (display-mode: standalone) {
+  .mobile-layout {
+    padding-bottom: var(--safe-area-bottom);
+  }
+}
+
+/* Automotive-optimized touch scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Enhanced Automotive button sizing - minimum 44px touch targets */
+.automotive-button {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 16px;
+  padding: 12px 16px;
+  /* Cross-platform compatibility */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Hardware acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Consistent appearance across browsers */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Automotive text sizing for dashboard visibility */
+.automotive-text-sm {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.automotive-text-base {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.automotive-text-lg {
+  font-size: 18px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+/* Custom pulsing animation for Quick Accept button */
+@keyframes pulse-green {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+/* Apply pulse animation to Quick Accept button */
+.animate-pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+/* Bouncing arrow animation for scroll indicator */
+@keyframes bounce-down {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.animate-bounce-down {
+  animation: bounce-down 1.5s infinite;
+}
+
+.automotive-text-xl {
+  font-size: 20px;
+  line-height: 1.8;
+  font-weight: 600;
+}
+
+/* Automotive card spacing for easier interaction */
+.automotive-card {
+  padding: 16px 20px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+/* Automotive input styling */
+.automotive-input {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 12px 16px;
+  border-width: 2px;
+}
+
+/* Enhanced Automotive Sidebar Layout with Optimized Spacing */
+.automotive-layout {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* Sidebar transitions and animations - Enhanced for reliability */
+.sidebar-transition {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ensure proper display and pointer events during transitions */
+  will-change: width, transform, opacity;
+}
+
+/* Map expansion animations */
+.automotive-map-expanded {
+  animation: mapExpand 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes mapExpand {
+  from {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Enhanced Scalable Map Controls - Mobile-First Design with clamp() */
+.scalable-control-button {
+  /* Scalable button sizing - 44px minimum for accessibility */
+  min-width: clamp(44px, 12vw, 64px);
+  min-height: clamp(44px, 12vw, 64px);
+  font-size: clamp(14px, 3.5vw, 18px);
+  padding: clamp(8px, 2vw, 16px);
+  border-radius: clamp(8px, 2vw, 12px);
+  /* Enhanced touch interaction for all devices */
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  touch-action: manipulation;
+  /* Prevent text selection on mobile */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Enhanced mobile browser support */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Hardware acceleration for smooth animations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Improved focus handling for mobile */
+  outline: none;
+  border: 2px solid transparent;
+}
+
+/* Enhanced touch feedback for all mobile devices */
+.scalable-control-button:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsla(var(--primary), 0.3);
+}
+
+/* Android-specific touch optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 1) and (pointer: coarse) {
+  .scalable-control-button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px;
+  }
+}
+
+/* iOS-specific touch optimizations */
+@supports (-webkit-touch-callout: none) {
+  .scalable-control-button {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+  }
+}
+
+.scalable-control-button:hover {
+  transform: scale(1.02);
+}
+
+.scalable-control-button:active {
+  transform: scale(0.98);
+}
+
+/* Enhanced Hamburger Menu Button - Mobile-First Design */
+.hamburger-menu-button {
+  /* Ensure automotive-grade 44px minimum touch target */
+  min-width: 44px !important;
+  min-height: 44px !important;
+  /* Enhanced visual feedback */
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  /* Prevent text selection and improve touch */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.hamburger-menu-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hamburger-menu-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Hamburger icon lines with smooth animation */
+.hamburger-line {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: currentColor;
+  border-radius: 2px;
+}
+
+.hamburger-menu-button:hover .hamburger-line {
+  transform: scaleX(1.1);
+}
+
+/* Improved sidebar positioning for left-side layout */
+.sidebar-left-positioned {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100dvh;
+  z-index: 50;
+  border-right: 1px solid hsl(var(--border));
+}
+
+/* Desktop sidebar with proper left positioning and optimized width */
+@media (min-width: 1024px) {
+  .desktop-sidebar-layout {
+    position: relative;
+    border-right: 1px solid hsl(var(--border));
+    /* Optimized sidebar width to prevent blocking map detail buttons */
+    flex-shrink: 0;
+    max-width: min(400px, 30vw);
+    width: clamp(320px, 25vw, 380px);
+  }
+  
+  /* EXTENDED DEPTH: Enhanced map coverage for desktop with sidebar */
+  .map-container {
+    /* Ensure consistent extended depth on desktop */
+    min-height: calc(100vh - 120px);
+    height: calc(100vh - 120px);
+  }
+}
+
+/* Enhanced mobile-first responsive sidebar */
+@media (max-width: 1023px) {
+  .mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: transparent;
+    z-index: 40;
+  }
+  
+  .mobile-sidebar-panel {
+    transform: translateX(-100%);
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .mobile-sidebar-panel.open {
+    transform: translateX(0);
+  }
+}
+
+/* Scalable Icons */
+.scalable-control-icon {
+  width: clamp(16px, 4vw, 24px);
+  height: clamp(16px, 4vw, 24px);
+  stroke-width: clamp(1.5px, 0.4vw, 2px);
+}
+
+.scalable-control-icon-sm {
+  width: clamp(12px, 3vw, 18px);
+  height: clamp(12px, 3vw, 18px);
+  stroke-width: clamp(1.5px, 0.4vw, 2px);
+}
+
+/* Scalable Text Elements */
+.scalable-control-text {
+  font-size: clamp(13px, 3.2vw, 16px);
+  line-height: clamp(1.4, 1.2, 1.6);
+  font-weight: 500;
+  letter-spacing: clamp(-0.01em, 0, 0.01em);
+}
+
+.scalable-control-text-xs {
+  font-size: clamp(11px, 2.8vw, 14px);
+  line-height: clamp(1.3, 1.1, 1.5);
+  font-weight: 400;
+  letter-spacing: clamp(0, 0, 0.02em);
+}
+
+.scalable-badge {
+  font-size: clamp(9px, 2.2vw, 12px);
+  padding: clamp(2px, 0.5vw, 4px) clamp(4px, 1vw, 6px);
+  border-radius: clamp(4px, 1vw, 6px);
+  min-width: clamp(16px, 4vw, 20px);
+  min-height: clamp(14px, 3.5vw, 18px);
+}
+
+/* Mobile-Optimized Control Clustering with Sidebar Avoidance */
+.map-controls-cluster {
+  /* Safe area for mobile devices with sidebar consideration */
+  max-width: clamp(160px, 45vw, 220px);
+  gap: clamp(8px, 2vw, 12px);
+}
+
+/* === PROFESSIONAL TRUCK NAVIGATION RESPONSIVE DESIGN SYSTEM === */
+
+/* Mobile-safe positioning utilities - Prevents double-offset in standalone PWA mode */
+@supports (bottom: max(0px)) {
+  .mobile-safe-bottom {
+    bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-bottom {
+      bottom: 16px; /* No env() - wrapper handles it */
+    }
+  }
+}
+
+@supports (top: max(0px)) {
+  .mobile-safe-top {
+    top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-top {
+      top: 16px; /* No env() - wrapper handles it */
+    }
+  }
+}
+
+@supports (left: max(0px)) {
+  .mobile-safe-left {
+    left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-left {
+      left: 16px; /* No env() - wrapper handles it */
+    }
+  }
+}
+
+@supports (right: max(0px)) {
+  .mobile-safe-right {
+    right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-right {
+      right: 16px; /* No env() - wrapper handles it */
+    }
+  }
+}
+
+/* Joyride tour guide mobile positioning fix */
+@media (max-width: 768px) {
+  /* Force the floater/tooltip to be centered on mobile */
+  .__floater {
+    left: 16px !important;
+    right: 16px !important;
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    transform: none !important;
+  }
+  
+  .__floater__body {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .react-joyride__tooltip {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* Enhanced responsive design system */
+:root {
+  /* HUD and overlay heights for map calculations */
+  --hud-height: 0px;
+  --bottom-bar-height: 0px;
+  --nav-header-height: 0px;
+  
+  /* Device tier breakpoints */
+  --breakpoint-phone-sm: 360px;   /* Small phones */
+  --breakpoint-phone-reg: 400px;  /* Regular phones */
+  --breakpoint-phone-lg: 600px;   /* Large phones/phablets */
+  --breakpoint-tablet-sm: 840px;  /* Small tablets */
+  --breakpoint-tablet-lg: 1024px; /* Large tablets */
+  
+  /* Responsive density tokens using clamp for smooth scaling */
+  --density-icon-sm: clamp(16px, 4vw, 20px);
+  --density-icon-md: clamp(20px, 5vw, 28px);
+  --density-icon-lg: clamp(24px, 6vw, 32px);
+  --density-icon-xl: clamp(28px, 7vw, 40px);
+  
+  --density-touch-target: clamp(44px, 12vw, 56px);
+  --density-touch-target-sm: clamp(36px, 10vw, 48px);
+  --density-touch-target-lg: clamp(52px, 14vw, 64px);
+  
+  --density-spacing-xs: clamp(4px, 1vw, 8px);
+  --density-spacing-sm: clamp(8px, 2vw, 12px);
+  --density-spacing-md: clamp(12px, 3vw, 16px);
+  --density-spacing-lg: clamp(16px, 4vw, 24px);
+  --density-spacing-xl: clamp(20px, 5vw, 32px);
+  
+  --density-text-xs: clamp(12px, 3.5vw, 14px);
+  --density-text-sm: clamp(14px, 4vw, 16px);
+  --density-text-md: clamp(16px, 4.5vw, 18px);
+  --density-text-lg: clamp(18px, 5vw, 20px);
+  --density-text-xl: clamp(20px, 5.5vw, 24px);
+  
+  /* Map container sizing */
+  --map-container-height: calc(100svh - var(--hud-height) - var(--bottom-bar-height) - var(--nav-header-height));
+}
+
+/* Device-specific adjustments */
+@media (max-width: 360px) {
+  :root {
+    /* Compact mode for small phones */
+    --density-icon-sm: 14px;
+    --density-icon-md: 18px;
+    --density-icon-lg: 22px;
+    --density-touch-target: 44px;
+    --density-spacing-sm: 6px;
+    --density-spacing-md: 8px;
+    --density-text-sm: 13px;
+    --density-text-md: 14px;
+  }
+}
+
+@media (min-width: 600px) {
+  :root {
+    /* Enhanced mode for tablets */
+    --density-icon-lg: 28px;
+    --density-icon-xl: 36px;
+    --density-touch-target: 52px;
+    --density-touch-target-lg: 64px;
+    --density-spacing-lg: 20px;
+    --density-spacing-xl: 28px;
+  }
+}
+
+@media (min-width: 840px) {
+  :root {
+    /* Desktop-like mode for large tablets */
+    --density-icon-xl: 40px;
+    --density-touch-target-lg: 72px;
+    --density-spacing-xl: 32px;
+  }
+}
+
+/* Map shell wrapper for consistent sizing across devices */
+.map-shell {
+  /* Default fallback height - overridden by parent flex container */
+  height: 100%;
+  min-height: 300px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  
+  /* Safe area handling for map edges */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.map-shell .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Professional navigation interface scaling */
+.professional-nav-interface {
+  /* Use density tokens for consistent scaling */
+  font-size: var(--density-text-md);
+}
+
+.professional-nav-interface .nav-button {
+  min-height: var(--density-touch-target);
+  min-width: var(--density-touch-target);
+  padding: var(--density-spacing-sm) var(--density-spacing-md);
+  font-size: var(--density-text-sm);
+}
+
+.professional-nav-interface .nav-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+.professional-nav-interface .nav-icon-lg {
+  width: var(--density-icon-lg);
+  height: var(--density-icon-lg);
+}
+
+/* HUD scaling for different screen sizes */
+.professional-nav-hud {
+  padding: var(--density-spacing-md);
+  gap: var(--density-spacing-sm);
+}
+
+.professional-nav-hud .hud-button {
+  min-height: var(--density-touch-target-sm);
+  padding: var(--density-spacing-xs) var(--density-spacing-sm);
+  font-size: var(--density-text-sm);
+}
+
+.professional-nav-hud .hud-icon {
+  width: var(--density-icon-sm);
+  height: var(--density-icon-sm);
+}
+
+/* Lane guidance popup scaling */
+.lane-guidance-safe {
+  /* Ensure proper safe area handling */
+  margin: var(--density-spacing-md);
+}
+
+.lane-guidance-safe .guidance-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+/* Bottom navigation button scaling */
+.bottom-nav-safe {
+  padding: var(--density-spacing-md);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav-safe .nav-button-primary {
+  min-height: var(--density-touch-target-lg);
+  padding: var(--density-spacing-md) var(--density-spacing-lg);
+  font-size: var(--density-text-lg);
+  font-weight: 600;
+}
+
+/* Responsive map controls */
+.map-controls {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.map-controls > * {
+  pointer-events: auto;
+}
+
+.map-controls .control-button {
+  min-height: var(--density-touch-target);
+  min-width: var(--density-touch-target);
+  padding: var(--density-spacing-sm);
+  /* backdrop-filter removed - causes transform context issues on iPad Safari */
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-controls .control-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+/* Orientation-aware layouts */
+@media (orientation: landscape) and (max-width: 840px) {
+  .professional-nav-hud {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .bottom-nav-safe {
+    padding: var(--density-spacing-sm) var(--density-spacing-lg);
+  }
+}
+
+/* High DPI display adjustments */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  .professional-nav-interface {
+    /* Slightly reduce sizes on high DPI to account for visual density */
+    --density-icon-md: clamp(18px, 4.5vw, 26px);
+    --density-text-md: clamp(15px, 4.2vw, 17px);
+  }
+}
+
+/* Ensure map controls avoid sidebar on desktop layouts */
+@media (min-width: 1024px) {
+  .desktop-sidebar ~ * .map-controls-cluster {
+    /* Position controls with sidebar clearance */
+    right: max(16px, calc(4px + env(safe-area-inset-right, 0px)));
+  }
+}
+
+/* Comprehensive iOS Safe Area Support for Mobile Devices */
+/* Safe area utilities for iOS devices with notches and home indicators */
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+.safe-area-all {
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+
+/* Fixed position elements safe area adjustments */
+.fixed-top-safe {
+  top: max(0px, env(safe-area-inset-top, 0));
+}
+
+.fixed-bottom-safe {
+  bottom: max(0px, env(safe-area-inset-bottom, 0));
+}
+
+.fixed-left-safe {
+  left: max(0px, env(safe-area-inset-left, 0));
+}
+
+.fixed-right-safe {
+  right: max(0px, env(safe-area-inset-right, 0));
+}
+
+/* Professional navigation HUD safe area support */
+/* Positioned directly under white header (56px + safe-area-top) */
+.nav-hud-safe-area {
+  position: fixed;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+.nav-hud-safe-area > * {
+  pointer-events: auto;
+}
+
+/* Start navigation button safe area support */
+.start-nav-button-safe {
+  bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+  right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+}
+
+/* Lane guidance popup safe area support */
+.lane-guidance-safe {
+  top: max(80px, calc(80px + env(safe-area-inset-top, 0px)));
+  left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+  right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+}
+
+/* Map controls safe area adjustments */
+.map-controls-safe {
+  top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+  right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+  bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+}
+
+/* Professional truck driver specific safe area handling */
+/* Note: margin-top removed - positioning handled by parent .nav-hud-safe-area */
+@supports (padding: env(safe-area-inset-top)) {
+  .professional-nav-interface {
+    /* Ensure horizontal safe areas are respected */
+    margin-left: env(safe-area-inset-left, 0);
+    margin-right: env(safe-area-inset-right, 0);
+  }
+}
+
+/* Adaptive spacing for different screen sizes */
+@media (max-width: 640px) {
+  .scalable-control-button {
+    /* Smaller buttons on very small screens but maintain accessibility */
+    min-width: clamp(40px, 11vw, 52px);
+    min-height: clamp(40px, 11vw, 52px);
+  }
+  
+  .map-controls-cluster {
+    /* Tighter clustering on small screens */
+    max-width: clamp(140px, 40vw, 180px);
+  }
+}
+
+/* Large screen adaptations */
+@media (min-width: 1024px) {
+  .scalable-control-button {
+    /* Larger buttons on desktop for easier mouse targeting */
+    min-width: clamp(48px, 8vw, 64px);
+    min-height: clamp(48px, 8vw, 64px);
+  }
+  
+  .map-controls-cluster {
+    /* More spacious layout on larger screens */
+    max-width: clamp(200px, 25vw, 280px);
+  }
+}
+
+/* High DPI display optimizations */
+@media (min-resolution: 2dppx) {
+  .scalable-control-icon,
+  .scalable-control-icon-sm {
+    /* Sharper icons on high-DPI displays */
+    stroke-width: clamp(1px, 0.3vw, 1.5px);
+  }
+}
+
+/* Automotive and landscape optimizations */
+@media (orientation: landscape) and (max-height: 600px) {
+  .scalable-control-button {
+    /* Compact controls for automotive landscape displays */
+    min-width: clamp(36px, 10vw, 48px);
+    min-height: clamp(36px, 10vw, 48px);
+    padding: clamp(6px, 1.5vw, 12px);
+  }
+  
+  .scalable-control-text {
+    font-size: clamp(12px, 3vw, 15px);
+  }
+}
+
+/* Responsive sidebar behavior for automotive displays */
+@media (orientation: landscape) and (min-width: 640px) {
+  .automotive-layout {
+    /* Landscape automotive layout optimization */
+  }
+  
+  /* Sidebar auto-collapse on small automotive screens */
+  @media (max-width: 1024px) {
+    .sidebar-auto-collapse {
+      width: 64px;
+    }
+  }
+}
+
+/* CarPlay/Android Auto specific optimizations */
+@media (max-height: 480px) and (orientation: landscape) {
+  .automotive-compact {
+    padding: 8px 12px;
+  }
+  
+  .automotive-text-compact {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  /* Compact sidebar for very small automotive screens */
+  .sidebar-compact {
+    width: 48px;
+  }
+  
+  .sidebar-compact .sidebar-content {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Sidebar-specific styling */
+.sidebar-backdrop {
+  background: transparent; /* DISABLED TO PREVENT OVERLAY */
+  transition: opacity 200ms ease-in-out;
+}
+
+/* Map container enhancements - Extended for maximum depth coverage */
+.map-container {
+  position: relative;
+  /* Transparent background to allow Leaflet map to show through */
+  background: transparent;
+  /* EXTENDED MAP DEPTH: Reduced reserved space from 200px to 120px for maximum coverage */
+  min-height: calc(100vh - 120px); /* Extended height for better navigation depth */
+  height: calc(100vh - 120px); /* More geographical coverage */
+  width: 100%;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius));
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.map-container.expanded {
+  z-index: 100;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Enhanced automotive touch targets */
+.automotive-touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 150ms ease-in-out;
+}
+
+.automotive-touch-target:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.automotive-touch-target:active {
+  transform: scale(0.98);
+}
+
+:root {
+  /* Day Theme - Bright, warm colors for daytime truck navigation */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(220, 90%, 8%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 90%, 8%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 90%, 8%);
+  
+  /* Primary - Strong blue for navigation elements */
+  --primary: hsl(214, 100%, 45%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  
+  /* Secondary - Bright amber for warnings and highlights */
+  --secondary: hsl(45, 100%, 55%);
+  --secondary-foreground: hsl(220, 90%, 8%);
+  
+  /* Muted elements with higher contrast */
+  --muted: hsl(210, 45%, 90%);
+  --muted-foreground: hsl(220, 25%, 35%);
+  
+  /* Accent - Safety green for go/safe indicators */
+  --accent: hsl(120, 65%, 40%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  
+  /* Destructive - High-contrast red for alerts and restrictions */
+  --destructive: hsl(0, 85%, 45%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Enhanced borders and inputs for better visibility */
+  --border: hsl(214, 40%, 85%);
+  --input: hsl(214, 40%, 94%);
+  --ring: hsl(214, 100%, 50%);
+  
+  /* Sidebar-specific colors */
+  --sidebar-background: hsl(210, 45%, 98%);
+  --sidebar-border: hsl(214, 40%, 85%);
+  --sidebar-shadow: hsla(214, 40%, 10%, 0.1);
+  
+  /* Truck navigation specific colors */
+  --route-primary: hsl(214, 100%, 45%);
+  --route-secondary: hsl(190, 80%, 50%);
+  --route-warning: hsl(35, 100%, 50%);
+  --route-danger: hsl(0, 85%, 45%);
+  --route-safe: hsl(120, 65%, 40%);
+  --map-road: hsl(0, 0%, 85%);
+  --map-highway: hsl(214, 30%, 75%);
+  --truck-profile: hsl(214, 100%, 45%);
+  --warning-amber: hsl(45, 100%, 55%);
+  --safety-green: hsl(120, 65%, 40%);
+  --alert-red: hsl(0, 85%, 45%);
+  
+  /* Chart colors optimized for day visibility */
+  --chart-1: hsl(214, 100%, 45%);
+  --chart-2: hsl(120, 65%, 40%);
+  --chart-3: hsl(45, 100%, 55%);
+  --chart-4: hsl(0, 85%, 45%);
+  --chart-5: hsl(280, 90%, 60%);
+  
+  /* Enhanced sidebar with automotive styling */
+  --sidebar: var(--sidebar-background);
+  --sidebar-foreground: hsl(220, 90%, 8%);
+  --sidebar-primary: hsl(214, 100%, 45%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(210, 45%, 90%);
+  --sidebar-accent-foreground: hsl(214, 100%, 45%);
+  --sidebar-border: var(--sidebar-border);
+  --sidebar-ring: hsl(214, 100%, 50%);
+  
+  /* Typography and spacing */
+  --font-sans: 'Roboto', system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Night Theme - Dark colors with amber/red accents for night vision preservation */
+  --background: hsl(224, 80%, 2%);
+  --foreground: hsl(15, 20%, 85%);
+  --card: hsl(224, 70%, 4%);
+  --card-foreground: hsl(15, 20%, 85%);
+  --popover: hsl(224, 70%, 4%);
+  --popover-foreground: hsl(15, 20%, 85%);
+  
+  /* Dark theme sidebar colors */
+  --sidebar-background: hsl(224, 70%, 4%);
+  --sidebar-border: hsl(224, 40%, 12%);
+  --sidebar-shadow: hsla(224, 40%, 2%, 0.3);
+  
+  /* Primary - Muted blue that preserves night vision */
+  --primary: hsl(214, 70%, 60%);
+  --primary-foreground: hsl(224, 80%, 2%);
+  
+  /* Secondary - Warm amber for night visibility */
+  --secondary: hsl(45, 100%, 65%);
+  --secondary-foreground: hsl(224, 80%, 2%);
+  
+  /* Muted elements optimized for night */
+  --muted: hsl(224, 60%, 8%);
+  --muted-foreground: hsl(15, 15%, 65%);
+  
+  /* Accent - Soft green that doesn't strain eyes */
+  --accent: hsl(120, 50%, 55%);
+  --accent-foreground: hsl(224, 80%, 2%);
+  
+  /* Destructive - Soft red for night alerts */
+  --destructive: hsl(0, 65%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Enhanced borders and inputs for night visibility */
+  --border: hsl(216, 40%, 12%);
+  --input: hsl(216, 40%, 10%);
+  --ring: hsl(214, 70%, 60%);
+  
+  /* Night-optimized truck navigation colors */
+  --route-primary: hsl(214, 70%, 60%);
+  --route-secondary: hsl(190, 60%, 65%);
+  --route-warning: hsl(35, 90%, 65%);
+  --route-danger: hsl(0, 65%, 60%);
+  --route-safe: hsl(120, 50%, 55%);
+  --map-road: hsl(224, 30%, 15%);
+  --map-highway: hsl(214, 40%, 20%);
+  --truck-profile: hsl(214, 70%, 60%);
+  --warning-amber: hsl(45, 100%, 65%);
+  --safety-green: hsl(120, 50%, 55%);
+  --alert-red: hsl(0, 65%, 60%);
+  
+  /* Chart colors optimized for night vision */
+  --chart-1: hsl(214, 70%, 60%);
+  --chart-2: hsl(120, 50%, 55%);
+  --chart-3: hsl(45, 100%, 65%);
+  --chart-4: hsl(0, 65%, 60%);
+  --chart-5: hsl(280, 60%, 70%);
+  
+  /* Sidebar with night-optimized contrast */
+  --sidebar: hsl(224, 70%, 4%);
+  --sidebar-foreground: hsl(15, 20%, 85%);
+  --sidebar-primary: hsl(214, 70%, 60%);
+  --sidebar-primary-foreground: hsl(224, 80%, 2%);
+  --sidebar-accent: hsl(224, 60%, 8%);
+  --sidebar-accent-foreground: hsl(214, 70%, 60%);
+  --sidebar-border: hsl(216, 40%, 12%);
+  --sidebar-ring: hsl(214, 70%, 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Duplicate map-container rule removed - consolidated above */
+
+/* Dark mode map container */
+.dark .map-container {
+  /* Transparent background to allow Leaflet map to show through */
+  background: transparent;
+}
+
+/* Satellite view styling - Enhanced green terrain appearance */
+.map-container.satellite-view {
+  /* Override base background with terrain-like gradient */
+  background: linear-gradient(135deg, #065f46 0%, #059669 30%, #10b981 60%, #34d399 100%);
+  /* Remove grid pattern for satellite view */
+  background-image: none;
+}
+
+/* Dark mode satellite view */
+.dark .map-container.satellite-view {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 30%, #047857 60%, #059669 100%);
+  background-image: none;
+}
+
+/* Route Line - Enhanced for Day/Night Visibility */
+.route-line {
+  position: absolute;
+  background: linear-gradient(90deg, var(--route-primary), var(--route-secondary));
+  height: 5px;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(21, 101, 192, 0.4);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced route line visibility in dark mode */
+.dark .route-line {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Alternative route lines */
+.route-line.alternative {
+  background: linear-gradient(90deg, var(--muted-foreground), var(--muted));
+  opacity: 0.7;
+  height: 3px;
+}
+
+/* Warning route segments */
+.route-line.warning {
+  background: linear-gradient(90deg, var(--route-warning), var(--secondary));
+}
+
+/* Restricted route segments */
+.route-line.restricted {
+  background: linear-gradient(90deg, var(--route-danger), var(--destructive));
+  animation: restrictionPulse 2s infinite;
+}
+
+@keyframes restrictionPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+/* Truck Navigation Markers */
+.restriction-marker {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: var(--alert-red);
+  border: 3px solid var(--destructive-foreground);
+  border-radius: 50%;
+  animation: restrictionAlert 2s infinite;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+  z-index: 10;
+}
+
+.dark .restriction-marker {
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.6);
+}
+
+/* Safe facility markers */
+.facility-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  background: var(--safety-green);
+  border: 2px solid var(--accent-foreground);
+  border-radius: 4px;
+  animation: facilityGlow 3s infinite;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+}
+
+/* Truck profile indicators */
+.truck-profile-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--truck-profile);
+  color: var(--primary-foreground);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.truck-profile-indicator:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Warning badges for restrictions */
+.warning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--warning-amber);
+  color: var(--secondary-foreground);
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 11px;
+  font-weight: 700;
+  animation: warningFlash 4s infinite;
+}
+
+@keyframes restrictionAlert {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  25% { 
+    opacity: 0.8; 
+    transform: scale(1.1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.15);
+  }
+  75% { 
+    opacity: 0.8; 
+    transform: scale(1.1);
+  }
+}
+
+@keyframes facilityGlow {
+  0%, 100% { 
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+  }
+  50% { 
+    box-shadow: 0 2px 12px rgba(34, 197, 94, 0.6);
+  }
+}
+
+@keyframes warningFlash {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.8; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Enhanced Cross-Browser Street View Fixes */
+/* Comprehensive webkit transform fixes for Chrome, Safari, Edge, and mobile browsers */
+
+/* Fix for Google Street View controls across all webkit browsers */
+html body div[style*="transform"],
+.gmnoprint div[style*="transform"],
+[class*="gm-"] div[style*="transform"] {
+  -webkit-transform: scale(1) translateZ(0) !important;
+  -moz-transform: scale(1) translateZ(0) !important;
+  -ms-transform: scale(1) translateZ(0) !important;
+  transform: scale(1) translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  -webkit-perspective: 1000px !important;
+  perspective: 1000px !important;
+}
+
+/* Fix for Street View panorama container specifically */
+.gm-style,
+.gm-style div,
+.gm-style-pbc,
+[data-capture-injected="true"] {
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
+/* Android Chrome specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+  .android-chrome-fix {
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .ios-safari-fix {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* Mobile browser compatibility layer */
+@media (max-width: 768px) {
+  .gm-style,
+  .gm-style div,
+  [class*="street-view"] {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+  }
+  
+  /* Enhanced mobile map container performance */
+  .map-container,
+  .mobile-map-container {
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-overflow-scrolling: touch !important;
+    overflow-scrolling: touch !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+  
+  /* Mobile direction button enhancements */
+  .direction-button-panel {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
+}
+
+/* Enhanced Focus Indicators for Accessibility and Safety */
+.navigation-focus:focus,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 
+    0 0 0 6px hsla(214, 100%, 50%, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+  border-radius: var(--radius);
+}
+
+.dark .navigation-focus:focus,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark [tabindex]:focus-visible {
+  outline: 3px solid var(--primary);
+  box-shadow: 
+    0 0 0 6px hsla(214, 70%, 60%, 0.4),
+    0 2px 10px rgba(59, 130, 246, 0.2);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: hsl(214, 100%, 35%);
+    --destructive: hsl(0, 100%, 40%);
+    --accent: hsl(120, 100%, 30%);
+  }
+  
+  .dark {
+    --primary: hsl(214, 100%, 70%);
+    --destructive: hsl(0, 100%, 70%);
+    --accent: hsl(120, 100%, 60%);
+  }
+  
+  .route-line {
+    height: 6px;
+    border: 2px solid var(--foreground);
+  }
+  
+  .restriction-marker,
+  .facility-marker {
+    border-width: 4px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .restriction-marker,
+  .route-line.restricted,
+  .warning-badge,
+  .facility-marker {
+    animation: none;
+  }
+  
+  .navigation-focus:focus,
+  button:focus-visible,
+  input:focus-visible {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Navigation Status Indicators */
+.nav-status-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 8px;
+}
+
+/* Enhanced Flag Dropdown Styling with Solid Frame and Pinstripe Borders */
+.flag-dropdown-frame {
+  /* Solid visual frame around the dropdown container */
+  border: 2px solid var(--primary);
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.2),
+    0 0 0 1px hsla(214, 100%, 45%, 0.3);
+  background: var(--popover);
+  /* backdrop-filter: blur(8px); - Removed to prevent frosted glass overlay effects */
+  overflow: hidden;
+  position: relative;
+}
+
+.flag-dropdown-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    hsla(214, 100%, 45%, 0.05) 0%,
+    transparent 50%,
+    hsla(214, 100%, 45%, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .flag-dropdown-frame {
+  border: 2px solid var(--primary);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 hsla(214, 70%, 60%, 0.3),
+    0 0 0 1px hsla(214, 70%, 60%, 0.4);
+}
+
+/* Pinstripe border styling for country menu items */
+.flag-country-item {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) - 1px);
+  margin: 2px 4px;
+  padding: 8px 12px;
+  background: var(--card);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.flag-country-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    hsla(214, 40%, 85%, 0.3) 2px,
+    hsla(214, 40%, 85%, 0.3) 4px
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.flag-country-item:hover::before {
+  opacity: 1;
+}
+
+.flag-country-item:hover {
+  border-color: var(--primary);
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.2);
+}
+
+.flag-country-item[data-selected="true"] {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, 
+    var(--primary) 0%,
+    hsla(214, 100%, 50%, 0.8) 100%
+  );
+  color: var(--primary-foreground);
+  box-shadow: 
+    0 2px 8px hsla(214, 100%, 45%, 0.3),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.3);
+}
+
+.flag-country-item[data-selected="true"]::before {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    hsla(0, 0%, 100%, 0.1) 2px,
+    hsla(0, 0%, 100%, 0.1) 4px
+  );
+  opacity: 1;
+}
+
+.dark .flag-country-item::before {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    hsla(214, 40%, 30%, 0.4) 2px,
+    hsla(214, 40%, 30%, 0.4) 4px
+  );
+}
+
+.dark .flag-country-item:hover {
+  background: var(--accent);
+  border-color: var(--primary);
+}
+
+.dark .flag-country-item[data-selected="true"] {
+  background: linear-gradient(135deg, 
+    var(--primary) 0%,
+    hsla(214, 70%, 60%, 0.9) 100%
+  );
+}
+
+/* Enhanced flag visuals with better spacing */
+.flag-enhanced {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.3);
+  border: 1px solid hsla(0, 0%, 0%, 0.1);
+  background: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.flag-enhanced:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.4);
+}
+
+.dark .flag-enhanced {
+  border-color: hsla(0, 0%, 100%, 0.1);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.1);
+}
+
+/* Country group headers with enhanced styling */
+.flag-country-group-header {
+  position: relative;
+  padding: 8px 12px 4px;
+  margin: 8px 4px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+}
+
+.flag-country-group-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  width: 20px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+
+/* Command input styling for flag dropdown */
+.flag-dropdown-search {
+  border-bottom: 2px solid var(--border);
+  background: var(--background);
+  position: relative;
+}
+
+.flag-dropdown-search::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    var(--primary) 0%,
+    transparent 50%,
+    var(--primary) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.flag-dropdown-search:focus-within::after {
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .nav-status-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    margin: 0;
+  }
+}
+
+.nav-status-indicator.active {
+  background: var(--safety-green);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
+.nav-status-indicator.warning {
+  background: var(--warning-amber);
+  color: var(--secondary-foreground);
+  border-color: var(--secondary);
+}
+
+.nav-status-indicator.danger {
+  background: var(--alert-red);
+  color: var(--destructive-foreground);
+  border-color: var(--destructive);
+  animation: dangerPulse 2s infinite;
+}
+
+@keyframes dangerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; transform: scale(1.02); }
+}
+
+/* GPS Marker Visibility Fix */
+.maplibregl-marker {
+  z-index: 9999 !important;
+}
+
+.user-position-marker {
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
+/* Ensure MapLibre markers are always visible */
+.maplibregl-canvas-container .maplibregl-marker {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Lighten MapLibre map tiles to reduce dark road appearance (matches Leaflet styling) */
+.maplibregl-canvas {
+  filter: brightness(1.15) contrast(0.92) saturate(0.95);
+  -webkit-filter: brightness(1.15) contrast(0.92) saturate(0.95);
+}
+
+/* Amazon Fire TV and 10-foot UI Optimizations */
+@media (orientation: landscape) and (min-width: 1280px) and (min-height: 720px) {
+  /* Fire TV specific styles for TruckNav Pro */
+  body {
+    padding: 40px;
+    font-size: 18px;
+  }
+  
+  /* Enhanced focus management for TV remote navigation with theme support */
+  button:focus,
+  [tabindex]:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 4px solid var(--primary);
+    outline-offset: 3px;
+    box-shadow: 
+      0 0 0 8px hsla(214, 100%, 50%, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
+    transition: all 0.2s ease;
+    border-radius: var(--radius);
+  }
+  
+  .dark button:focus,
+  .dark [tabindex]:focus,
+  .dark input:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    outline: 4px solid var(--primary);
+    box-shadow: 
+      0 0 0 8px hsla(214, 70%, 60%, 0.4),
+      0 4px 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Larger touch targets for TV navigation */
+  button {
+    min-height: 52px;
+    min-width: 140px;
+    font-size: 18px;
+    padding: 16px 28px;
+    font-weight: 600;
+  }
+  
+  /* Enhanced map visibility for TV - Additional styles only */
+  .map-container {
+    border-width: 2px; /* Thicker border for TV */
+    border-radius: calc(var(--radius) + 2px);
+  }
+  
+  .route-line {
+    height: 6px;
+  }
+  
+  .restriction-marker {
+    width: 24px;
+    height: 24px;
+    border-width: 4px;
+  }
+  
+  .facility-marker {
+    width: 22px;
+    height: 22px;
+    border-width: 3px;
+  }
+}
+
+/* Amazon Silk Browser Optimizations */
+@supports (-webkit-appearance: none) {
+  /* Silk-specific optimizations for TruckNav Pro */
+  body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Hardware acceleration for smooth scrolling */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+  }
+  
+  /* Optimize rendering for Silk */
+  button,
+  .card {
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+}
+
+/* Fire Tablet Portrait Mode */
+@media (orientation: portrait) and (max-width: 768px) {
+  /* Tablet-specific navigation for TruckNav Pro */
+  .navigation-header {
+    padding: 16px;
+    font-size: 20px;
+  }
+  
+  /* Touch-friendly spacing */
+  .facility-card,
+  .route-card {
+    padding: 20px;
+    margin: 12px 0;
+  }
+  
+  /* Optimized map size for tablets - Additional styles only */
+  .map-container {
+    /* min-height already set in main definition */
+    border-radius: 8px; /* Custom border radius for tablets */
+  }
+}
+
+/* Amazon-specific legal notices positioning */
+.amazon-footer {
+  position: relative;
+  padding: 8px 16px;
+  background: hsl(210, 40%, 96%);
+  border-top: 1px solid hsl(214, 32%, 91%);
+  font-size: 12px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.dark .amazon-footer {
+  background: hsl(224, 71%, 4%);
+  border-top: 1px solid hsl(216, 34%, 17%);
+}
+
+@media (min-width: 768px) {
+  .amazon-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-top: 0;
+  }
+}
+
+/* Fire TV voice command indicators */
+.voice-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: hsl(120, 61%, 34%);
+  border-radius: 50%;
+  animation: amazonPulse 2s infinite;
+}
+
+@keyframes amazonPulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Flag emoji font support for country selector */
+.font-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  font-feature-settings: "liga" off;
+  font-variant-ligatures: none;
+}
+
+/* Country flag display optimization */
+.country-flag {
+  display: inline-block;
+  font-size: inherit;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Ensure flags render correctly in different contexts */
+.flag-icon {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ==================================================
+   MOBILE-FIRST NAVIGATION SHELL ENHANCEMENTS
+   ================================================== */
+
+/* Mobile-first safe area variables */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  
+  /* Mobile-first responsive typography using clamp() */
+  --text-xs: clamp(0.75rem, 0.5vw + 0.6rem, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.5vw + 0.7rem, 1rem);
+  --text-base: clamp(1rem, 1vw + 0.8rem, 1.125rem);
+  --text-lg: clamp(1.125rem, 1.2vw + 0.9rem, 1.375rem);
+  --text-xl: clamp(1.25rem, 1.5vw + 1rem, 1.625rem);
+  --text-2xl: clamp(1.5rem, 2vw + 1.2rem, 2rem);
+  --text-3xl: clamp(1.875rem, 3vw + 1.4rem, 2.5rem);
+  
+  /* Mobile spacing variables */
+  --mobile-padding: clamp(1rem, 4vw, 2rem);
+  --mobile-margin: clamp(0.5rem, 2vw, 1rem);
+  --touch-target-min: 44px;
+  --drawer-height: clamp(60vh, 70vh, 80vh);
+}
+
+/* Mobile-first base layout - CONSOLIDATED (primary definition is at top of file with position: fixed; inset: 0) */
+/* This section only adds overflow handling - do NOT redefine position/inset */
+
+/* Mobile fullscreen map container - Optimized depth coverage */
+.mobile-map-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: calc(100vh - 120px); /* Balanced spacing for better alignment without sacrificing map area */
+  height: calc(100vh - 120px); /* Slightly thicker borders for proper mobile framing */
+  background: var(--map-background, #f8fafc);
+  overflow: hidden;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+/* Inherit map-container styles for mobile */
+.mobile-map-container > .map-container {
+  min-height: 100%;
+  height: 100%;
+}
+
+/* Responsive adjustments for better alignment on all screen sizes */
+@media (max-height: 600px) {
+  .map-container {
+    min-height: calc(100vh - 100px); /* Optimized for small screens */
+    height: calc(100vh - 100px); /* Better alignment on compact devices */
+  }
+  
+  .mobile-map-container {
+    min-height: calc(100vh - 110px); /* Balanced spacing on small screens */
+    height: calc(100vh - 110px); /* Optimized mobile alignment */
+  }
+}
+
+@media (min-height: 800px) {
+  .map-container {
+    min-height: calc(100vh - 140px); /* Moderate spacing on large screens */
+    height: calc(100vh - 140px); /* Better visual balance */
+  }
+  
+  .mobile-map-container {
+    min-height: calc(100vh - 130px); /* Balanced framing on tall screens */
+    height: calc(100vh - 130px); /* Better mobile coverage with proper borders */
+  }
+}
+
+/* CarPlay/Android Auto adjustments - Optimized for landscape automotive displays */
+@media (max-height: 480px) and (orientation: landscape) {
+  .map-container,
+  .mobile-map-container {
+    min-height: calc(100vh - 90px); /* Optimized for landscape automotive displays */
+    height: calc(100vh - 90px); /* Better coverage on automotive screens */
+  }
+}
+
+/* Mobile drawer overlay - Enhanced with fallback visibility - No backdrop blur to prevent frosted glass overlay */
+.mobile-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent; /* COMPLETELY DISABLED TO PREVENT GREY OVERLAY */
+  /* Default opacity 0 to prevent stuck overlays */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 40;
+}
+
+/* Use data-state if available, otherwise keep default visibility */
+.mobile-drawer-overlay[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-drawer-overlay[data-state='open'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile drawer container with enhanced swipe support */
+.mobile-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--background);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(100%);
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+  max-height: var(--drawer-height);
+  /* Remove double safe-area padding - handled in drawer-content */
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.mobile-drawer[data-state='open'] {
+  transform: translateY(0);
+}
+
+/* Drawer handle for swipe indicator */
+.drawer-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--muted-foreground);
+  border-radius: 2px;
+  margin: 12px auto 16px;
+  opacity: 0.6;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.drawer-handle:active {
+  cursor: grabbing;
+}
+
+/* Drawer content scrollable area */
+.drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--mobile-padding);
+  /* Safe area padding handled by component prop now */
+}
+
+/* Mobile navigation header */
+.mobile-nav-header {
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 10;
+  padding: var(--mobile-padding);
+  padding-top: calc(var(--safe-area-inset-top) + var(--mobile-padding));
+  border-bottom: 1px solid var(--border);
+  /* backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+}
+
+/* Touch-friendly button classes */
+.touch-button {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem);
+  font-size: var(--text-base);
+  border-radius: 12px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: all 150ms ease-in-out;
+}
+
+.touch-button:active {
+  transform: scale(0.98);
+}
+
+/* Mobile touch targets are now handled by automotive-touch-target class for consistency */
+
+/* Mobile-first responsive grid */
+.mobile-grid {
+  display: grid;
+  gap: var(--mobile-margin);
+  padding: var(--mobile-padding);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .mobile-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* Mobile cards with enhanced touch feedback */
+.mobile-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: var(--mobile-padding);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile typography classes using clamp() */
+.mobile-text-xs { font-size: var(--text-xs); }
+.mobile-text-sm { font-size: var(--text-sm); }
+.mobile-text-base { font-size: var(--text-base); }
+.mobile-text-lg { font-size: var(--text-lg); }
+.mobile-text-xl { font-size: var(--text-xl); }
+.mobile-text-2xl { font-size: var(--text-2xl); }
+.mobile-text-3xl { font-size: var(--text-3xl); }
+
+/* Mobile-safe spacing utilities */
+.mobile-safe-top {
+  padding-top: calc(var(--safe-area-inset-top) + 1rem);
+}
+
+.mobile-safe-bottom {
+  padding-bottom: calc(var(--safe-area-inset-bottom) + 1rem);
+}
+
+.mobile-safe-left {
+  padding-left: calc(var(--safe-area-inset-left) + 1rem);
+}
+
+.mobile-safe-right {
+  padding-right: calc(var(--safe-area-inset-right) + 1rem);
+}
+
+/* Mobile breakpoint-specific styles */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar on mobile */
+  .desktop-sidebar {
+    display: none;
+  }
+  
+  /* Full viewport map on mobile with extended depth */
+  .navigation-layout {
+    flex-direction: column;
+  }
+  
+  .map-container {
+    position: relative;
+    width: 100%;
+    /* EXTENDED DEPTH: Use calculated height for consistency with container sizing */
+    height: calc(100dvh - 100px); /* Dynamic viewport height with extended depth */
+    border-radius: 0;
+    border: none;
+  }
+  
+  /* Enhance button sizes for mobile */
+  button, .btn {
+    min-height: var(--touch-target-min);
+    padding: 12px 16px;
+    font-size: var(--text-base);
+  }
+  
+  /* Mobile-friendly form inputs */
+  input, select, textarea {
+    min-height: var(--touch-target-min);
+    padding: 12px 16px;
+    font-size: var(--text-base);
+    border-radius: 12px;
+  }
+}
+
+/* EXTENDED DEPTH: Tablet landscape optimization with enhanced coverage */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+  .mobile-drawer {
+    left: 50%;
+    right: 0;
+    border-top-left-radius: 20px;
+  }
+  
+  .mobile-map-container {
+    width: 50%;
+    /* Enhanced depth for tablet landscape */
+    min-height: calc(100vh - 90px);
+    height: calc(100vh - 90px);
+  }
+  
+  /* Desktop-style map container for tablets */
+  .map-container {
+    min-height: calc(100vh - 100px);
+    height: calc(100vh - 100px);
+  }
+}
+
+/* Large mobile devices (6.7" and above) */
+@media (min-width: 414px) and (max-width: 768px) {
+  :root {
+    --drawer-height: 75vh;
+    --touch-target-min: 48px;
+  }
+}
+
+/* Small mobile devices optimization */
+@media (max-width: 414px) {
+  :root {
+    --drawer-height: 65vh;
+    --mobile-padding: 1rem;
+    --mobile-margin: 0.75rem;
+  }
+  
+  .mobile-card {
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  
+  .drawer-content {
+    padding: 0 1rem;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --drawer-height: 85vh;
+  }
+  
+  .mobile-nav-header {
+    padding-top: calc(var(--safe-area-inset-top) + 0.5rem);
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .mobile-layout {
+    height: 100dvh;
+    height: -webkit-fill-available;
+  }
+  
+  .mobile-drawer {
+    bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Enhanced accessibility for mobile */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-drawer {
+    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer {
+    transition: none;
+  }
+  
+  .mobile-card:active,
+  .touch-button:active {
+    transform: none;
+  }
+}
+
+/* Dark mode mobile enhancements */
+.dark .mobile-drawer {
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mobile-nav-header {
+  /* backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+  border-bottom: 1px solid var(--border);
+}
+
+/* High contrast mode mobile support */
+@media (prefers-contrast: high) {
+  .mobile-card {
+    border-width: 2px;
+  }
+  
+  .drawer-handle {
+    height: 6px;
+    background: var(--foreground);
+    opacity: 1;
+  }
+}
+
+/* Mobile focus indicators */
+@media (max-width: 768px) {
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px hsla(214, 100%, 50%, 0.2);
+  }
+}
+
+/* ===== AUTOMOTIVE LEGAL OVERLAY STYLES ===== */
+
+/* Legal overlay at bottom of map - automotive design language */
+.automotive-legal-overlay {
+  /* Ensure proper stacking - below map controls but above map content */
+  z-index: 30 !important;
+  
+  /* Enhanced backdrop blur for readability on any map background - Removed to prevent frosted glass overlay effects */
+  /* backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
+  
+  /* Automotive-grade contrast and readability - DISABLED OVERLAY */
+  background: transparent;
+  border: 1px solid hsla(var(--border), 0.8);
+  
+  /* Automotive spacing and safe areas */
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+  
+  /* Smooth animations for automotive feel */
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ensure text remains readable */
+  color: hsl(var(--foreground));
+  
+  /* Prevent interference with map interactions */
+  pointer-events: auto;
+  
+  /* Enhanced shadow for depth perception */
+  box-shadow: 
+    0 4px 12px hsla(0, 0%, 0%, 0.15),
+    0 2px 4px hsla(0, 0%, 0%, 0.1),
+    inset 0 1px 0 hsla(var(--background), 0.8);
+}
+
+/* Hover state for interactive elements within legal overlay */
+.automotive-legal-overlay:hover {
+  background: hsla(var(--background), 0.98);
+  border-color: hsla(var(--primary), 0.3);
+}
+
+/* Mobile-specific legal overlay adjustments */
+@media (max-width: 640px) {
+  .automotive-legal-overlay {
+    /* Tighter margins on mobile for space efficiency */
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    
+    /* Adjusted font size for mobile visibility */
+    font-size: 11px;
+    line-height: 1.4;
+    
+    /* Increased touch targets for mobile */
+    padding: 8px 12px !important;
+    
+    /* Enhanced safe area handling */
+    margin-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  }
+}
+
+/* Tablet and desktop legal overlay adjustments */
+@media (min-width: 641px) {
+  .automotive-legal-overlay {
+    /* More generous spacing on larger screens */
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    
+    /* Optimal font size for desktop visibility */
+    font-size: 12px;
+    line-height: 1.5;
+    
+    /* Desktop padding */
+    padding: 12px 16px !important;
+    
+    /* Max width to prevent excessive stretching on wide screens */
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Large desktop adjustments */
+@media (min-width: 1024px) {
+  .automotive-legal-overlay {
+    /* Prevent interference with sidebar areas */
+    max-width: calc(100% - 64px);
+    
+    /* Enhanced readability on larger screens */
+    font-size: 13px;
+    padding: 14px 20px !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .automotive-legal-overlay {
+    background: hsl(var(--background));
+    border: 2px solid hsl(var(--foreground));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 hsl(var(--background));
+  }
+}
+
+/* Dark mode enhancements */
+.dark .automotive-legal-overlay {
+  background: hsla(var(--background), 0.92);
+  border: 1px solid hsla(var(--border), 0.6);
+  
+  box-shadow: 
+    0 4px 12px hsla(0, 0%, 0%, 0.4),
+    0 2px 4px hsla(0, 0%, 0%, 0.2),
+    inset 0 1px 0 hsla(var(--background), 0.6);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .automotive-legal-overlay {
+    transition: none;
+  }
+}
+
+/* Legal overlay protection indicators styling */
+.automotive-legal-overlay .protection-badge {
+  /* Small, automotive-style badges */
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 6px;
+  
+  /* Subtle animation */
+  transition: all 200ms ease-in-out;
+}
+
+.automotive-legal-overlay .protection-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Ensure legal buttons maintain automotive touch targets */
+.automotive-legal-overlay button {
+  min-height: 32px;
+  min-width: 64px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  
+  /* Enhanced automotive touch feedback */
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.automotive-legal-overlay button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px hsla(var(--primary), 0.3);
+}
+
+.automotive-legal-overlay button:active {
+  transform: translateY(0);
+}
+
+/* Print styles for legal overlay */
+@media print {
+  .automotive-legal-overlay {
+    position: static !important;
+    background: white !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    margin: 20px 0 !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* Mobile-friendly input styling and organization */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Enhanced mobile input organization */
+  .mobile-input-spacing > * + * {
+    margin-top: 1rem;
+  }
+  
+  .mobile-field-group {
+    touch-action: manipulation; /* Improves touch responsiveness */
+  }
+  
+  .mobile-action-group {
+    padding: 1rem 0;
+    gap: 0.75rem;
+  }
+  
+  /* Better touch targets for mobile */
+  .mobile-field-group input,
+  .mobile-field-group select,
+  .mobile-field-group button {
+    min-height: 48px;
+  }
+}
+
+/* Enhanced form organization and input grouping */
+.input-group-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.field-group-enhanced {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.field-group-enhanced:last-child {
+  margin-bottom: 0;
+}
+
+.form-section-divider {
+  margin: 2rem 0;
+  border-color: hsl(var(--border));
+  opacity: 0.6;
+}
+
+/* Improved focus states for better accessibility */
+.enhanced-focus {
+  @apply focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-ring;
+}
+
+/* GLOBAL FIX: Hide vaul drawer wrapper/overlay when not actively open */
+[data-vaul-drawer-wrapper],
+[data-vaul-overlay],
+.vaul-drawer-wrapper,
+.vaul-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
+/* COMPREHENSIVE OVERLAY KILL-SWITCH - Force all overlays transparent during navigation */
+html.overlay-safe-mode [class*="Overlay"], 
+html.overlay-safe-mode [data-radix-portal], 
+html.overlay-safe-mode [class*="backdrop"], 
+html.overlay-safe-mode [class*="overlay"], 
+html.overlay-safe-mode ::backdrop,
+html.overlay-safe-mode [data-vaul-drawer-wrapper],
+html.overlay-safe-mode [data-vaul-overlay],
+html.overlay-safe-mode [data-vaul-drawer],
+body.navigation-active .fixed.inset-0,
+body.navigation-active [data-state="open"][role="dialog"],
+body.navigation-active [data-state="open"][role="alertdialog"],
+body.navigation-active .vaul-drawer-wrapper,
+body.navigation-active .vaul-overlay,
+body.navigation-active [data-testid*="overlay"],
+body.navigation-active [data-testid*="drawer"],
+body.navigation-active .drawer-overlay,
+body.navigation-active .sheet-overlay,
+body.navigation-active .dialog-overlay,
+body.navigation-active [class*="DialogOverlay"],
+body.navigation-active [class*="SheetOverlay"],
+body.navigation-active [class*="DrawerOverlay"] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+  animation: none !important;
+  z-index: -1 !important;
+}
+
+/* FORCE MAP INTERACTION DURING NAVIGATION */
+body.navigation-active .maplibregl-canvas,
+body.navigation-active .maplibregl-map,
+body.navigation-active .leaflet-container,
+body.navigation-active [data-testid*="map"] {
+  pointer-events: auto !important;
+  z-index: 1 !important;
+}
+
+/* PRESERVE CRITICAL NAVIGATION CONTROLS */
+body.navigation-active [data-testid="button-hamburger"],
+body.navigation-active [data-testid="button-start-navigation"],
+body.navigation-active .navigation-controls,
+body.navigation-active [data-testid*="button-"] {
+  pointer-events: auto !important;
+  /* z-index handled by component-level styles - DO NOT override here */
+}
+
+/* CRITICAL: Preserve right-side navigation controls CONTAINER during navigation */
+body.navigation-active [data-testid="navigation-controls-container"],
+body.navigation-active .navigation-controls-container,
+html.overlay-safe-mode [data-testid="navigation-controls-container"],
+html.overlay-safe-mode .navigation-controls-container {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2100 !important;
+  display: flex !important;
+}
+
+/* CRITICAL: Preserve right-side navigation controls buttons during navigation */
+body.navigation-active [data-testid="nav-control-incidents"],
+body.navigation-active [data-testid="nav-control-compass"],
+body.navigation-active [data-testid="nav-control-center-gps"],
+body.navigation-active [data-testid="nav-control-zoom-in"],
+body.navigation-active [data-testid="nav-control-zoom-out"],
+body.navigation-active [data-testid="nav-control-3d"],
+body.navigation-active [data-testid="nav-control-traffic"],
+body.navigation-active [data-testid="nav-control-satellite"],
+html.overlay-safe-mode [data-testid="nav-control-incidents"],
+html.overlay-safe-mode [data-testid="nav-control-compass"],
+html.overlay-safe-mode [data-testid="nav-control-center-gps"],
+html.overlay-safe-mode [data-testid="nav-control-zoom-in"],
+html.overlay-safe-mode [data-testid="nav-control-zoom-out"],
+html.overlay-safe-mode [data-testid="nav-control-3d"],
+html.overlay-safe-mode [data-testid="nav-control-traffic"],
+html.overlay-safe-mode [data-testid="nav-control-satellite"] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2100 !important;
+  display: inline-flex !important;
+}
+
+/* ============================================
+   CRITICAL: FORCE BLACK LUCIDE ICONS IN RIGHT-SIDE NAV BUTTONS
+   All buttons have white backgrounds with colored borders
+   so icons MUST be black to be visible!
+   Using !important to override any conflicting MapLibre styles
+   ============================================ */
+
+/* All right-side navigation buttons - BLACK icons */
+[data-testid="button-view-incidents"] svg,
+[data-testid="button-view-incidents"] svg *,
+[data-testid="button-toggle-view"] svg,
+[data-testid="button-toggle-view"] svg *,
+[data-testid="button-recenter"] svg,
+[data-testid="button-recenter"] svg *,
+[data-testid="button-zoom-in"] svg,
+[data-testid="button-zoom-in"] svg *,
+[data-testid="button-zoom-out"] svg,
+[data-testid="button-zoom-out"] svg *,
+[data-testid="button-compass-reset"] svg,
+[data-testid="button-compass-reset"] svg *,
+[data-testid="button-toggle-3d"] svg,
+[data-testid="button-toggle-3d"] svg *,
+[data-testid="button-toggle-traffic"] svg,
+[data-testid="button-toggle-traffic"] svg * {
+  stroke: #000000 !important;
+  color: #000000 !important;
+  fill: none !important;
+}
+
+/* ============================================
+   ENHANCED GLOVE CURSOR FEATURE FOR MAP DRAGGING
+   ============================================ */
+
+/* Professional map interaction cursors */
+.leaflet-container {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: -moz-grab !important;
+}
+
+.leaflet-container:active,
+.leaflet-container.leaflet-dragging {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  cursor: -moz-grabbing !important;
+}
+
+/* Enhanced map dragging feedback */
+.leaflet-container.leaflet-dragging {
+  background-color: rgba(59, 130, 246, 0.02) !important;
+  transition: background-color 0.1s ease;
+}
+
+/* Professional touch feedback for mobile */
+.leaflet-container:active {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* ============================================
+   SMOOTH TILE RENDERING & VISIBILITY
+   ============================================ */
+
+/* Prevent tile flickering during zoom/pan */
+.leaflet-tile-container {
+  transition: opacity 200ms ease-in-out !important;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Keep tiles visible during zoom transitions */
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
+}
+
+/* Smooth tile loading */
+.leaflet-tile {
+  transition: opacity 300ms ease-in;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Significantly lighten map tiles to reduce dark road appearance */
+  filter: brightness(1.25) contrast(0.88) saturate(0.9);
+  -webkit-filter: brightness(1.25) contrast(0.88) saturate(0.9);
+}
+
+.leaflet-tile-loaded {
+  opacity: 1;
+}
+
+/* Prevent grey background during tile loading */
+.leaflet-layer {
+  background-color: transparent !important;
+}
+
+/* Smooth tile class for enhanced visibility */
+.leaflet-tile-smooth {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimizeQuality;
+  image-rendering: smooth;
+  /* Additional lightening for smooth tiles */
+  filter: brightness(1.25) contrast(0.88) saturate(0.9);
+  -webkit-filter: brightness(1.25) contrast(0.88) saturate(0.9);
+}
+
+/* GPU acceleration for better performance */
+.leaflet-pane {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Override any conflicting Leaflet cursor styles */
+.leaflet-container .leaflet-marker-draggable {
+  cursor: move !important;
+}
+
+.leaflet-container .leaflet-marker-draggable:hover {
+  cursor: move !important;
+}
+
+/* Ensure map controls maintain proper cursor */
+.leaflet-control-zoom a,
+.leaflet-control-layers-toggle {
+  cursor: pointer !important;
+}
+
+/* Enhanced visual feedback for professional truck navigation */
+.map-container {
+  position: relative;
+}
+
+.map-container::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.map-container::after {
+  content: '🧤';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* Show glove icon on hover for desktop */
+@media (hover: hover) {
+  .map-container:hover::before,
+  .map-container:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Professional map interaction for truck drivers */
+.cursor-grab {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: -moz-grab !important;
+}
+
+.cursor-grab:active,
+.active\:cursor-grabbing:active {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  cursor: -moz-grabbing !important;
+}
+
+/* Enhanced mobile touch response */
+@media (pointer: coarse) {
+  .leaflet-container {
+    touch-action: pan-x pan-y !important;
+  }
+}
+
+/* ============================================
+   CRITICAL: NAVIGATION CONTROLS STACK VISIBILITY
+   Ensure right-side navigation buttons are ALWAYS visible
+   across mobile browser and PWA standalone modes
+   ============================================ */
+
+/* 
+ * ALWAYS visible rules - apply regardless of body classes
+ * These override any accidental hiding from overlay CSS
+ */
+[data-testid="navigation-controls-container"],
+.navigation-controls-container {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+[data-testid="nav-control-incidents"],
+[data-testid="nav-control-compass"],
+[data-testid="nav-control-center-gps"],
+[data-testid="nav-control-zoom-in"],
+[data-testid="nav-control-zoom-out"],
+[data-testid="nav-control-3d"],
+[data-testid="nav-control-traffic"],
+[data-testid="nav-control-satellite"] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-flex !important;
+}
+
+/* PWA standalone mode - ensure navigation controls are visible */
+@media (display-mode: standalone) {
+  [data-testid="navigation-controls-container"],
+  .navigation-controls-container {
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+  }
+  
+  [data-testid="nav-control-incidents"],
+  [data-testid="nav-control-compass"],
+  [data-testid="nav-control-center-gps"],
+  [data-testid="nav-control-zoom-in"],
+  [data-testid="nav-control-zoom-out"],
+  [data-testid="nav-control-3d"],
+  [data-testid="nav-control-traffic"],
+  [data-testid="nav-control-satellite"],
+  [data-testid="button-gps-fill-location"] {
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================ */
+/* CRITICAL FIX: Radix Select Dropdown Positioning */
+/* Forces Select dropdowns to appear properly positioned */
+/* ============================================ */
+
+/* Target Radix Select Content when rendered via Portal */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Ensure Select content is positioned correctly */
+[data-radix-select-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Force Select viewport to have proper dimensions */
+[data-radix-select-viewport] {
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+}
+
+/* Dialog-specific Select fix - ensure dropdowns inside dialogs are visible */
+[data-state="open"][role="dialog"] [data-radix-popper-content-wrapper],
+.dialog-content [data-radix-popper-content-wrapper] {
+  z-index: 10000 !important;
+}
+
+/* Dialog positioning handled by component-level styles */
+/* All conflicting touch/PWA dialog positioning CSS has been removed */
+/* to prevent duplicate panel rendering on iOS Safari */
+
+/* ============================================ */
+/* LANDSCAPE MODE - CSS rotation for mobile nav */
+/* Forces landscape view when phone is in portrait */
+/* ============================================ */
+.landscape-mode-inner {
+  position: fixed !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  overflow: hidden !important;
+}
+
+/* --- Landscape Compact: Navigation Header - top half of 28px band (14px) --- */
+/* .landscape-compact applied to wrapper div AND body for portal elements */
+.landscape-compact [data-testid="navigation-header"] {
+  height: 14px !important;
+  min-height: 14px !important;
+  padding: 0 4px !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+.landscape-compact [data-testid="navigation-header"] img {
+  width: 10px !important;
+  height: 10px !important;
+}
+.landscape-compact [data-testid="navigation-header"] span,
+.landscape-compact [data-testid="navigation-header"] h1 {
+  font-size: 7px !important;
+  line-height: 1 !important;
+}
+.landscape-compact [data-testid="navigation-header"] button {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  padding: 0px !important;
+}
+.landscape-compact [data-testid="navigation-header"] button svg {
+  width: 8px !important;
+  height: 8px !important;
+}
+.landscape-compact [data-testid="navigation-header"] .gap-2 {
+  gap: 2px !important;
+}
+
+/* --- Landscape Compact: CompactTripStrip (ETA) - bottom half of 28px band (14px) --- */
+.landscape-compact [data-testid="compact-trip-strip"] {
+  top: calc(14px + max(env(safe-area-inset-top, 0px), 0px)) !important;
+  padding: 0px 4px !important;
+  gap: 0px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  max-height: 14px !important;
+  overflow: hidden !important;
+  border-bottom-width: 1px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}
+/* Hide Row 2 entirely (voice, road badge, lane, nav status) */
+.landscape-compact [data-testid="compact-trip-strip"] > div:nth-child(2) {
+  display: none !important;
+}
+/* Row 1 compact */
+.landscape-compact [data-testid="compact-trip-strip"] > div:first-child {
+  gap: 2px !important;
+  height: 14px !important;
+  align-items: center !important;
+}
+.landscape-compact [data-testid="compact-trip-strip"] span {
+  font-size: 7px !important;
+  line-height: 1 !important;
+}
+.landscape-compact [data-testid="compact-trip-strip"] svg {
+  width: 7px !important;
+  height: 7px !important;
+}
+
+/* ETA/Arrival/Status pills - ultra thin */
+.landscape-compact [data-testid="compact-trip-strip"] .flex.items-center {
+  padding: 0px 3px !important;
+  gap: 1px !important;
+  height: 12px !important;
+}
+.landscape-compact [data-testid="compact-trip-strip"] .rounded {
+  padding: 0px 3px !important;
+  height: 12px !important;
+  line-height: 12px !important;
+}
+
+/* Direction square - tiny */
+.landscape-compact [data-testid="direction-square"] {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  border-radius: 2px !important;
+}
+.landscape-compact [data-testid="direction-square"] svg {
+  width: 8px !important;
+  height: 8px !important;
+}
+/* Hide distance label inside direction square */
+.landscape-compact [data-testid="direction-square"] > div:last-child {
+  display: none !important;
+}
+
+/* Speed limit circle - tiny */
+.landscape-compact [data-testid="compact-trip-strip"] .rounded-full {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  border-width: 1px !important;
+}
+.landscape-compact [data-testid="compact-trip-strip"] .rounded-full span {
+  font-size: 6px !important;
+}
+
+/* Speed display - compact */
+.landscape-compact [data-testid="compact-trip-strip"] .rounded-lg {
+  min-width: 28px !important;
+  padding: 0px 3px !important;
+  height: 12px !important;
+}
+
+/* Preview/Stop buttons */
+.landscape-compact [data-testid="button-preview-start"],
+.landscape-compact [data-testid="button-preview-stop"] {
+  height: 12px !important;
+  min-width: 24px !important;
+  padding: 0px 4px !important;
+  font-size: 6px !important;
+}
+
+/* Voice toggle - hidden in landscape */
+.landscape-compact [data-testid="voice-toggle-button"] {
+  display: none !important;
+}
+
+/* Buttons inside ETA strip */
+.landscape-compact [data-testid="compact-trip-strip"] button {
+  min-height: 12px !important;
+  min-width: 20px !important;
+  height: 12px !important;
+  padding: 0px 3px !important;
+  font-size: 6px !important;
+}
+
+/* --- Landscape Compact: Control stacks below 28px header+ETA band --- */
+.landscape-compact [data-nav-controls="top-left-stack"] {
+  top: calc(32px + var(--safe-area-top, 0px)) !important;
+  left: 6px !important;
+  gap: 3px !important;
+}
+.landscape-compact [data-nav-controls="top-right-stack"] {
+  top: calc(32px + var(--safe-area-top, 0px)) !important;
+  right: 6px !important;
+  gap: 3px !important;
+}
+
+/* --- Landscape Compact: All nav control buttons smaller --- */
+.landscape-compact [data-nav-controls] button {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  border-radius: 6px !important;
+}
+.landscape-compact [data-nav-controls] button svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* Left stack (menu, etc.) */
+.landscape-compact [data-nav-controls="left-stack"] {
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 6px !important;
+  gap: 3px !important;
+}
+
+/* Right stack (zoom, layers, etc.) */
+.landscape-compact [data-nav-controls="right-stack"] {
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+  right: 6px !important;
+  gap: 3px !important;
+}
+
+/* --- Landscape Compact: Bottom instrumentation bar thinner --- */
+.landscape-compact [data-testid="instrumentation-bar"],
+.landscape-compact [data-testid="bottom-bar"] {
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 1px 6px !important;
+}
+.landscape-compact [data-testid="instrumentation-bar"] span,
+.landscape-compact [data-testid="bottom-bar"] span {
+  font-size: 8px !important;
+}
+.landscape-compact [data-testid="instrumentation-bar"] svg,
+.landscape-compact [data-testid="bottom-bar"] svg {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+/* --- Landscape Compact: Quick settings dropdown compact --- */
+.landscape-compact [data-testid="quick-settings-panel"] {
+  max-height: 50vh !important;
+  font-size: 9px !important;
+}
+.landscape-compact [data-testid="quick-settings-panel"] button {
+  min-height: 24px !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+}
+
+/* --- Landscape Compact: iOS portal elements (rendered on body) --- */
+body.landscape-compact #ios-left-stack-portal,
+body.landscape-compact #ios-right-stack-portal {
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+  gap: 3px !important;
+}
+body.landscape-compact #ios-left-stack-portal {
+  left: 6px !important;
+}
+body.landscape-compact #ios-right-stack-portal {
+  right: 6px !important;
+}
+body.landscape-compact #ios-left-stack-portal button,
+body.landscape-compact #ios-right-stack-portal button {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  border-radius: 6px !important;
+}
+body.landscape-compact #ios-left-stack-portal button svg,
+body.landscape-compact #ios-right-stack-portal button svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* --- Landscape Compact: Speedometer HUD (bottom GO/Speed/STOP bar) --- */
+.landscape-compact [data-testid="speedometer-hud"] {
+  transform: scale(0.55) !important;
+  transform-origin: bottom center !important;
+}
+
+/* --- Landscape Compact: Route info overlay at bottom of map --- */
+.landscape-compact [data-testid="route-info-overlay"],
+.landscape-compact [data-testid="route-mask-bottom"] {
+  transform: scale(0.6) !important;
+  transform-origin: bottom center !important;
+}
+
+/* --- Landscape Compact: Lane guidance popup --- */
+.landscape-compact [data-testid="lane-guidance-popup"] {
+  transform: scale(0.5) !important;
+  transform-origin: top left !important;
+}
+
+/* --- Landscape Compact: Restriction warning floaters --- */
+.landscape-compact [data-testid="restriction-warning"] {
+  transform: scale(0.6) !important;
+  transform-origin: bottom center !important;
+}

@@ -1,0 +1,678 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "プロフェッショナルトラックナビゲーション",
+    "owner": "Bespoke Marketing. Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "ルート計画",
+    "vehicle_setup": "車両設定", 
+    "facility_search": "施設検索",
+    "live_traffic": "リアルタイム交通情報",
+    "restrictions": "制限",
+    "settings": "設定"
+  },
+  "vehicle": {
+    "profile": "車両プロファイル",
+    "name": "車両名",
+    "height": "高さ",
+    "width": "幅", 
+    "length": "長さ",
+    "weight": "重量",
+    "axles": "車軸",
+    "hazmat": "危険物",
+    "feet": "フィート",
+    "inches": "インチ",
+    "tons": "トン",
+    "save": "プロファイルを保存"
+  },
+  "route": {
+    "plan": "ルートを計画",
+    "from": "出発地",
+    "to": "目的地",
+    "calculate": "ルートを計算",
+    "distance": "距離",
+    "duration": "所要時間",
+    "restrictions": "制限が見つかりました",
+    "alternative": "代替ルート"
+  },
+  "facilities": {
+    "search": "施設を検索",
+    "truck_stop": "トラックストップ",
+    "fuel": "ガソリンスタンド",
+    "parking": "駐車場",
+    "restaurant": "レストラン",
+    "hotel": "ホテル",
+    "restrooms": "トイレ",
+    "showers": "シャワー",
+    "near_me": "近くの施設"
+  },
+  "legal": {
+    "title": "法的合意が必要 - TruckNav Pro",
+    "description": "TruckNav Proを使用するには、これらの法的条件に同意する必要があります",
+    "patent_notice": "TruckNav ProにはBespoke Marketing. Ai Ltdが所有する特許技術が含まれています",
+    "trademark_notice": "TruckNav ProとProfessional Navigationは登録商標です",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. 全著作権所有",
+    "accept": "これらの条件に同意します",
+    "decline": "同意しません",
+    "terms_of_service": "利用規約",
+    "privacy_policy": "プライバシーポリシー",
+    "termsTitle": "TruckNav Pro - 法的条件と保護"
+  },
+  "subscription": {
+    "plans": "サブスクリプションプラン",
+    "3month": "3ヶ月プラン",
+    "6month": "6ヶ月プラン", 
+    "12month": "12ヶ月プラン",
+    "lifetime": "生涯アクセス",
+    "price_3m": "¥3,999",
+    "price_6m": "¥7,999",
+    "price_12m": "¥15,999",
+    "price_lifetime": "¥32,000",
+    "features": "含まれる機能",
+    "subscribe": "今すぐ購読"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "cancel": "キャンセル",
+    "continue": "続行",
+    "back": "戻る",
+    "next": "次へ",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "search": "検索",
+    "filter": "フィルター",
+    "language": "言語",
+    "guide": "ガイド",
+    "legal": "法的事項"
+  },
+  "amazon": {
+    "fire_tv": "Fire TV用に最適化",
+    "fire_tablet": "Fire Tablet用に最適化",
+    "silk_browser": "Silk Browser用に強化",
+    "voice_support": "音声ナビゲーションサポート",
+    "remote_navigation": "リモコンナビゲーション"
+  },
+  "voice": {
+    "directions": {
+      "straight": "直進",
+      "right": "右折",
+      "left": "左折",
+      "slight_right": "斜め右へ",
+      "slight_left": "斜め左へ",
+      "sharp_right": "鋭く右折",
+      "sharp_left": "鋭く左折",
+      "u_turn": "Uターン",
+      "roundabout_right": "ロータリーを右へ",
+      "roundabout_left": "ロータリーを左へ",
+      "exit_right": "右の出口へ",
+      "exit_left": "左の出口へ"
+    },
+    "distances": {
+      "now": "今すぐ{{direction}}",
+      "in_100_feet": "30メートル先で{{direction}}",
+      "in_200_feet": "60メートル先で{{direction}}",
+      "in_500_feet": "150メートル先、{{direction}}",
+      "in_800_feet": "250メートル先、{{direction}}",
+      "in_1000_feet": "300メートル先、{{direction}}",
+      "in_30_meters": "30メートル先で{{direction}}",
+      "in_50_meters": "50メートル先で{{direction}}",
+      "in_150_meters": "150メートル先、{{direction}}",
+      "in_250_meters": "250メートル先、{{direction}}",
+      "in_300_meters": "300メートル先、{{direction}}"
+    },
+    "onto_road": "{{roadName}}へ",
+    "announcements": {
+      "recalculating": "ルートを再計算中",
+      "arrived": "目的地に到着しました",
+      "use_lanes": "{{lanes}}を使用してください",
+      "use_lanes_in_100_feet": "30メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_500_feet": "150メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_1000_feet": "300メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_30_meters": "30メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_150_meters": "150メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_300_meters": "300メートル先、{{lanes}}を使用してください",
+      "voice_ready": "音声ナビゲーションの準備ができました"
+    },
+    "warnings": {
+      "incident_ahead": "注意：この先{{type}}",
+      "in_miles": "{{distance}}マイル先",
+      "in_kilometers": "{{distance}}キロメートル先",
+      "speed_warning": "速度警告。現在速度{{speed}}{{unit}}。制限速度は{{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "渋滞",
+      "accident": "事故",
+      "road_hazard": "道路危険",
+      "road_closed": "道路閉鎖",
+      "police_ahead": "この先警察",
+      "speed_camera": "速度カメラ",
+      "construction": "工事中",
+      "bad_weather": "悪天候"
+    },
+    "units": {
+      "mph": "マイル毎時",
+      "kmh": "キロメートル毎時"
+    }
+  },
+  "settings": {
+    "language": "言語",
+    "select_language": "言語を選択",
+    "voice_language": "音声言語",
+    "language_changed": "言語が{{language}}に変更されました"
+  },
+  "languages": {
+    "en-US": "英語（米国）",
+    "en-GB": "英語（英国）",
+    "es-ES": "スペイン語",
+    "de-DE": "ドイツ語",
+    "it-IT": "イタリア語",
+    "pt-BR": "ポルトガル語",
+    "pl-PL": "ポーランド語",
+    "ro-RO": "ルーマニア語",
+    "zh-CN": "中国語",
+    "ja-JP": "日本語"
+  },
+  "fleet": {
+    "title": "車両管理",
+    "navigation": "ナビゲーション",
+    "dashboard": "ダッシュボード",
+    "vehicles": {
+      "title": "車両",
+      "registry": "車両登録",
+      "add": "車両を追加",
+      "edit": "車両を編集",
+      "registration": "ナンバープレート",
+      "trailer": "トレーラー番号",
+      "make": "メーカー",
+      "model": "モデル",
+      "year": "年式",
+      "vin": "車台番号",
+      "type": "車種",
+      "fuel_type": "燃料種類",
+      "tank_capacity": "タンク容量",
+      "mileage": "走行距離",
+      "status": {
+        "title": "ステータス",
+        "active": "稼働中",
+        "maintenance": "整備中",
+        "decommissioned": "廃車"
+      }
+    },
+    "operators": {
+      "title": "ドライバー",
+      "add": "ドライバーを追加",
+      "edit": "ドライバーを編集",
+      "name": "氏名",
+      "license_number": "免許証番号",
+      "license_type": "免許種類",
+      "license_expiry": "免許有効期限",
+      "cpc_expiry": "資格証有効期限",
+      "tacho_card": "タコグラフカード",
+      "employee_id": "社員番号",
+      "status": {
+        "title": "ステータス",
+        "active": "在職",
+        "inactive": "休職",
+        "suspended": "停職"
+      }
+    },
+    "service": {
+      "title": "整備記録",
+      "add": "整備記録を追加",
+      "type": {
+        "title": "整備種類",
+        "routine": "定期点検",
+        "mot": "車検",
+        "repair": "修理",
+        "inspection": "点検",
+        "tacho_calibration": "タコグラフ校正"
+      },
+      "date": "整備日",
+      "next_due": "次回予定",
+      "mileage": "整備時走行距離",
+      "cost": "費用",
+      "provider": "整備業者",
+      "parts": "交換部品"
+    },
+    "fuel": {
+      "title": "給油記録",
+      "add": "給油記録を追加",
+      "odometer": "オドメーター",
+      "liters": "給油量",
+      "cost": "費用",
+      "location": "場所",
+      "type": "燃料種類",
+      "mpg": "燃費",
+      "efficiency": "燃料効率"
+    },
+    "documents": {
+      "title": "書類",
+      "upload": "書類をアップロード",
+      "type": {
+        "registration": "車検証",
+        "mot": "車検証明書",
+        "insurance": "保険",
+        "maintenance": "整備記録"
+      },
+      "expiry": "有効期限"
+    },
+    "costs": {
+      "title": "コスト分析",
+      "total": "総コスト",
+      "average": "車両平均",
+      "breakdown": "コスト内訳",
+      "per_vehicle": "車両別コスト",
+      "monthly_trends": "月次トレンド",
+      "categories": {
+        "fuel": "燃料",
+        "maintenance": "整備",
+        "insurance": "保険",
+        "tolls": "高速料金",
+        "other": "その他"
+      }
+    },
+    "incidents": {
+      "title": "事故記録",
+      "add": "事故を報告",
+      "type": {
+        "accident": "事故",
+        "damage": "損傷",
+        "violation": "違反",
+        "breakdown": "故障",
+        "near_miss": "ヒヤリハット"
+      },
+      "severity": {
+        "critical": "重大",
+        "high": "高",
+        "medium": "中",
+        "low": "低"
+      },
+      "root_cause": "原因",
+      "preventative": "予防措置",
+      "insurance_claim": "保険請求"
+    },
+    "trips": {
+      "title": "運行",
+      "add": "運行を追加",
+      "planned": "計画",
+      "actual": "実績",
+      "distance": "距離",
+      "duration": "時間",
+      "cost": "コスト",
+      "revenue": "売上",
+      "profit": "利益",
+      "margin": "利益率",
+      "efficiency": "ルート効率"
+    },
+    "compliance": {
+      "title": "コンプライアンス",
+      "status": {
+        "compliant": "適合",
+        "non_compliant": "不適合",
+        "pending": "確認中"
+      },
+      "types": {
+        "dvla": "車検確認",
+        "emissions": "排ガス規制",
+        "hazmat": "危険物資格",
+        "tacho": "タコグラフ検査",
+        "working_hours": "労働時間"
+      }
+    },
+    "tracking": {
+      "title": "車両追跡",
+      "live_map": "リアルタイムマップ",
+      "vehicle_list": "車両リスト",
+      "refresh": "更新",
+      "last_update": "最終更新",
+      "status": {
+        "moving": "走行中",
+        "stopped": "停止",
+        "offline": "オフライン"
+      },
+      "speed": "速度",
+      "heading": "方向",
+      "address": "現在地",
+      "toast": {
+        "loadFailed": "車両追跡データの読み込みに失敗しました",
+        "loadFailedDesc": "GPS追跡データを取得できません"
+      }
+    },
+    "geofencing": {
+      "title": "ジオフェンス",
+      "zones": "エリア",
+      "add": "エリアを追加",
+      "edit": "エリアを編集",
+      "name": "エリア名",
+      "radius": "半径",
+      "type": {
+        "warehouse": "倉庫",
+        "customer": "顧客",
+        "restricted": "制限区域",
+        "checkpoint": "チェックポイント"
+      },
+      "alerts": {
+        "entry": "入場アラート",
+        "exit": "退場アラート",
+        "today": "本日のアラート"
+      },
+      "events": "イベント履歴"
+    },
+    "behavior": {
+      "title": "運転行動",
+      "analytics": "行動分析",
+      "safety_score": "安全スコア",
+      "fleet_average": "車両平均",
+      "high_risk": "高リスクドライバー",
+      "events_today": "本日のイベント",
+      "leaderboard": "ドライバーランキング",
+      "breakdown": "行動分析",
+      "types": {
+        "speeding": "速度超過",
+        "harsh_braking": "急ブレーキ",
+        "harsh_acceleration": "急加速",
+        "sharp_cornering": "急カーブ"
+      },
+      "risk": {
+        "low": "低リスク",
+        "medium": "中リスク",
+        "high": "高リスク"
+      },
+      "toast": {
+        "loadFailed": "運転行動データの読み込みに失敗しました",
+        "loadFailedDesc": "分析データを取得できません"
+      }
+    },
+    "hos": {
+      "title": "運転時間管理",
+      "driver_status": "ドライバー勤務状態",
+      "violations": "違反アラート",
+      "daily_driving": "日次運転時間",
+      "weekly_driving": "週次運転時間",
+      "remaining_daily": "残り日次",
+      "remaining_weekly": "残り週次",
+      "status": {
+        "driving": "運転中",
+        "on_duty": "勤務中",
+        "off_duty": "休憩中",
+        "sleeper": "仮眠"
+      },
+      "violation_types": {
+        "daily_exceeded": "日次超過",
+        "weekly_exceeded": "週次超過",
+        "break_not_taken": "休憩未取得",
+        "rest_period": "休息時間違反"
+      },
+      "toast": {
+        "loadFailed": "運転時間管理データの読み込みに失敗しました",
+        "loadFailedDesc": "運転時間コンプライアンスデータを取得できません"
+      }
+    },
+    "billing": {
+      "title": "顧客請求",
+      "customers": "顧客",
+      "add": "顧客を追加",
+      "edit": "顧客を編集",
+      "top_customers": "主要顧客",
+      "contract_type": {
+        "title": "契約種類",
+        "per_mile": "距離制",
+        "per_hour": "時間制",
+        "fixed": "定額",
+        "hybrid": "複合"
+      },
+      "rate_per_mile": "km単価",
+      "rate_per_hour": "時間単価",
+      "fixed_rate": "定額料金",
+      "total_trips": "総運行数",
+      "total_revenue": "総売上",
+      "profit_margin": "利益率",
+      "outstanding": "未収金",
+      "status": {
+        "active": "取引中",
+        "inactive": "休止",
+        "pending": "保留"
+      },
+      "toast": {
+        "loadFailed": "顧客の読み込みに失敗しました",
+        "loadFailedDesc": "顧客請求データを取得できません",
+        "loadFailedAnalytics": "分析の読み込みに失敗しました"
+      }
+    },
+    "notifications": {
+      "expires": "期限",
+      "days": "日",
+      "done": "完了",
+      "dismiss": "閉じる"
+    },
+    "common": {
+      "no_data": "データなし",
+      "loading": "読み込み中...",
+      "error": "読み込みエラー",
+      "retry": "再試行",
+      "actions": "アクション",
+      "view": "表示",
+      "details": "詳細",
+      "date_range": "期間",
+      "all": "すべて",
+      "today": "今日",
+      "week": "今週",
+      "month": "今月",
+      "hours": "時間",
+      "miles": "マイル",
+      "km": "km"
+    }
+  },
+  "userGuide": {
+    "title": "TruckNav Pro ユーザーガイド",
+    "subtitle": "すべての機能とその使用方法の完全ガイド",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "はじめに",
+      "planMode": "プランモード",
+      "planModeDesc": "左上のメニューボタン(☰)をタップしてルートプランナーを開きます。検索バーを使用して目的地を入力します。アプリは低い橋や重量制限を避けて、トラックに安全なルートを見つけます。",
+      "previewMode": "プレビューモード",
+      "previewModeDesc": "計画後、マップでルートを確認します。黄色い警告アイコンはルート上の制限を示します。高さ、重量、幅の制限の詳細を見るには、任意の制限をタップします。",
+      "navigateMode": "ナビゲートモード",
+      "navigateModeDesc": "「ナビゲーション開始」をタップしてターンバイターンのガイダンスを開始します。マップは自動的に位置を追跡し、次のマニューバを表示します。"
+    },
+    "vehicleSetup": {
+      "title": "車両設定",
+      "profiles": "車両プロファイル",
+      "profilesDesc": "メニュー → 車両タブからアクセス。寸法（高さ、幅、長さ）、重量、車軸数を含む各車両のプロファイルを作成します。",
+      "hazmat": "危険物設定",
+      "hazmatDesc": "ADR準拠のルーティングのために危険物オプションを有効にします。アプリは危険物が禁止されているトンネルやルートを回避します。",
+      "trailerType": "トレーラータイプ",
+      "trailerTypeDesc": "トレーラー構成（シングル、ダブル、またはトレーラーなし）を選択します。総車両長と回転半径の要件に基づいてルートが最適化されます。"
+    },
+    "previewFlyby": {
+      "title": "プレビュー＆フライバイモード",
+      "routePreview": "ルートプレビュー",
+      "routePreviewDesc": "ルートを計画した後、ナビゲーションを開始する前にマップで完全なパスを確認します。ズームやパンでルートの任意のセクションを検査します。",
+      "flybyAnimation": "フライバイアニメーション",
+      "flybyAnimationDesc": "再生ボタンをタップして、ルート全体のアニメーションフライバイを見ます。カメラは曲がり角、制限、ランドマークを表示しながら道路をたどります。",
+      "etaDisplay": "到着予定時刻表示",
+      "etaDisplayDesc": "プレビューは現在の交通状況に基づいて、到着予定時刻、総距離、予想運転時間を表示します。",
+      "noAutoStart": "手動スタート",
+      "noAutoStartDesc": "ナビゲーションは自動的に開始しません。準備ができたら「ナビゲーション開始」をタップし、最初にルートを確認する時間があります。"
+    },
+    "etaInfo": {
+      "title": "到着予定時刻と旅程情報",
+      "arrivalTime": "到着時刻",
+      "arrivalTimeDesc": "到着予定時刻は、速度、交通状況、残りの距離に基づいて継続的に更新されます。",
+      "remainingDistance": "残り距離",
+      "remainingDistanceDesc": "目的地までの残りの距離。お好みの単位（マイルまたはキロメートル）で表示されます。",
+      "remainingTime": "残り時間",
+      "remainingTimeDesc": "現在の交通状況に基づいて目的地に到着するまでの推定運転時間。",
+      "tripStrip": "トリップストリップ",
+      "tripStripDesc": "画面下部のビジュアルプログレスバーで、旅程の進行状況、今後のターン、ウェイポイントを表示します。"
+    },
+    "controlButtons": {
+      "title": "マップコントロールボタン",
+      "compass": "コンパス",
+      "compassDesc": "タップしてマップの向きを北にリセットします。ナビゲーション中は現在の進行方向を表示します。",
+      "recenter": "再センター",
+      "recenterDesc": "パンして離れたときに、マップを現在の位置に戻すためにタップします。",
+      "3dButton": "3Dボタン",
+      "3dButtonDesc": "傾斜した3Dパースペクティブと従来のトップダウン2Dビューを切り替えます。",
+      "satellite": "衛星",
+      "satelliteDesc": "衛星画像と標準マップビューを切り替えます。",
+      "traffic": "交通",
+      "trafficDesc": "道路上の交通フロー色（緑、黄、赤）付きのライブ交通レイヤーを有効または無効にします。",
+      "zoomIn": "ズームイン",
+      "zoomInDesc": "マップを拡大して詳細を表示します。",
+      "zoomOut": "ズームアウト",
+      "zoomOutDesc": "マップを縮小してルートの広い範囲を表示します。",
+      "layers": "レイヤー",
+      "layersDesc": "POI、トラック制限、交通を含むマップレイヤーを制御します。"
+    },
+    "3dMap": {
+      "title": "3Dマップと地形",
+      "tiltedView": "傾斜ビュー",
+      "tiltedViewDesc": "マップを傾けて、前方の道路をよりよく見せる3Dパースペクティブを得ます。",
+      "buildings": "3Dビルディング",
+      "buildingsDesc": "都市部の建物は実際の高さで3D表示されます。",
+      "hillShading": "ヒルシェーディング",
+      "hillShadingDesc": "地形の可視化で丘や傾斜を表示し、トラックドライバーに役立ちます。",
+      "rotation": "マップ回転",
+      "rotationDesc": "マップは進行方向に回転するか、コンパスボタンで北向き固定にできます。"
+    },
+    "restrictions": {
+      "title": "制限警告",
+      "panel": "制限パネル",
+      "panelDesc": "プレビューモードでは、パネルにルート上のすべての制限が表示されます。重大な違反（赤）は避ける必要があります。高（オレンジ）と中（黄色）は注意が必要です。",
+      "markers": "マップマーカー",
+      "markersDesc": "マップ上の黄色い三角形のアイコンは制限の場所を示します。任意のマーカーをタップして詳細を確認します。",
+      "heightLimit": "高さ制限",
+      "heightLimitDesc": "低い橋や高架道路の警告。アプリはクリアランスを車両の高さと比較します。",
+      "weightLimit": "重量制限",
+      "weightLimitDesc": "橋や道路の重量制限。アプリはルートが車両の重量に対応できることを確認します。"
+    },
+    "dynamicRoutes": {
+      "title": "ダイナミックルート",
+      "alternative": "代替ルート",
+      "alternativeDesc": "ナビゲーション中、アプリは5分ごとにより速いルートをチェックします。より速いオプションが見つかると緑のバナーが表示されます。",
+      "oneTouch": "ワンタッチ切り替え",
+      "oneTouchDesc": "より速いルートが利用可能になったら、緑のバーをタップして新しいルートに即座に切り替えます。"
+    },
+    "incidentReporting": {
+      "title": "インシデント報告",
+      "voiceReport": "音声報告",
+      "voiceReportDesc": "音声コマンドを使用して安全にインシデントを報告します。マイクボタンをタップして見たことを話します。",
+      "trafficJam": "渋滞",
+      "trafficJamDesc": "重い交通や停止状態を報告します。他のドライバーがアラートを受け取ります。",
+      "accident": "事故",
+      "accidentDesc": "道路事故を報告してドライバーに警告し、交通データを更新します。",
+      "roadHazard": "道路危険",
+      "roadHazardDesc": "がれき、穴、その他の道路危険を報告します。",
+      "policeSpeedCamera": "警察/スピードカメラ",
+      "policeSpeedCameraDesc": "警察の存在やスピードカメラの場所を報告します。",
+      "roadClosure": "道路閉鎖",
+      "roadClosureDesc": "閉鎖された道路を報告して、ドライバーが代替ルートを取れるようにします。"
+    },
+    "voiceFeatures": {
+      "title": "音声機能",
+      "guidance": "音声ガイダンス",
+      "guidanceDesc": "道路名と距離を含む明確な音声ターンバイターン案内。",
+      "dictation": "ディクテーション",
+      "dictationDesc": "タイプする代わりに話して目的地を検索します。",
+      "commands": "音声コマンド",
+      "commandsDesc": "「渋滞を報告」「トラックストップを探す」「ミュート」などのコマンドを話します。",
+      "languageSync": "言語同期",
+      "languageSyncDesc": "音声ガイダンスは選択したアプリ言語に自動的に一致します。"
+    },
+    "alertsHaptics": {
+      "title": "アラートと触覚",
+      "speedWarning": "速度警告",
+      "speedWarningDesc": "制限速度を超えるとオーディオとビジュアルでアラート。",
+      "hapticFeedback": "触覚フィードバック",
+      "hapticFeedbackDesc": "ボタンプレスとナビゲーションイベントの振動フィードバック。",
+      "fatigueAlert": "疲労アラート",
+      "fatigueAlertDesc": "長時間の運転後に休憩を取るようリマインダー。"
+    },
+    "arNavigation": {
+      "title": "ARナビゲーション",
+      "cameraView": "カメラビュー",
+      "cameraViewDesc": "カメラを使用して現実世界にナビゲーション情報をオーバーレイします。",
+      "maneuverOverlay": "マニューバオーバーレイ",
+      "maneuverOverlayDesc": "今後のターンと方向がカメラビューに表示されます。",
+      "speedDisplay": "速度表示",
+      "speedDisplayDesc": "現在の速度と制限速度がARビューにオーバーレイされます。"
+    },
+    "widgets": {
+      "title": "ダッシュボードウィジェット",
+      "speed": "速度ウィジェット",
+      "speedDesc": "現在の速度を目立つように表示します。",
+      "eta": "到着予定時刻ウィジェット",
+      "etaDesc": "到着予定時刻がライブで更新されます。",
+      "distance": "距離ウィジェット",
+      "distanceDesc": "目的地までの残り距離。",
+      "compass": "コンパスウィジェット",
+      "compassDesc": "現在の進行方向を表示します。",
+      "customize": "ウィジェットをカスタマイズ",
+      "customizeDesc": "設定アイコンをタップしてウィジェットを追加、削除、並べ替えます。"
+    },
+    "facilities": {
+      "title": "施設検索",
+      "finding": "トラックストップを探す",
+      "findingDesc": "メニューのPOI検索を使用して、近くのトラックストップ、ガソリンスタンド、駐車場、レストラン、休憩エリアを検索します。",
+      "truckStops": "トラックストップ",
+      "truckStopsDesc": "燃料、駐車、施設がある近くのトラックストップを見つけます。",
+      "fuel": "ガソリンスタンド",
+      "fuelDesc": "トラック用ディーゼルがあるガソリンスタンドを見つけます。",
+      "parking": "トラック駐車場",
+      "parkingDesc": "安全なトラック駐車エリアと休憩所を見つけます。",
+      "restaurants": "レストラン",
+      "restaurantsDesc": "トラック駐車場があるトラッカー向け飲食店。"
+    },
+    "fleet": {
+      "title": "フリート管理",
+      "vehicles": "車両追跡",
+      "vehiclesDesc": "マップ上ですべてのフリート車両のリアルタイムGPS位置を表示します。",
+      "drivers": "ドライバー管理",
+      "driversDesc": "ドライバープロファイル、ライセンス、割り当てを管理します。",
+      "service": "サービス記録",
+      "serviceDesc": "車両メンテナンス履歴とスケジュールを追跡します。",
+      "fuel": "燃料管理",
+      "fuelDesc": "燃料費と効率を監視します。",
+      "compliance": "コンプライアンス追跡",
+      "complianceDesc": "車両検査と規制要件を追跡します。"
+    },
+    "fleetManagement": {
+      "title": "フリート管理（デスクトップ）",
+      "access": "フリートツールへのアクセス",
+      "accessDesc": "フリート管理はデスクトップでのみ利用可能です。上部のナビゲーションバーからアクセス。"
+    },
+    "pwa": {
+      "title": "アプリのインストール",
+      "installing": "デバイスへのインストール",
+      "installingDesc": "iOSの場合：共有 → ホーム画面に追加をタップ。Androidの場合：メニュー → アプリをインストールをタップ。",
+      "ios": "iOSインストール",
+      "iosDesc": "Safariで開き、共有ボタンをタップ、「ホーム画面に追加」を選択します。",
+      "android": "Androidインストール",
+      "androidDesc": "Chromeで開き、メニューをタップ、「アプリをインストール」を選択します。",
+      "offline": "オフラインサポート",
+      "offlineDesc": "インターネット接続なしでマップとルートを使用するためにエリアをダウンロードします。"
+    },
+    "settings": {
+      "title": "設定と環境設定",
+      "language": "言語設定",
+      "languageDesc": "メニュー → 設定からアクセス。希望の言語を選択します。",
+      "units": "単位の設定",
+      "unitsDesc": "メートル法（キロメートル、メートル）と帝国法（マイル、フィート）の測定を切り替えます。",
+      "theme": "テーマ",
+      "themeDesc": "ライト、ダーク、またはシステム自動テーマから選択します。"
+    },
+    "entertainment": {
+      "title": "エンターテインメントシステム",
+      "radio": "インターネットラジオ",
+      "radioDesc": "ナビゲーション中にラジオボタンからアクセス。トラッカーフレンドリーなラジオ局をストリーミング。"
+    }
+  }
+}

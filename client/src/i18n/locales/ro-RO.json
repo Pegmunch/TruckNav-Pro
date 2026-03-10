@@ -1,0 +1,676 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Navigație Profesională pentru Camioane",
+    "owner": "Bespoke Marketing. Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Planificare Rută",
+    "vehicle_setup": "Configurare Vehicul",
+    "facility_search": "Căutare Facilități",
+    "live_traffic": "Trafic în Direct",
+    "restrictions": "Restricții",
+    "settings": "Setări"
+  },
+  "vehicle": {
+    "profile": "Profil Vehicul",
+    "name": "Nume Vehicul",
+    "height": "Înălțime",
+    "width": "Lățime",
+    "length": "Lungime",
+    "weight": "Greutate",
+    "axles": "Osii",
+    "hazmat": "Materiale Periculoase",
+    "feet": "picioare",
+    "inches": "țoli",
+    "tons": "tone",
+    "save": "Salvare Profil"
+  },
+  "route": {
+    "plan": "Planificare Rută",
+    "from": "De la",
+    "to": "Către",
+    "calculate": "Calculare Rută",
+    "distance": "Distanță",
+    "duration": "Durată",
+    "restrictions": "Restricții Găsite",
+    "alternative": "Rută Alternativă"
+  },
+  "facilities": {
+    "search": "Căutare Facilități",
+    "truck_stop": "Parcare Camioane",
+    "fuel": "Stație de Benzină",
+    "parking": "Parcare",
+    "restaurant": "Restaurant",
+    "hotel": "Hotel",
+    "restrooms": "Toalete",
+    "showers": "Dușuri",
+    "near_me": "În Apropiere"
+  },
+  "legal": {
+    "title": "Acord Legal Necesar - TruckNav Pro",
+    "description": "Trebuie să acceptați acești termeni legali pentru a utiliza TruckNav Pro",
+    "patent_notice": "TruckNav Pro conține tehnologie brevetată deținută de Bespoke Marketing. Ai Ltd",
+    "trademark_notice": "TruckNav Pro și Professional Navigation sunt mărci înregistrate",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. Toate drepturile rezervate",
+    "accept": "Accept Acești Termeni",
+    "decline": "Nu Accept",
+    "terms_of_service": "Termeni și Condiții",
+    "privacy_policy": "Politica de Confidențialitate",
+    "termsTitle": "TruckNav Pro - Termeni Legali și Protecții"
+  },
+  "subscription": {
+    "plans": "Planuri de Abonament",
+    "3month": "Plan 3 Luni",
+    "6month": "Plan 6 Luni",
+    "12month": "Plan 12 Luni",
+    "lifetime": "Acces pe Viață",
+    "price_3m": "99,99 RON",
+    "price_6m": "199,99 RON",
+    "price_12m": "399,99 RON",
+    "price_lifetime": "799,99 RON",
+    "features": "Funcționalități Incluse",
+    "subscribe": "Abonează-te Acum"
+  },
+  "common": {
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "success": "Succes",
+    "cancel": "Anulare",
+    "continue": "Continuare",
+    "back": "Înapoi",
+    "next": "Următorul",
+    "save": "Salvare",
+    "delete": "Ștergere",
+    "edit": "Editare",
+    "close": "Închidere",
+    "search": "Căutare",
+    "filter": "Filtrare",
+    "language": "Limbă",
+    "guide": "Ghid",
+    "legal": "Legal"
+  },
+  "amazon": {
+    "fire_tv": "Optimizat pentru Fire TV",
+    "fire_tablet": "Optimizat pentru Fire Tablet",
+    "silk_browser": "Îmbunătățit pentru Silk Browser",
+    "voice_support": "Navigație Vocală Suportată",
+    "remote_navigation": "Navigație cu Telecomandă"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continuați drept",
+      "right": "Virați la dreapta",
+      "left": "Virați la stânga",
+      "slight_right": "Mențineți dreapta",
+      "slight_left": "Mențineți stânga",
+      "sharp_right": "Virați brusc la dreapta",
+      "sharp_left": "Virați brusc la stânga",
+      "u_turn": "Faceți întoarcere",
+      "roundabout_right": "Luați sensul giratoriu la dreapta",
+      "roundabout_left": "Luați sensul giratoriu la stânga",
+      "exit_right": "Luați ieșirea la dreapta",
+      "exit_left": "Luați ieșirea la stânga"
+    },
+    "distances": {
+      "now": "{{direction}} acum",
+      "in_100_feet": "{{direction}} în 30 metri",
+      "in_200_feet": "{{direction}} în 60 metri",
+      "in_500_feet": "În 150 metri, {{direction}}",
+      "in_800_feet": "În 250 metri, {{direction}}",
+      "in_1000_feet": "În 300 metri, {{direction}}",
+      "in_30_meters": "{{direction}} în 30 metri",
+      "in_50_meters": "{{direction}} în 50 metri",
+      "in_150_meters": "În 150 metri, {{direction}}",
+      "in_250_meters": "În 250 metri, {{direction}}",
+      "in_300_meters": "În 300 metri, {{direction}}"
+    },
+    "onto_road": "pe {{roadName}}",
+    "announcements": {
+      "recalculating": "Recalculare rută",
+      "arrived": "Ați ajuns la destinație",
+      "use_lanes": "Folosiți {{lanes}}",
+      "use_lanes_in_100_feet": "În 30 metri, folosiți {{lanes}}",
+      "use_lanes_in_500_feet": "În 150 metri, folosiți {{lanes}}",
+      "use_lanes_in_1000_feet": "În 300 metri, folosiți {{lanes}}",
+      "use_lanes_in_30_meters": "În 30 metri, folosiți {{lanes}}",
+      "use_lanes_in_150_meters": "În 150 metri, folosiți {{lanes}}",
+      "use_lanes_in_300_meters": "În 300 metri, folosiți {{lanes}}",
+      "voice_ready": "Ghidarea vocală este pregătită pentru navigație"
+    },
+    "warnings": {
+      "incident_ahead": "Atenție: {{type}} înainte",
+      "in_miles": "în {{distance}} mile",
+      "in_kilometers": "în {{distance}} kilometri",
+      "speed_warning": "Avertizare viteză. Viteza curentă {{speed}} {{unit}}. Limita de viteză este {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "ambuteiaj",
+      "accident": "accident",
+      "road_hazard": "pericol pe drum",
+      "road_closed": "drum închis",
+      "police_ahead": "poliție înainte",
+      "speed_camera": "radar",
+      "construction": "lucrări",
+      "bad_weather": "vreme rea"
+    },
+    "units": {
+      "mph": "mile pe oră",
+      "kmh": "kilometri pe oră"
+    }
+  },
+  "settings": {
+    "language": "Limbă",
+    "select_language": "Selectare Limbă",
+    "voice_language": "Limbă Vocală",
+    "language_changed": "Limba a fost schimbată în {{language}}"
+  },
+  "languages": {
+    "en-US": "Engleză (SUA)",
+    "en-GB": "Engleză (UK)",
+    "es-ES": "Spaniolă",
+    "de-DE": "Germană",
+    "it-IT": "Italiană",
+    "pt-BR": "Portugheză",
+    "pl-PL": "Poloneză",
+    "ro-RO": "Română",
+    "zh-CN": "Chineză",
+    "ja-JP": "Japoneză"
+  },
+  "fleet": {
+    "title": "Management Flotă",
+    "navigation": "Navigație",
+    "dashboard": "Panou",
+    "vehicles": {
+      "title": "Vehicule",
+      "registry": "Registru Vehicule",
+      "add": "Adaugă Vehicul",
+      "edit": "Editează Vehicul",
+      "registration": "Număr Înmatriculare",
+      "trailer": "Număr Remorcă",
+      "make": "Marcă",
+      "model": "Model",
+      "year": "An",
+      "vin": "VIN",
+      "type": "Tip Vehicul",
+      "fuel_type": "Tip Combustibil",
+      "tank_capacity": "Capacitate Rezervor",
+      "mileage": "Kilometraj",
+      "status": {
+        "title": "Status",
+        "active": "Activ",
+        "maintenance": "Service",
+        "decommissioned": "Radiat"
+      }
+    },
+    "operators": {
+      "title": "Șoferi",
+      "add": "Adaugă Șofer",
+      "edit": "Editează Șofer",
+      "name": "Nume",
+      "license_number": "Număr Permis",
+      "license_type": "Categorie",
+      "license_expiry": "Valabilitate Permis",
+      "cpc_expiry": "Valabilitate CPC",
+      "tacho_card": "Card Tahograf",
+      "employee_id": "ID Angajat",
+      "status": {
+        "title": "Status",
+        "active": "Activ",
+        "inactive": "Inactiv",
+        "suspended": "Suspendat"
+      }
+    },
+    "service": {
+      "title": "Istoric Service",
+      "add": "Adaugă Service",
+      "type": {
+        "title": "Tip Service",
+        "routine": "Rutină",
+        "mot": "ITP",
+        "repair": "Reparație",
+        "inspection": "Inspecție",
+        "tacho_calibration": "Calibrare Tahograf"
+      },
+      "date": "Data Service",
+      "next_due": "Următorul Termen",
+      "mileage": "Km la Service",
+      "cost": "Cost",
+      "provider": "Furnizor",
+      "parts": "Piese Înlocuite"
+    },
+    "fuel": {
+      "title": "Jurnal Combustibil",
+      "add": "Adaugă Alimentare",
+      "odometer": "Citire Kilometraj",
+      "liters": "Litri Alimentați",
+      "cost": "Cost",
+      "location": "Locație",
+      "type": "Tip Combustibil",
+      "mpg": "L/100km",
+      "efficiency": "Eficiență Combustibil"
+    },
+    "documents": {
+      "title": "Documente",
+      "upload": "Încarcă Document",
+      "type": {
+        "registration": "Înmatriculare",
+        "mot": "Certificat ITP",
+        "insurance": "Asigurare",
+        "maintenance": "Istoric Service"
+      },
+      "expiry": "Data Expirare"
+    },
+    "costs": {
+      "title": "Analiză Costuri",
+      "total": "Costuri Totale",
+      "average": "Medie per Vehicul",
+      "breakdown": "Detaliere Costuri",
+      "per_vehicle": "Costuri per Vehicul",
+      "monthly_trends": "Tendințe Lunare",
+      "categories": {
+        "fuel": "Combustibil",
+        "maintenance": "Service",
+        "insurance": "Asigurare",
+        "tolls": "Taxe Drum",
+        "other": "Altele"
+      }
+    },
+    "incidents": {
+      "title": "Incidente",
+      "add": "Raportează Incident",
+      "type": {
+        "accident": "Accident",
+        "damage": "Avarie",
+        "violation": "Amendă",
+        "breakdown": "Pană",
+        "near_miss": "Aproape Accident"
+      },
+      "severity": {
+        "critical": "Critic",
+        "high": "Ridicat",
+        "medium": "Mediu",
+        "low": "Scăzut"
+      },
+      "root_cause": "Cauză",
+      "preventative": "Măsuri Preventive",
+      "insurance_claim": "Dosar Asigurare"
+    },
+    "trips": {
+      "title": "Curse",
+      "add": "Adaugă Cursă",
+      "planned": "Planificat",
+      "actual": "Real",
+      "distance": "Distanță",
+      "duration": "Durată",
+      "cost": "Cost",
+      "revenue": "Venit",
+      "profit": "Profit",
+      "margin": "Marjă",
+      "efficiency": "Eficiență Rută"
+    },
+    "compliance": {
+      "title": "Conformitate",
+      "status": {
+        "compliant": "Conform",
+        "non_compliant": "Neconform",
+        "pending": "În Verificare"
+      },
+      "types": {
+        "dvla": "Verificare RAR",
+        "emissions": "Norme Emisii",
+        "hazmat": "Certificat ADR",
+        "tacho": "Inspecție Tahograf",
+        "working_hours": "Ore de Lucru"
+      }
+    },
+    "tracking": {
+      "title": "Urmărire Flotă",
+      "live_map": "Hartă Live",
+      "vehicle_list": "Listă Vehicule",
+      "refresh": "Actualizează",
+      "last_update": "Ultima Actualizare",
+      "status": {
+        "moving": "În Mișcare",
+        "stopped": "Oprit",
+        "offline": "Offline"
+      },
+      "speed": "Viteză",
+      "heading": "Direcție",
+      "address": "Locație Curentă",
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor flotei",
+        "loadFailedDesc": "Nu s-au putut prelua datele de urmărire GPS"
+      }
+    },
+    "geofencing": {
+      "title": "Geocercuri",
+      "zones": "Zone",
+      "add": "Adaugă Zonă",
+      "edit": "Editează Zonă",
+      "name": "Nume Zonă",
+      "radius": "Rază",
+      "type": {
+        "warehouse": "Depozit",
+        "customer": "Client",
+        "restricted": "Restricționat",
+        "checkpoint": "Punct Control"
+      },
+      "alerts": {
+        "entry": "Alertă Intrare",
+        "exit": "Alertă Ieșire",
+        "today": "Alerte Azi"
+      },
+      "events": "Istoric Evenimente"
+    },
+    "behavior": {
+      "title": "Comportament Șofer",
+      "analytics": "Analiză Comportament",
+      "safety_score": "Scor Siguranță",
+      "fleet_average": "Media Flotei",
+      "high_risk": "Șoferi Risc Mare",
+      "events_today": "Evenimente Azi",
+      "leaderboard": "Clasament Șoferi",
+      "breakdown": "Analiză Comportament",
+      "types": {
+        "speeding": "Depășire Viteză",
+        "harsh_braking": "Frânare Bruscă",
+        "harsh_acceleration": "Accelerare Bruscă",
+        "sharp_cornering": "Viraje Bruște"
+      },
+      "risk": {
+        "low": "Risc Scăzut",
+        "medium": "Risc Mediu",
+        "high": "Risc Mare"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor comportamentului",
+        "loadFailedDesc": "Nu s-au putut prelua analizele"
+      }
+    },
+    "hos": {
+      "title": "Ore de Serviciu",
+      "driver_status": "Status Ore Lucru",
+      "violations": "Încălcări",
+      "daily_driving": "Condus Zilnic",
+      "weekly_driving": "Condus Săptămânal",
+      "remaining_daily": "Rămas Zilnic",
+      "remaining_weekly": "Rămas Săptămânal",
+      "status": {
+        "driving": "Conduce",
+        "on_duty": "În Serviciu",
+        "off_duty": "Pauză",
+        "sleeper": "Cabină"
+      },
+      "violation_types": {
+        "daily_exceeded": "Limita Zilnică Depășită",
+        "weekly_exceeded": "Limita Săptămânală Depășită",
+        "break_not_taken": "Pauză Neluată",
+        "rest_period": "Încălcare Pauză"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor HoS",
+        "loadFailedDesc": "Nu s-au putut prelua datele de conformitate a orelor de serviciu"
+      }
+    },
+    "billing": {
+      "title": "Facturare Clienți",
+      "customers": "Clienți",
+      "add": "Adaugă Client",
+      "edit": "Editează Client",
+      "top_customers": "Top Clienți",
+      "contract_type": {
+        "title": "Tip Contract",
+        "per_mile": "Per Kilometru",
+        "per_hour": "Per Oră",
+        "fixed": "Tarif Fix",
+        "hybrid": "Hibrid"
+      },
+      "rate_per_mile": "Tarif per Km",
+      "rate_per_hour": "Tarif per Oră",
+      "fixed_rate": "Tarif Fix",
+      "total_trips": "Total Curse",
+      "total_revenue": "Venit Total",
+      "profit_margin": "Marjă Profit",
+      "outstanding": "Sold Restant",
+      "status": {
+        "active": "Activ",
+        "inactive": "Inactiv",
+        "pending": "În Așteptare"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea clienților",
+        "loadFailedDesc": "Nu s-au putut prelua datele de facturare a clienților",
+        "loadFailedAnalytics": "Eroare la încărcarea analizelor"
+      }
+    },
+    "notifications": {
+      "expires": "Expiră",
+      "days": "zile",
+      "done": "Gata",
+      "dismiss": "Închide"
+    },
+    "common": {
+      "no_data": "Nu există date",
+      "loading": "Se încarcă...",
+      "error": "Eroare la încărcare",
+      "retry": "Reîncearcă",
+      "actions": "Acțiuni",
+      "view": "Vizualizează",
+      "details": "Detalii",
+      "date_range": "Perioadă",
+      "all": "Toate",
+      "today": "Azi",
+      "week": "Această Săptămână",
+      "month": "Această Lună",
+      "hours": "ore",
+      "miles": "mile",
+      "km": "km"
+    }
+  },
+  "userGuide": {
+    "title": "Ghid Utilizator TruckNav Pro",
+    "subtitle": "Ghid complet pentru toate funcțiile și cum să le utilizați",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Primii Pași",
+      "planMode": "Mod Planificare",
+      "planModeDesc": "Atingeți butonul meniu (☰) în colțul din stânga sus pentru a deschide planificatorul de rută. Introduceți destinația folosind bara de căutare. Aplicația va găsi rute sigure pentru camioane, evitând podurile joase și restricțiile de greutate.",
+      "previewMode": "Mod Previzualizare",
+      "previewModeDesc": "După planificare, revizuiți ruta pe hartă. Iconițele galbene de avertizare arată restricțiile de-a lungul rutei. Atingeți orice restricție pentru a vedea detalii despre limitele de înălțime, greutate sau lățime.",
+      "navigateMode": "Mod Navigare",
+      "navigateModeDesc": "Atingeți \"Începe Navigația\" pentru a porni ghidarea pas cu pas. Harta urmărește automat poziția dvs. și arată manevrele viitoare."
+    },
+    "vehicleSetup": {
+      "title": "Configurare Vehicul",
+      "profiles": "Profile Vehicule",
+      "profilesDesc": "Accesați prin Meniu → fila Vehicul. Creați profiluri pentru fiecare vehicul cu dimensiuni (înălțime, lățime, lungime), greutate și număr de osii. Aplicația folosește acestea pentru a evita rutele necorespunzătoare.",
+      "hazmat": "Setări Materiale Periculoase",
+      "hazmatDesc": "Activați opțiunile pentru materiale periculoase pentru rutare conformă ADR. Aplicația va evita tunelurile și rutele interzise pentru mărfuri periculoase.",
+      "trailerType": "Tip Remorcă",
+      "trailerTypeDesc": "Selectați configurația remorcii (simplă, dublă sau fără remorcă). Rutele sunt optimizate pe baza lungimii totale a vehiculului și a cerințelor razei de virare."
+    },
+    "previewFlyby": {
+      "title": "Previzualizare și Mod Survol",
+      "routePreview": "Previzualizare Rută",
+      "routePreviewDesc": "După planificarea unei rute, vizualizați întregul traseu pe hartă înainte de a începe navigarea. Măriți și deplasați pentru a examina orice parte a rutei.",
+      "flybyAnimation": "Animație Survol",
+      "flybyAnimationDesc": "Atingeți butonul de redare pentru a viziona un survol animat al întregii rute. Camera urmărește drumul, arătând curbele, restricțiile și punctele de reper.",
+      "etaDisplay": "Afișare ETA",
+      "etaDisplayDesc": "Previzualizarea arată timpul estimat de sosire, distanța totală și durata așteptată a călătoriei pe baza condițiilor actuale de trafic.",
+      "noAutoStart": "Start Manual",
+      "noAutoStartDesc": "Navigarea nu pornește automat. Examinați ruta cu atenție, apoi atingeți 'Începe Navigația' când sunteți gata să porniți."
+    },
+    "etaInfo": {
+      "title": "ETA și Informații Călătorie",
+      "arrivalTime": "Ora de Sosire",
+      "arrivalTimeDesc": "Timpul estimat de sosire este actualizat continuu pe baza vitezei, condițiilor de trafic și distanței rămase.",
+      "remainingDistance": "Distanță Rămasă",
+      "remainingDistanceDesc": "Arată distanța totală rămasă până la destinație, afișată în unitățile preferate (mile sau kilometri).",
+      "remainingTime": "Timp Rămas",
+      "remainingTimeDesc": "Afișează timpul de condus rămas estimat, ținând cont de întârzierile actuale și anticipate ale traficului.",
+      "tripStrip": "Bandă Călătorie",
+      "tripStripDesc": "Banda compactă din partea de jos arată informații cheie: următoarea manevră, distanța până la virare, ETA și distanța totală rămasă."
+    },
+    "controlButtons": {
+      "title": "Butoane Control Hartă",
+      "compass": "Busolă",
+      "compassDesc": "Atingeți pentru a reseta orientarea hărții la nord în sus. Săgeata indică direcția curentă.",
+      "recenter": "Recentrare",
+      "recenterDesc": "Atingeți pentru a readuce harta la poziția GPS curentă cu nivel de zoom automat.",
+      "3dButton": "Vedere 3D",
+      "3dButtonDesc": "Comutați între vederea plată 2D și perspectiva înclinată 3D pentru o mai bună percepție spațială.",
+      "satellite": "Satelit",
+      "satelliteDesc": "Comutați între harta rutieră și imaginile satelitare pentru a vedea terenul real și punctele de reper.",
+      "traffic": "Trafic",
+      "trafficDesc": "Activați suprapunerea traficului în timp real cu drumuri codificate color pentru nivelurile de aglomerare.",
+      "zoomIn": "Mărire",
+      "zoomInDesc": "Atingeți sau ciupiți pentru a mări și a vedea mai multe detalii pe străzi și intersecții.",
+      "zoomOut": "Micșorare",
+      "zoomOutDesc": "Atingeți sau întindeți pentru a micșora și a obține o vedere mai largă a rutei.",
+      "layers": "Straturi",
+      "layersDesc": "Accesați straturi suplimentare de hartă, inclusiv parcări pentru camioane, benzinării, zone de odihnă și stații de cântărire."
+    },
+    "3dMap": {
+      "title": "Hartă 3D și Teren",
+      "tiltedView": "Vedere Înclinată",
+      "tiltedViewDesc": "Perspectiva 3D arată drumul din față cu adâncime, facilitând anticiparea curbelor și punctelor de reper viitoare.",
+      "buildings": "Clădiri 3D",
+      "buildingsDesc": "La nivelul de zoom 14+, clădirile apar ca structuri 3D. Clădirile mai înalte apar mai închise, ajutând la identificarea centrelor urbane și punctelor de reper.",
+      "hillShading": "Umbrire Relief",
+      "hillShadingDesc": "Altitudinea terenului este afișată cu umbrire, ajutând la vizualizarea dealurilor, munților și văilor de-a lungul rutei.",
+      "rotation": "Rotire Hartă",
+      "rotationDesc": "Harta se rotește pentru a se potrivi cu direcția dvs., menținând drumul din față întotdeauna în partea de sus a ecranului."
+    },
+    "restrictions": {
+      "title": "Avertismente Restricții",
+      "panel": "Panou Restricții",
+      "panelDesc": "În modul previzualizare, un panou arată toate restricțiile pe ruta dvs. Încălcările critice (roșu) trebuie evitate. Înalte (portocaliu) și medii (galben) necesită atenție.",
+      "markers": "Marcaje Hartă",
+      "markersDesc": "Iconițele triunghiulare galbene pe hartă arată locațiile restricțiilor. Atingeți orice marcaj pentru a vedea detalii, inclusiv dimensiunea specifică care încalcă profilul vehiculului.",
+      "heightLimit": "Limită Înălțime",
+      "heightLimitDesc": "Podurile și tunelurile cu restricții de înălțime sunt marcate. Aplicația avertizează dacă înălțimea vehiculului depășește spațiul liber.",
+      "weightLimit": "Limită Greutate",
+      "weightLimitDesc": "Drumurile cu restricții de greutate sunt marcate. Rutele sunt calculate evitând drumurile care nu pot suporta greutatea totală a vehiculului."
+    },
+    "dynamicRoutes": {
+      "title": "Sugestii Rute Dinamice",
+      "alternative": "Rute Alternative",
+      "alternativeDesc": "În timpul navigării, aplicația verifică la fiecare 5 minute dacă există rute mai rapide. Când este găsită o opțiune mai rapidă, apare un banner verde care arată economisirea de timp. Atingeți \"Schimbă Ruta\" pentru a accepta.",
+      "oneTouch": "Redirecționare cu o Singură Atingere",
+      "oneTouchDesc": "Când este sugerată o rută alternativă, atingeți o dată pentru a o accepta imediat. Aplicația va recalcula automat și vă va ghida pe noua cale."
+    },
+    "incidentReporting": {
+      "title": "Raportare Incidente",
+      "voiceReport": "Raport Vocal",
+      "voiceReportDesc": "Atingeți butonul microfonului și vorbiți pentru a raporta incidente fără mâini. Spuneți ce vedeți și aplicația va categoriza automat.",
+      "trafficJam": "Ambuteiaj",
+      "trafficJamDesc": "Raportați trafic greu sau staționare. Alți șoferi vor vedea aceasta și pot alege rute alternative.",
+      "accident": "Accident",
+      "accidentDesc": "Raportați accidente pe drum. Includeți informații despre bandă dacă este posibil, spunând 'accident pe banda din stânga' sau 'accident blochează drumul'.",
+      "roadHazard": "Pericol pe Drum",
+      "roadHazardDesc": "Raportați obstacole, resturi, gropi sau condiții periculoase. Fiți specific: 'resturi pe banda din dreapta' sau 'groapă mare'.",
+      "policeSpeedCamera": "Poliție / Radar",
+      "policeSpeedCameraDesc": "Raportați prezența poliției sau radarele. Spuneți 'poliție înainte' sau 'radar' pentru a alerta alți șoferi.",
+      "roadClosure": "Drum Închis",
+      "roadClosureDesc": "Raportați drumuri închise sau rute blocate. Aplicația va sugera alternative și va alerta alți șoferi."
+    },
+    "voiceFeatures": {
+      "title": "Funcții Vocale",
+      "guidance": "Ghidare Vocală",
+      "guidanceDesc": "Instrucțiunile vocale pas cu pas vă ghidează prin fiecare manevră. Volumul se ajustează automat în timpul apelurilor telefonice sau muzicii.",
+      "dictation": "Dictare Vocală",
+      "dictationDesc": "Spuneți destinația în loc să tastați. Atingeți microfonul în bara de căutare și spuneți adresa sau numele locației.",
+      "commands": "Comenzi Vocale",
+      "commandsDesc": "Controlați aplicația fără mâini cu comenzi precum 'oprește ghidarea', 'arată traficul', 'găsește benzinărie' sau 'anulează navigarea'.",
+      "languageSync": "Sincronizare Limbă",
+      "languageSyncDesc": "Limba ghidării vocale se potrivește cu setarea limbii aplicației. Schimbați limbile în Setări pentru a auzi instrucțiunile în limba preferată."
+    },
+    "alertsHaptics": {
+      "title": "Alerte și Feedback Haptic",
+      "speedWarning": "Avertizare Viteză",
+      "speedWarningDesc": "Avertismente vizuale și audio la depășirea limitei de viteză. Vitezometrul devine roșu și se aude un sunet de avertizare.",
+      "hapticFeedback": "Feedback Haptic",
+      "hapticFeedbackDesc": "Dispozitivul vibrează pentru evenimente importante: apăsări de butoane, avertismente de virare, avertismente de viteză și notificări de sosire.",
+      "fatigueAlert": "Alertă Oboseală",
+      "fatigueAlertDesc": "După condus prelungit, aplicația vă reamintește să luați o pauză. Arată zone de odihnă și parcări din apropiere pentru oprire sigură."
+    },
+    "arNavigation": {
+      "title": "Suprapunere Navigare AR",
+      "cameraView": "Vedere Cameră",
+      "cameraViewDesc": "Îndreptați telefonul spre drumul din față. Suprapunerea AR arată săgeți de navigare și indicații de virare pe vederea live a camerei.",
+      "maneuverOverlay": "Suprapunere Manevră",
+      "maneuverOverlayDesc": "Virajele viitoare sunt afișate ca săgeți suprapuse pe drumul real, făcând ușor să vedeți exact unde să virați.",
+      "speedDisplay": "Afișaj Viteză",
+      "speedDisplayDesc": "Viteza curentă, limita de viteză și distanța până la următorul viraj apar în partea de sus a vederii AR pentru referință rapidă."
+    },
+    "widgets": {
+      "title": "Widgeturi Tablou",
+      "speed": "Widget Viteză",
+      "speedDesc": "Arată viteza curentă cu codare color: verde (sub limită), galben (aproape de limită), roșu (peste limită).",
+      "eta": "Widget ETA",
+      "etaDesc": "Afișează timpul estimat de sosire, actualizat în timp real pe baza traficului și vitezei curente.",
+      "distance": "Widget Distanță",
+      "distanceDesc": "Arată distanța rămasă până la destinație în unitățile preferate.",
+      "compass": "Widget Busolă",
+      "compassDesc": "Afișează direcția curentă de călătorie (N, NE, E, SE, S, SV, V, NV).",
+      "customize": "Personalizare Widgeturi",
+      "customizeDesc": "Atingeți și țineți apăsat un widget pentru a rearanja sau elimina. Atingeți butonul + pentru a adăuga noi widgeturi pe tablou."
+    },
+    "facilities": {
+      "title": "Căutare Facilități",
+      "finding": "Găsirea Parcărilor pentru Camioane",
+      "findingDesc": "Utilizați căutarea POI în meniu pentru a găsi parcări pentru camioane, benzinării, parcări, restaurante și zone de odihnă din apropiere. Rezultatele sunt filtrate pentru locații accesibile camioanelor.",
+      "truckStops": "Parcări pentru Camioane",
+      "truckStopsDesc": "Găsiți parcări complet echipate cu combustibil, parcare, dușuri, restaurante și servicii de reparații. Vizualizați facilitățile și recenziile înainte de oprire.",
+      "fuel": "Benzinării",
+      "fuelDesc": "Găsiți benzinării pentru camioane cu motorină, AdBlue și pompe de mare capacitate. Comparați prețurile și filtrați după marcă.",
+      "parking": "Parcare Camioane",
+      "parkingDesc": "Găsiți parcare sigură pentru noapte la parcări, zone de odihnă și locuri de parcare desemnate. Vizualizați disponibilitatea și facilitățile.",
+      "restaurants": "Restaurante",
+      "restaurantsDesc": "Descoperiți restaurante prietenoase pentru camioane cu parcare pentru vehicule mari. Filtrați după tipul de bucătărie și orele de funcționare."
+    },
+    "fleet": {
+      "title": "Management Flotă",
+      "vehicles": "Gestionare Vehicule",
+      "vehiclesDesc": "Urmăriți toate vehiculele din flotă cu poziții GPS în timp real, actualizări de stare și programe de întreținere.",
+      "drivers": "Gestionare Șoferi",
+      "driversDesc": "Gestionați profilurile șoferilor, permisele, certificările și atribuiți șoferi la vehicule pentru urmărire precisă.",
+      "service": "Înregistrări Service",
+      "serviceDesc": "Înregistrați activitățile de întreținere și service. Setați mementouri pentru ITP, inspecții, calibrarea tahografului și service de rutină.",
+      "fuel": "Jurnale Combustibil",
+      "fuelDesc": "Urmăriți achizițiile de combustibil, calculați eficiența și monitorizați costurile combustibilului în întreaga flotă.",
+      "compliance": "Urmărire Conformitate",
+      "complianceDesc": "Monitorizați orele șoferilor, perioadele de odihnă și conformitatea cu reglementările. Primiți alerte înainte de expirarea certificărilor."
+    },
+    "fleetManagement": {
+      "title": "Management Flotă (Desktop)",
+      "access": "Accesare Instrumente Flotă",
+      "accessDesc": "Managementul flotei este disponibil doar pe desktop. Accesați prin bara de navigare superioară. Gestionați vehicule, șoferi, înregistrări service, jurnale combustibil, urmărire conformitate și facturare clienți."
+    },
+    "pwa": {
+      "title": "Instalare Aplicație Mobilă",
+      "ios": "Instalare iOS",
+      "iosDesc": "Pe iPhone sau iPad: Atingeți butonul Partajare → derulați în jos și atingeți 'Adaugă la Ecran Principal' → atingeți 'Adaugă' pentru a instala.",
+      "android": "Instalare Android",
+      "androidDesc": "Pe Android: Atingeți meniul (trei puncte) → atingeți 'Instalează Aplicația' sau 'Adaugă la Ecran Principal' → confirmați instalarea.",
+      "offline": "Mod Offline",
+      "offlineDesc": "Odată instalată, aplicația funcționează offline cu hărți și rute din cache. Descărcați zone în avans pentru navigare fără internet."
+    },
+    "settings": {
+      "title": "Setări și Preferințe",
+      "language": "Setări Limbă",
+      "languageDesc": "Accesați prin Meniu → Setări. Alegeți limba preferată. Întreaga interfață a aplicației, ghidarea vocală și acest ghid de utilizator se vor actualiza în limba selectată.",
+      "units": "Preferințe Unități",
+      "unitsDesc": "Comutați între măsuri metrice (kilometri, metri) și imperiale (mile, picioare). Limitele de viteză și distanțele vor fi afișate în unitățile preferate.",
+      "theme": "Setări Temă",
+      "themeDesc": "Alegeți între tema Luminoasă, Întunecată sau Automată. Modul automat comută în funcție de ora zilei sau de setările dispozitivului."
+    },
+    "entertainment": {
+      "title": "Sistem Divertisment",
+      "radio": "Radio Internet",
+      "radioDesc": "Accesați prin butonul radio în timpul navigării. Transmiteți stații radio prietenoase pentru camioane. Controlați redarea cu mini playerul din partea de jos a ecranului."
+    }
+  }
+}
